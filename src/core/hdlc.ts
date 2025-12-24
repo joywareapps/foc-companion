@@ -1,4 +1,4 @@
-const { crc_16_x_25 } = require('js-crc');
+const { crc_16_x_25 } = require('js-crc/models');
 
 export class HDLC {
   private static readonly FRAME_BOUNDARY_MARKER = 0x7E;

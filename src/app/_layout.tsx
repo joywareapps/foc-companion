@@ -8,6 +8,8 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 
+console.log('--- JS BUNDLE STARTING ---');
+
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
@@ -22,6 +24,7 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  console.log('[RootLayout] Initializing...');
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
@@ -29,19 +32,25 @@ export default function RootLayout() {
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
-    if (error) throw error;
+    if (error) {
+      console.error('[RootLayout] Font loading error:', error);
+      throw error;
+    }
   }, [error]);
 
   useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      console.log('[RootLayout] Fonts loaded, hiding splash screen...');
+      SplashScreen.hideAsync().catch(err => console.error('[RootLayout] Error hiding splash screen:', err));
     }
   }, [loaded]);
 
   if (!loaded) {
+    console.log('[RootLayout] Waiting for fonts...');
     return null;
   }
 
+  console.log('[RootLayout] Rendering RootLayoutNav...');
   return <RootLayoutNav />;
 }
 

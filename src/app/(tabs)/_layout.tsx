@@ -27,7 +27,7 @@ export default function TabLayout() {
         headerShown: useClientOnlyValue(false, true),
       }}>
       <Tabs.Screen
-        name="control"
+        name="index"
         options={{
           title: 'Control',
           tabBarIcon: ({ color }) => <TabBarIcon name="sliders" color={color} />,

@@ -1,4 +1,4 @@
-import { createWorkletRuntime, runOnRuntime, runOnJS } from 'react-native-worklets';
+import { createWorkletRuntime, runOnRuntime, runOnJS, type WorkletRuntime } from 'react-native-worklets';
 import { CirclePattern } from './patterns';
 import { focStimApi } from './FocStimApiService';
 import { AxisType } from '../generated/protobuf/constants_pb';
@@ -7,12 +7,18 @@ export class CommandLoop {
   private pattern = new CirclePattern(0.5, 2.0); // Default amplitude and velocity
   private isRunning = false;
   private lastTimestamp = 0;
-  
-  // Create a worklet runtime for high-priority background execution
-  private runtime = createWorkletRuntime({ name: 'StimulationLoop' });
+  private runtime: WorkletRuntime | null = null;
 
   public start() {
     if (this.isRunning) return;
+    
+    console.log('[CommandLoop] Starting...');
+    
+    if (!this.runtime) {
+      console.log('[CommandLoop] Creating Worklet runtime...');
+      this.runtime = createWorkletRuntime({ name: 'StimulationLoop' });
+    }
+
     this.isRunning = true;
     this.lastTimestamp = Date.now();
     
@@ -21,21 +27,15 @@ export class CommandLoop {
   }
 
   public stop() {
+    console.log('[CommandLoop] Stopping...');
     this.isRunning = false;
   }
 
   private scheduleNextTick() {
-    if (!this.isRunning) return;
+    if (!this.isRunning || !this.runtime) return;
 
     runOnRuntime(this.runtime, () => {
       'worklet';
-      
-      const now = Date.now();
-      // Note: we need to handle state carefully in worklets. 
-      // For now, keeping it simple.
-      
-      // In a real implementation, we'd pass pattern state or use shared values
-      // For this MVP, we'll trigger the JS update but aim for future worklet-only logic
       runOnJS(this.tick)();
     })();
   }

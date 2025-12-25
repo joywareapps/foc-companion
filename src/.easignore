@@ -1,0 +1,57 @@
+# EAS Build Ignore File
+# Files and directories listed here will be excluded from EAS build uploads
+# This improves upload performance and build times
+
+# Source repositories (desktop app reference code - not needed for mobile build)
+source-repos/
+
+# Documentation (not needed for builds)
+documents/
+*.md
+!README.md
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Claude Code files
+.claude/
+
+# CI/CD files (not needed for EAS)
+.github/
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Local environment files
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+
+# Build artifacts that will be regenerated
+src/node_modules/.cache/
+
+# Development builds
+*.apk
+*.aab
+*.ipa

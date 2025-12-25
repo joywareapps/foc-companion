@@ -21,6 +21,10 @@ export class FocStimApiService {
   public onConnectionError: ((error: string) => void) | null = null;
   public onDisconnect: (() => void) | null = null;
 
+  public get connected(): boolean {
+    return this.isConnected;
+  }
+
   public async connectTcp(host: string, port: number = 55533): Promise<void> {
     return new Promise((resolve, reject) => {
       try {

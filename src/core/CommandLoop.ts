@@ -89,6 +89,12 @@ export class CommandLoop {
       this.intervalId = null;
     }
 
+    // Only attempt to stop signal if connected
+    if (!focStimApi.connected) {
+      console.log('[CommandLoop] Device not connected, skipping stop signal command');
+      return;
+    }
+
     try {
       // Stop signal output on device
       await focStimApi.stopSignal();

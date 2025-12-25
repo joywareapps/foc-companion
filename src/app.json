@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "src",
-    "slug": "src",
+    "name": "Foc Companion",
+    "slug": "foc-companion",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "src",
+    "scheme": "foc-companion",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -23,7 +23,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.goranobradovic.src"
+      "package": "com.joywareapps.foccompanion"
     },
     "web": {
       "bundler": "metro",
@@ -35,6 +35,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c5716308-0779-427b-864c-a0277aec8cbd"
+      }
+    },
+    "owner": "goranobradovic"
   }
 }

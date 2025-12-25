@@ -62,53 +62,54 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
     - [x] Document valid ranges and default values from `stim_math/limits.py`
     - [x] Create comprehensive specification document: `documents/functional_spec/device-settings-spec.md`
 
-### **4.2 Settings Infrastructure** (Priority 1)
+### **4.2 Settings Infrastructure** ✅ COMPLETED
 
-- [ ] **Settings Service:**
-    - [ ] Create TypeScript interfaces for settings structures:
-        - [ ] `DeviceSettings` interface (device type, waveform type, min/max freq, amplitude)
-        - [ ] `PulseSettings` interface (carrier freq, pulse freq, pulse width, rise time, interval random)
-        - [ ] `FocStimSettings` interface (WiFi IP, SSID, password, communication mode)
-        - [ ] `AppSettings` interface (combines all settings)
-    - [ ] Implement AsyncStorage persistence layer:
-        - [ ] `SettingsService.ts` with load/save methods
-        - [ ] Storage keys: `@foccompanion/device_settings`, `@foccompanion/pulse_settings`, etc.
-        - [ ] Default values matching desktop app (min_freq: 500Hz, max_freq: 1500Hz, amplitude: 0.120A)
-    - [ ] Create settings validation utilities:
-        - [ ] Min/max frequency validation (500-2000 Hz range, min < max)
-        - [ ] Waveform amplitude validation (0.01-0.15 A range)
-        - [ ] Pulse parameter validation (frequency: 1-300Hz, width: 3-100 cycles, rise: 2-100 cycles)
-        - [ ] Duty cycle calculation and warning logic
+- [x] **Settings Service:**
+    - [x] Create TypeScript interfaces for settings structures:
+        - [x] `DeviceSettings` interface (device type, waveform type, min/max freq, amplitude)
+        - [x] `PulseSettings` interface (carrier freq, pulse freq, pulse width, rise time, interval random)
+        - [x] `FocStimSettings` interface (WiFi IP, SSID, password, communication mode)
+        - [x] `AppSettings` interface (combines all settings)
+    - [x] Implement AsyncStorage persistence layer:
+        - [x] `SettingsService.ts` with load/save methods
+        - [x] Storage keys: `@foccompanion/device_settings`, `@foccompanion/pulse_settings`, etc.
+        - [x] Default values matching desktop app (min_freq: 500Hz, max_freq: 1500Hz, amplitude: 0.120A)
+    - [x] Create settings validation utilities:
+        - [x] Min/max frequency validation (500-2000 Hz range, min < max)
+        - [x] Waveform amplitude validation (0.01-0.15 A range)
+        - [x] Pulse parameter validation (frequency: 1-300Hz, width: 3-100 cycles, rise: 2-100 cycles)
+        - [x] Duty cycle calculation and warning logic
 
-- [ ] **State Management Integration:**
-    - [ ] Extend `deviceStore.ts` with settings state:
-        - [ ] Add `deviceSettings`, `pulseSettings`, `focstimSettings` state
-        - [ ] Add `loadSettings()` action (load from AsyncStorage on app start)
-        - [ ] Add `saveDeviceSettings()`, `savePulseSettings()` actions
-        - [ ] Add `resetToDefaults()` action
-    - [ ] Initialize settings on app start in store creation
+- [x] **State Management Integration:**
+    - [x] Extend `deviceStore.ts` with settings state:
+        - [x] Add `deviceSettings`, `pulseSettings`, `focstimSettings` state
+        - [x] Add `loadSettings()` action (load from AsyncStorage on app start)
+        - [x] Add `saveDeviceSettings()`, `savePulseSettings()` actions
+        - [x] Add `resetToDefaults()` action
+    - [x] Initialize settings on app start in store creation
 
-### **4.3 Device Settings UI** (Priority 1)
+### **4.3 Device Settings UI** ✅ COMPLETED
 
-- [ ] **Device Settings Screen:**
-    - [ ] Create new screen: `src/app/(tabs)/device-settings.tsx`
-    - [ ] Add tab bar icon and navigation
-    - [ ] Implement UI sections:
-        - [ ] **Safety Limits Section:**
-            - [ ] Min Carrier Frequency slider (500-2000 Hz, default: 500 Hz, step: 10 Hz)
-            - [ ] Max Carrier Frequency slider (500-2000 Hz, default: 1500 Hz, step: 10 Hz)
-            - [ ] Validation: display error if min >= max
-            - [ ] Waveform Amplitude slider (10-150 mA, default: 120 mA, step: 1 mA)
-            - [ ] Display current values with units (Hz, mA)
-        - [ ] **Device Type Section:**
-            - [ ] Display current device type (FOC-Stim V3 / 3-Phase)
-            - [ ] Waveform type selector (Continuous / Pulse-Based)
-        - [ ] **Actions:**
-            - [ ] "Reset to Defaults" button
-            - [ ] "Save Settings" button
-            - [ ] Real-time validation with error messages
-    - [ ] Add ScrollView for accessibility
-    - [ ] Implement haptic feedback for slider adjustments
+- [x] **Device Settings Screen:**
+    - [x] Create new screen: `src/app/(tabs)/device-settings.tsx`
+    - [x] Add tab bar icon and navigation
+    - [x] Implement UI sections:
+        - [x] **Safety Limits Section:**
+            - [x] Min Carrier Frequency slider (500-2000 Hz, default: 500 Hz, step: 10 Hz)
+            - [x] Max Carrier Frequency slider (500-2000 Hz, default: 1500 Hz, step: 10 Hz)
+            - [x] Validation: display error if min >= max
+            - [x] Waveform Amplitude slider (10-150 mA, default: 120 mA, step: 1 mA)
+            - [x] Display current values with units (Hz, mA)
+        - [x] **Device Configuration Section:**
+            - [x] Display current device type (FOC-Stim V3 / 3-Phase)
+            - [x] Removed waveform type selector (vibration-only, not applicable to FOC-Stim)
+            - [x] Added info note explaining FOC-Stim electromagnetic field operation
+        - [x] **Actions:**
+            - [x] "Reset to Defaults" button with confirmation dialog
+            - [x] "Save Settings" button (disabled when no changes or validation errors)
+            - [x] Real-time validation with error messages
+    - [x] Add ScrollView for accessibility
+    - [x] Implement haptic feedback for slider adjustments
 
 ### **4.4 Pulse Settings UI** (Priority 2)
 

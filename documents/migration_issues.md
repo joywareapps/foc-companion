@@ -1,10 +1,11 @@
 # Migration Issues & Guideline Mismatches
 
-## 1. Dependency & Version Mismatches
-*   **React Native Version**: Guidelines specify **0.83** (Stable, Dec 2025). Current: `0.81.5`.
-*   **React Version**: Guidelines specify **19.2.x**. Current: `19.1.0`.
+## 1. Dependency & Version Mismatches (RESOLVED)
+*   **~~React Native Version~~**: ✅ FIXED - Upgraded from `0.81.5` to **`0.83.1`** (compliant with guidelines).
+*   **~~React Version~~**: ✅ FIXED - Upgraded from `19.1.0` to **`19.2.3`** (includes CVE-2025-55182 fix).
+*   **~~@types/react~~**: ✅ FIXED - Upgraded to `19.2.7` for React 19.2.3 compatibility.
 *   **~~Missing Serial Support~~**: ✅ FIXED - Moved to TODO.md Phase 4 (lower priority). TCP is implemented, Serial/USB is planned but not started.
-*   **Worklets Library**: Guidelines mention `react-native-worklets-core` (likely for Reanimated 4 integration). Current: `react-native-worklets`.
+*   **Worklets Library**: Guidelines mention `react-native-worklets-core` (likely for Reanimated 4 integration). Current: `react-native-worklets` (0.7.1).
 
 ## 2. Technical Implementation Issues
 *   **Command Loop Performance**:

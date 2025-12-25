@@ -31,6 +31,13 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Control',
+          tabBarIcon: ({ color }) => <TabBarIcon name="play-circle" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="device-settings"
+        options={{
+          title: 'Device',
           tabBarIcon: ({ color }) => <TabBarIcon name="sliders" color={color} />,
         }}
       />

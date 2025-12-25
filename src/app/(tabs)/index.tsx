@@ -17,44 +17,16 @@ export default function TabControlScreen() {
 
       {isConnected && (
         <>
-          {/* Device Status Display */}
+          {/* Device Status Display - Compact */}
           {Object.keys(deviceStatus).length > 0 && (
             <View style={styles.statusContainer}>
-              <Text style={styles.subtitle}>Device Status</Text>
-              <View style={styles.statusGrid}>
-                {deviceStatus.temperature !== undefined && (
-                  <View style={styles.statusItem}>
-                    <Text style={styles.statusLabel}>Temperature</Text>
-                    <Text style={styles.statusValue}>{deviceStatus.temperature.toFixed(1)}°C</Text>
-                  </View>
-                )}
-                {deviceStatus.batteryVoltage !== undefined && (
-                  <View style={styles.statusItem}>
-                    <Text style={styles.statusLabel}>Battery</Text>
-                    <Text style={styles.statusValue}>{deviceStatus.batteryVoltage.toFixed(2)}V</Text>
-                  </View>
-                )}
-                {deviceStatus.batterySoc !== undefined && (
-                  <View style={styles.statusItem}>
-                    <Text style={styles.statusLabel}>Charge</Text>
-                    <Text style={styles.statusValue}>{(deviceStatus.batterySoc * 100).toFixed(0)}%</Text>
-                  </View>
-                )}
-                {deviceStatus.pulseFrequency !== undefined && (
-                  <View style={styles.statusItem}>
-                    <Text style={styles.statusLabel}>Frequency</Text>
-                    <Text style={styles.statusValue}>{deviceStatus.pulseFrequency.toFixed(0)} Hz</Text>
-                  </View>
-                )}
-                {deviceStatus.wallPowerPresent !== undefined && (
-                  <View style={styles.statusItem}>
-                    <Text style={styles.statusLabel}>Power</Text>
-                    <Text style={styles.statusValue}>
-                      {deviceStatus.wallPowerPresent ? 'External' : 'Battery'}
-                    </Text>
-                  </View>
-                )}
-              </View>
+              <Text style={styles.statusLine}>
+                {deviceStatus.temperature !== undefined && `Temp: ${deviceStatus.temperature.toFixed(1)}°C`}
+                {deviceStatus.temperature !== undefined && (deviceStatus.batteryVoltage !== undefined || deviceStatus.wallPowerPresent !== undefined) && ' | '}
+                {deviceStatus.wallPowerPresent !== undefined && (deviceStatus.wallPowerPresent ? '🔌 ' : '🔋 ')}
+                {deviceStatus.batteryVoltage !== undefined && `${deviceStatus.batteryVoltage.toFixed(2)}V`}
+                {deviceStatus.batterySoc !== undefined && ` - ${(deviceStatus.batterySoc * 100).toFixed(0)}%`}
+              </Text>
             </View>
           )}
 
@@ -114,27 +86,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(52, 152, 219, 0.05)',
   },
-  statusGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statusItem: {
-    width: '48%',
-    marginBottom: 8,
-    padding: 8,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  statusLabel: {
-    fontSize: 11,
-    color: '#666',
-    marginBottom: 2,
-  },
-  statusValue: {
+  statusLine: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#2c3e50',
+    textAlign: 'center',
   },
   patternContainer: {
     marginTop: 20,

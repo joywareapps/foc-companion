@@ -1,19 +1,21 @@
 import React from 'react';
-import { StyleSheet, Pressable, ActivityIndicator, TextInput } from 'react-native';
+import { StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { useDeviceStore } from '@/store/deviceStore';
+import { useRouter } from 'expo-router';
 
 export default function DeviceConnection() {
-  const { 
-    status, 
+  const {
+    status,
     ipAddress,
     error,
-    setIpAddress,
-    connect, 
-    disconnect 
+    connect,
+    disconnect
   } = useDeviceStore();
+
+  const router = useRouter();
 
   const isConnecting = status === 'CONNECTING';
   const isConnected = status === 'CONNECTED';
@@ -40,35 +42,41 @@ export default function DeviceConnection() {
       {/* Error Message */}
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      {/* Connection Controls */}
+      {/* IP Address Display (when not connected) */}
       {!isConnected && (
-        <View style={styles.tcpContainer}>
-          <Text style={styles.label}>Device IP Address:</Text>
-          <TextInput
-            style={styles.input}
-            value={ipAddress}
-            onChangeText={setIpAddress}
-            placeholder="192.168.1.xxx"
-            keyboardType="numeric"
-          />
-        </View>
+        <Text style={styles.ipText}>
+          IP: {ipAddress || 'Not configured'}
+          {!ipAddress && (
+            <Text style={styles.settingsHint}> (Set in Settings tab)</Text>
+          )}
+        </Text>
       )}
 
       {/* Connect/Disconnect Button */}
       <Pressable
         onPress={handleConnectPress}
-        disabled={isConnecting}
+        disabled={isConnecting || (!isConnected && !ipAddress)}
         style={({ pressed }) => [
           styles.button,
-          { 
+          {
             backgroundColor: isConnected ? '#e74c3c' : Colors.light.tint,
-            opacity: (pressed || isConnecting) ? 0.7 : 1
+            opacity: (pressed || isConnecting || (!isConnected && !ipAddress)) ? 0.7 : 1
           },
         ]}>
         <Text style={styles.buttonText}>
           {isConnected ? 'Disconnect' : 'Connect'}
         </Text>
       </Pressable>
+
+      {/* Settings Link (when not connected and no IP) */}
+      {!isConnected && !ipAddress && (
+        <Pressable
+          onPress={() => router.push('/settings')}
+          style={styles.settingsLink}>
+          <FontAwesome name="cog" size={14} color={Colors.light.tint} />
+          <Text style={styles.settingsLinkText}>Configure IP in Settings</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -100,22 +108,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: 'center'
   },
-  tcpContainer: {
-    width: '100%',
-    marginBottom: 15,
-  },
-  label: {
+  ipText: {
     fontSize: 14,
-    marginBottom: 5,
     color: '#666',
+    marginBottom: 10,
+    textAlign: 'center',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    backgroundColor: '#fff',
+  settingsHint: {
+    fontSize: 12,
+    color: '#999',
+    fontStyle: 'italic',
   },
   button: {
     paddingVertical: 12,
@@ -129,5 +131,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center'
+  },
+  settingsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 6,
+  },
+  settingsLinkText: {
+    fontSize: 13,
+    color: Colors.light.tint,
+    textDecorationLine: 'underline',
   },
 });

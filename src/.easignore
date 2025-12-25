@@ -2,6 +2,11 @@
 # Files and directories listed here will be excluded from EAS build uploads
 # This improves upload performance and build times
 
+# Heavy build artifacts (EAS will regenerate these)
+android/
+ios/
+node_modules/
+
 # Source repositories (desktop app reference code - not needed for mobile build)
 source-repos/
 
@@ -47,9 +52,6 @@ Thumbs.db
 
 # Test coverage
 coverage/
-
-# Build artifacts that will be regenerated
-src/node_modules/.cache/
 
 # Development builds
 *.apk

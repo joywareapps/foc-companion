@@ -146,21 +146,21 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
             - [ ] Toggle for Teleplot visualization (optional)
             - [ ] Toggle for notification logging (optional)
 
-### **4.6 CommandLoop Integration** (Priority 1 - CRITICAL)
+### **4.6 CommandLoop Integration** ✅ COMPLETED
 
-- [ ] **Update CommandLoop to Use Settings:**
-    - [ ] Inject settings dependency into `CommandLoop` class constructor
-    - [ ] Replace hardcoded values in `setupSignalParameters()`:
-        - [ ] Line 56-60: Use `deviceSettings.minFrequency` instead of hardcoded 700 Hz
-        - [ ] Line 62-66: Use `pulseSettings.pulseFrequency` instead of hardcoded 50 Hz
-        - [ ] Line 68-72: Use `pulseSettings.pulseWidth` instead of hardcoded 5 cycles
-        - [ ] Line 74-78: Use `pulseSettings.pulseRiseTime` instead of hardcoded 10 cycles
-    - [ ] Replace hardcoded amplitude in `tick()`:
-        - [ ] Line 120: Use `deviceSettings.waveformAmplitude` instead of hardcoded 0.01 A
-    - [ ] Add settings validation before starting pattern
-    - [ ] Handle settings changes (apply on next pattern start)
+- [x] **Update CommandLoop to Use Settings:**
+    - [x] Inject settings dependency into `CommandLoop` class (via `useDeviceStore.getState()`)
+    - [x] Replace hardcoded values in `setupSignalParameters()`:
+        - [x] Use `pulseSettings.carrierFrequency` instead of hardcoded 700 Hz
+        - [x] Use `pulseSettings.pulseFrequency` instead of hardcoded 50 Hz
+        - [x] Use `pulseSettings.pulseWidth` instead of hardcoded 5 cycles
+        - [x] Use `pulseSettings.pulseRiseTime` instead of hardcoded 10 cycles
+    - [x] Replace hardcoded amplitude in `tick()`:
+        - [x] Use `deviceSettings.waveformAmplitude` instead of hardcoded 0.01 A (now defaults to 0.120 A / 120 mA)
+    - [x] Add settings validation before starting pattern
+    - [x] Handle settings changes (apply on next pattern start - settings are read fresh on each start())
 
-- [ ] **Settings Hot Reload:**
+- [ ] **Settings Hot Reload (Future Enhancement):**
     - [ ] Detect when settings change while pattern is running
     - [ ] Option 1: Warn user to restart pattern for changes to take effect
     - [ ] Option 2: Apply amplitude changes immediately, require restart for frequency changes

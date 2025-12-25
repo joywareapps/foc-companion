@@ -176,3 +176,54 @@ Since your app involves hardware communication (**Serial/TCP**) and **Protobuf**
 1. Priority 1 (Critical): Settings infrastructure, Device Settings UI, CommandLoop integration
 2. Priority 2: Pulse Settings UI, FOC-Stim Preferences
 3. Priority 3: Advanced features (volume, funscript conversion)
+
+---
+
+## **Phase 4.6: CommandLoop Integration** ✅ COMPLETED (Dec 25, 2024)
+
+### **Overview**
+Replaced all hardcoded values in CommandLoop with user-configurable settings from deviceStore, enabling dynamic pattern configuration and fixing the amplitude issue (was 12x too low).
+
+### **Changes Made**
+
+**Modified: `src/core/CommandLoop.ts`**
+- Added imports: `useDeviceStore`, `validateAppSettings`
+- **Settings Validation**: Added pre-flight validation in `start()` method
+  - Validates all settings before starting pattern
+  - Throws error with detailed message if validation fails
+  - Logs settings being used for debugging
+- **Signal Parameter Setup** (`setupSignalParameters()`):
+  - Replaced hardcoded 700 Hz → `pulseSettings.carrierFrequency` (default: 700 Hz)
+  - Replaced hardcoded 50 Hz → `pulseSettings.pulseFrequency` (default: 50 Hz)
+  - Replaced hardcoded 5 cycles → `pulseSettings.pulseWidth` (default: 5 cycles)
+  - Replaced hardcoded 10 cycles → `pulseSettings.pulseRiseTime` (default: 10 cycles)
+  - Added comprehensive logging of configured parameters
+- **Amplitude Update** (`tick()` method):
+  - **CRITICAL FIX**: Replaced hardcoded 0.01 A (10 mA) → `deviceSettings.waveformAmplitude` (default: 0.120 A / 120 mA)
+  - This was the most critical change - previous amplitude was 12x too low
+  - Amplitude now dynamically reads from settings on every tick
+- **Settings Refresh**: Settings are read fresh from store on each `start()` call, allowing changes to take effect on next pattern start
+
+### **Key Benefits**
+1. **No More Hardcoded Values**: All signal parameters now configurable by user
+2. **Amplitude Fix**: Device now uses correct default amplitude (120 mA instead of 10 mA)
+3. **Dynamic Configuration**: Settings changes apply on next pattern start (no app restart needed)
+4. **Safety Validation**: Pre-flight checks ensure settings are valid before starting
+5. **Better Debugging**: Comprehensive logging of all signal parameters
+
+### **Technical Details**
+- Used `useDeviceStore.getState()` for non-React context (class-based)
+- Settings validated using `validateAppSettings()` before pattern start
+- Settings read in two places:
+  - `start()`: For validation and setup parameters
+  - `tick()`: For amplitude (allows future hot-reload of amplitude)
+- Errors throw with detailed validation messages for user feedback
+
+### **Testing Status**
+- ✅ TypeScript compilation successful
+- ⏳ Real device testing pending (user to test with actual FOC-Stim hardware)
+
+### **Files Modified**
+1. `src/core/CommandLoop.ts` - Complete integration of settings
+2. `TODO.md` - Marked Phase 4.6 as completed
+3. `DONE.md` - Added this completion entry

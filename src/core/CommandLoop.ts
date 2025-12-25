@@ -1,6 +1,8 @@
 import { CirclePattern } from './patterns';
 import { focStimApi } from './FocStimApiService';
 import { AxisType } from '../generated/protobuf/constants_pb';
+import { useDeviceStore } from '../store/deviceStore';
+import { validateAppSettings } from '../services/SettingsValidator';
 
 export class CommandLoop {
   private pattern = new CirclePattern(1.0, 2.0); // Amplitude=1.0 (full range), velocity=2.0 rad/s
@@ -15,7 +17,21 @@ export class CommandLoop {
   public async start() {
     if (this.isRunning) return;
 
-    console.log('[CommandLoop] Starting circle pattern with amplitude=1.0, velocity=2.0rad/s');
+    // Validate settings before starting
+    const { deviceSettings, pulseSettings, focstimSettings } = useDeviceStore.getState();
+    const validation = validateAppSettings({ device: deviceSettings, pulse: pulseSettings, focstim: focstimSettings });
+
+    if (!validation.valid) {
+      const errorMessage = `Invalid settings: ${validation.errors.join(', ')}`;
+      console.error('[CommandLoop] Validation failed:', errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    console.log('[CommandLoop] Starting circle pattern with settings:', {
+      amplitude: deviceSettings.waveformAmplitude,
+      carrierFreq: pulseSettings.carrierFrequency,
+      pulseFreq: pulseSettings.pulseFrequency
+    });
 
     try {
       // Initialize signal parameters before starting
@@ -42,6 +58,9 @@ export class CommandLoop {
     // Set up signal parameters as shown in protocol-example.txt (lines 26-86)
     // These must be configured before starting the signal
 
+    // Get current settings from store
+    const { deviceSettings, pulseSettings } = useDeviceStore.getState();
+
     // Initialize position axes to 0
     await focStimApi.sendRequest({
       case: 'requestAxisMoveTo',
@@ -53,31 +72,37 @@ export class CommandLoop {
       value: { axis: AxisType.AXIS_POSITION_BETA, value: 0, interval: 0 } as any
     });
 
-    // Set carrier frequency (700 Hz is default in desktop app)
+    // Set carrier frequency from pulse settings
     await focStimApi.sendRequest({
       case: 'requestAxisMoveTo',
-      value: { axis: AxisType.AXIS_CARRIER_FREQUENCY_HZ, value: 700, interval: 0 } as any
+      value: { axis: AxisType.AXIS_CARRIER_FREQUENCY_HZ, value: pulseSettings.carrierFrequency, interval: 0 } as any
     });
 
-    // Set pulse frequency (50 Hz)
+    // Set pulse frequency from pulse settings
     await focStimApi.sendRequest({
       case: 'requestAxisMoveTo',
-      value: { axis: AxisType.AXIS_PULSE_FREQUENCY_HZ, value: 50, interval: 0 } as any
+      value: { axis: AxisType.AXIS_PULSE_FREQUENCY_HZ, value: pulseSettings.pulseFrequency, interval: 0 } as any
     });
 
-    // Set pulse width (5 cycles)
+    // Set pulse width from pulse settings
     await focStimApi.sendRequest({
       case: 'requestAxisMoveTo',
-      value: { axis: AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, value: 5, interval: 0 } as any
+      value: { axis: AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, value: pulseSettings.pulseWidth, interval: 0 } as any
     });
 
-    // Set pulse rise time (10 cycles)
+    // Set pulse rise time from pulse settings
     await focStimApi.sendRequest({
       case: 'requestAxisMoveTo',
-      value: { axis: AxisType.AXIS_PULSE_RISE_TIME_CYCLES, value: 10, interval: 0 } as any
+      value: { axis: AxisType.AXIS_PULSE_RISE_TIME_CYCLES, value: pulseSettings.pulseRiseTime, interval: 0 } as any
     });
 
-    console.log('[CommandLoop] Signal parameters configured');
+    console.log('[CommandLoop] Signal parameters configured:', {
+      carrierFrequency: pulseSettings.carrierFrequency,
+      pulseFrequency: pulseSettings.pulseFrequency,
+      pulseWidth: pulseSettings.pulseWidth,
+      pulseRiseTime: pulseSettings.pulseRiseTime,
+      amplitude: deviceSettings.waveformAmplitude
+    });
   }
 
   public async stop() {
@@ -117,13 +142,16 @@ export class CommandLoop {
     // Send commands to device (interval in ms for device to interpolate to this value)
     const interval = 50;
 
+    // Get current amplitude from settings
+    const { deviceSettings } = useDeviceStore.getState();
+
     // Send position updates (as per threephase_algorithm.py)
     this.sendUpdate(AxisType.AXIS_POSITION_ALPHA, pos.x, interval);
     this.sendUpdate(AxisType.AXIS_POSITION_BETA, pos.y, interval);
 
     // Send amplitude update (required for threephase mode)
-    // Default amplitude: 0.01 amps (conservative safe value)
-    this.sendUpdate(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, 0.01, interval);
+    // Use amplitude from device settings (default: 0.120 amps / 120 mA)
+    this.sendUpdate(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, deviceSettings.waveformAmplitude, interval);
   }
 
   private async sendUpdate(axis: AxisType, value: number, interval: number) {

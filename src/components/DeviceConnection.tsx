@@ -32,25 +32,22 @@ export default function DeviceConnection() {
     <View style={styles.container}>
       {/* Status Display */}
       <View style={styles.statusRow}>
-        {isConnecting 
+        {isConnecting
           ? <ActivityIndicator color={Colors.light.tint} />
           : <FontAwesome name={isConnected ? 'wifi' : 'warning'} size={20} color={isConnected ? Colors.light.tint : Colors.dark.tabIconDefault} />
         }
-        <Text style={styles.statusText}>{isConnected ? `Connected to ${ipAddress}` : 'Disconnected'}</Text>
+        <Text style={styles.statusText}>
+          {isConnected
+            ? `Connected to ${ipAddress}`
+            : ipAddress
+              ? `Disconnected (${ipAddress})`
+              : 'Disconnected - No IP configured'
+          }
+        </Text>
       </View>
 
       {/* Error Message */}
       {error && <Text style={styles.errorText}>{error}</Text>}
-
-      {/* IP Address Display (when not connected) */}
-      {!isConnected && (
-        <Text style={styles.ipText}>
-          IP: {ipAddress || 'Not configured'}
-          {!ipAddress && (
-            <Text style={styles.settingsHint}> (Set in Settings tab)</Text>
-          )}
-        </Text>
-      )}
 
       {/* Connect/Disconnect Button */}
       <Pressable

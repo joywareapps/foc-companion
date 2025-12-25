@@ -1,0 +1,16 @@
+# Gemini Ignore File
+# Patterns listed here will be excluded from Gemini's context
+# Use ! prefix to negate/allow access (override other ignore patterns)
+
+# Allow access to source-repos for analysis (override .gitignore)
+!source-repos/
+
+# Standard ignores
+node_modules/
+.expo/
+.expo-shared/
+dist/
+build/
+*.log
+.DS_Store
+*.map

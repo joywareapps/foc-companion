@@ -7,6 +7,10 @@ import {
   type Response,
   type Notification
 } from '../generated/protobuf/focstim_rpc_pb';
+import {
+  RequestSignalStartSchema,
+  RequestSignalStopSchema
+} from '../generated/protobuf/messages_pb';
 import { OutputMode } from '../generated/protobuf/constants_pb';
 import { create, toBinary, fromBinary } from '@bufbuild/protobuf';
 
@@ -130,7 +134,7 @@ export class FocStimApiService {
     console.log(`[FocStimApi] Starting signal output with mode=${mode}`);
     await this.sendRequest({
       case: 'requestSignalStart',
-      value: { mode }
+      value: create(RequestSignalStartSchema, { mode })
     });
   }
 
@@ -138,7 +142,7 @@ export class FocStimApiService {
     console.log('[FocStimApi] Stopping signal output');
     await this.sendRequest({
       case: 'requestSignalStop',
-      value: {}
+      value: create(RequestSignalStopSchema, {})
     });
   }
 }

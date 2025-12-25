@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { useDeviceStore } from '@/store/deviceStore';
 
 console.log('--- JS BUNDLE STARTING ---');
 
@@ -30,6 +31,8 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
+  const loadSettings = useDeviceStore((state) => state.loadSettings);
+
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) {
@@ -37,6 +40,11 @@ export default function RootLayout() {
       throw error;
     }
   }, [error]);
+
+  // Load settings on app start
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   useEffect(() => {
     if (loaded) {

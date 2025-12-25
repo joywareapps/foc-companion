@@ -91,3 +91,88 @@ Since your app involves hardware communication (**Serial/TCP**) and **Protobuf**
   * [x] Circle pattern execution verified
   * [x] Device status notifications received and displayed
   * [x] Start/Stop signal control working correctly
+
+---
+
+# 💡 Device Settings Discovery & Documentation (COMPLETED ✅ 2025-12-25)
+
+## **Phase 4.1: Desktop App Settings Analysis**
+
+* [x] **Settings Structure Analysis:**
+  * [x] Analyzed Device Selection settings (Setup → Device Selection)
+  * [x] Analyzed Preferences dialog structure (Setup → Preferences)
+  * [x] Analyzed 10 desktop source files for settings implementation
+
+* [x] **Settings Identification:**
+  * [x] Device Configuration settings (min/max carrier frequency, waveform amplitude)
+  * [x] Pulse settings (carrier freq, pulse freq/width/rise time, interval random)
+  * [x] FOC-Stim connection settings (WiFi IP, SSID, password)
+  * [x] Identified 12 vibration settings to EXCLUDE (not applicable to FOC-Stim)
+
+* [x] **Validation & Limits Documentation:**
+  * [x] Documented ranges from `stim_math/limits.py`:
+    * [x] Carrier Frequency: 500-2000 Hz (FOC-Stim)
+    * [x] Waveform Amplitude: 0.01-0.15 A (10-150 mA)
+    * [x] Pulse Frequency: 1-300 Hz
+    * [x] Pulse Width: 3-100 cycles
+    * [x] Pulse Rise Time: 2-100 cycles
+  * [x] Duty cycle validation formula: `(pulseFreq * pulseWidth) / carrierFreq`
+
+* [x] **Current Mobile Implementation Gaps:**
+  * [x] Identified 6 hardcoded values in CommandLoop.ts requiring replacement:
+    * [x] Line 59: Carrier frequency (700 Hz → user-configurable)
+    * [x] Line 65: Pulse frequency (50 Hz → user-configurable)
+    * [x] Line 71: Pulse width (5 cycles → user-configurable)
+    * [x] Line 77: Pulse rise time (10 cycles → user-configurable)
+    * [x] Line 120: Amplitude (0.01 A → 0.120 A default, user-configurable)
+  * [x] Critical finding: Current amplitude 10 mA vs desktop default 120 mA (12x lower)
+
+## **Deliverables Created**
+
+* [x] **Comprehensive Settings Specification** (`documents/functional_spec/device-settings-spec.md`):
+  * [x] 11 detailed sections covering all implementation aspects
+  * [x] Complete settings inventory with defaults and valid ranges
+  * [x] TypeScript interface definitions for all settings structures
+  * [x] Validation rules with code examples
+  * [x] UI/UX design recommendations
+  * [x] Testing requirements and success criteria
+
+* [x] **Analysis Summary** (`documents/functional_spec/device-settings-analysis-summary.md`):
+  * [x] Executive summary of findings
+  * [x] Settings breakdown by priority (Priority 1-3)
+  * [x] Current mobile implementation gaps identified
+  * [x] Risk assessment (high/medium/low)
+  * [x] Implementation phases with clear next steps
+
+* [x] **Task Breakdown** (TODO.md Phase 4):
+  * [x] 8 subsections with detailed implementation tasks
+  * [x] Priority levels assigned (Priority 1 = Critical)
+  * [x] Clear separation: Infrastructure → UI → Integration → Testing
+
+## **Desktop Files Analyzed**
+
+* [x] `qt_ui/preferences_dialog.py` - Main preferences dialog with all tabs
+* [x] `qt_ui/carrier_settings_widget.py` - Carrier frequency with safety limits
+* [x] `qt_ui/pulse_settings_widget.py` - Pulse settings with duty cycle validation
+* [x] `qt_ui/vibration_settings_widget.py` - Vibration settings (excluded)
+* [x] `qt_ui/three_phase_settings_widget.py` - Threephase calibration
+* [x] `qt_ui/tcode_command_router.py` - T-Code routing
+* [x] `qt_ui/settings.py` - All settings definitions with defaults
+* [x] `qt_ui/device_wizard/enums.py` - Device configuration enums
+* [x] `qt_ui/device_wizard/safety_limits_foc.py` - FOC-Stim safety limits
+* [x] `stim_math/limits.py` - Validation limits and ranges
+
+## **Key Findings Summary**
+
+**Settings to Implement (12 total):**
+- Device Settings: min/max freq (500/1500 Hz), amplitude (120 mA)
+- Pulse Settings: carrier freq, pulse freq, width, rise time, interval random
+- FOC-Stim Settings: WiFi IP, SSID, password
+
+**Settings Excluded (12 total):**
+- All vibration settings (vibration_1_* and vibration_2_*) - not applicable to FOC-Stim
+
+**Implementation Priority:**
+1. Priority 1 (Critical): Settings infrastructure, Device Settings UI, CommandLoop integration
+2. Priority 2: Pulse Settings UI, FOC-Stim Preferences
+3. Priority 3: Advanced features (volume, funscript conversion)

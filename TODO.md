@@ -49,7 +49,159 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
     - [x] Display device status metrics (temperature, battery voltage/charge, pulse frequency, power source).
     - [x] Optimize UI layout with ScrollView for compact display and full accessibility.
 
-## **📋 Phase 4: Serial/USB Communication (Lower Priority)**
+## **📋 Phase 4: Device Settings Implementation**
+
+### **4.1 Discovery & Documentation** ✅ COMPLETED
+
+- [x] **Desktop App Settings Analysis:**
+    - [x] Analyze Device Selection settings structure (Setup → Device Selection)
+    - [x] Analyze Preferences dialog structure (Setup → Preferences)
+    - [x] Identify FOC-Stim specific settings (carrier frequency min/max, waveform amplitude)
+    - [x] Identify Funscript/T-Code settings (pulse parameters, volume settings)
+    - [x] Identify vibration-related settings to EXCLUDE
+    - [x] Document valid ranges and default values from `stim_math/limits.py`
+    - [x] Create comprehensive specification document: `documents/functional_spec/device-settings-spec.md`
+
+### **4.2 Settings Infrastructure** (Priority 1)
+
+- [ ] **Settings Service:**
+    - [ ] Create TypeScript interfaces for settings structures:
+        - [ ] `DeviceSettings` interface (device type, waveform type, min/max freq, amplitude)
+        - [ ] `PulseSettings` interface (carrier freq, pulse freq, pulse width, rise time, interval random)
+        - [ ] `FocStimSettings` interface (WiFi IP, SSID, password, communication mode)
+        - [ ] `AppSettings` interface (combines all settings)
+    - [ ] Implement AsyncStorage persistence layer:
+        - [ ] `SettingsService.ts` with load/save methods
+        - [ ] Storage keys: `@foccompanion/device_settings`, `@foccompanion/pulse_settings`, etc.
+        - [ ] Default values matching desktop app (min_freq: 500Hz, max_freq: 1500Hz, amplitude: 0.120A)
+    - [ ] Create settings validation utilities:
+        - [ ] Min/max frequency validation (500-2000 Hz range, min < max)
+        - [ ] Waveform amplitude validation (0.01-0.15 A range)
+        - [ ] Pulse parameter validation (frequency: 1-300Hz, width: 3-100 cycles, rise: 2-100 cycles)
+        - [ ] Duty cycle calculation and warning logic
+
+- [ ] **State Management Integration:**
+    - [ ] Extend `deviceStore.ts` with settings state:
+        - [ ] Add `deviceSettings`, `pulseSettings`, `focstimSettings` state
+        - [ ] Add `loadSettings()` action (load from AsyncStorage on app start)
+        - [ ] Add `saveDeviceSettings()`, `savePulseSettings()` actions
+        - [ ] Add `resetToDefaults()` action
+    - [ ] Initialize settings on app start in store creation
+
+### **4.3 Device Settings UI** (Priority 1)
+
+- [ ] **Device Settings Screen:**
+    - [ ] Create new screen: `src/app/(tabs)/device-settings.tsx`
+    - [ ] Add tab bar icon and navigation
+    - [ ] Implement UI sections:
+        - [ ] **Safety Limits Section:**
+            - [ ] Min Carrier Frequency slider (500-2000 Hz, default: 500 Hz, step: 10 Hz)
+            - [ ] Max Carrier Frequency slider (500-2000 Hz, default: 1500 Hz, step: 10 Hz)
+            - [ ] Validation: display error if min >= max
+            - [ ] Waveform Amplitude slider (10-150 mA, default: 120 mA, step: 1 mA)
+            - [ ] Display current values with units (Hz, mA)
+        - [ ] **Device Type Section:**
+            - [ ] Display current device type (FOC-Stim V3 / 3-Phase)
+            - [ ] Waveform type selector (Continuous / Pulse-Based)
+        - [ ] **Actions:**
+            - [ ] "Reset to Defaults" button
+            - [ ] "Save Settings" button
+            - [ ] Real-time validation with error messages
+    - [ ] Add ScrollView for accessibility
+    - [ ] Implement haptic feedback for slider adjustments
+
+### **4.4 Pulse Settings UI** (Priority 2)
+
+- [ ] **Pulse Settings Tab in Preferences:**
+    - [ ] Create `src/components/PulseSettingsPanel.tsx` component
+    - [ ] Implement UI controls:
+        - [ ] **Carrier Settings:**
+            - [ ] Pulse Carrier Frequency (readonly display from device settings)
+            - [ ] Carrier frequency range display (min-max from device settings)
+        - [ ] **Pulse Parameters:**
+            - [ ] Pulse Frequency slider (1-300 Hz, default: 50 Hz, step: 1 Hz)
+            - [ ] Pulse Width slider (3-100 cycles, default: 5 cycles, step: 1)
+            - [ ] Pulse Rise Time slider (2-100 cycles, default: 10 cycles, step: 1)
+            - [ ] Pulse Interval Random slider (0-100%, default: 10%, step: 1%)
+        - [ ] **Duty Cycle Display:**
+            - [ ] Calculate duty cycle: `(pulseFreq * pulseWidth) / carrierFreq`
+            - [ ] Display percentage with warning icon if > 100%
+            - [ ] Show warning message: "Duty cycle exceeds 100% - reduce pulse width or frequency"
+    - [ ] Add tooltips/help text for each parameter
+    - [ ] Save button with validation
+
+### **4.5 FOC-Stim Preferences UI** (Priority 2)
+
+- [ ] **Enhance Existing Settings Screen:**
+    - [ ] Refactor `src/app/(tabs)/settings.tsx` to organize settings
+    - [ ] Add sections:
+        - [ ] **WiFi Configuration:**
+            - [ ] IP Address input (existing)
+            - [ ] SSID input (future feature - placeholder)
+            - [ ] Password input (future feature - placeholder)
+            - [ ] Communication mode toggle: Serial/WiFi (WiFi default for mobile)
+        - [ ] **Network Tab:**
+            - [ ] Placeholder message: "Serial/USB support coming soon"
+        - [ ] **Debugging (Developer Mode):**
+            - [ ] Toggle for Teleplot visualization (optional)
+            - [ ] Toggle for notification logging (optional)
+
+### **4.6 CommandLoop Integration** (Priority 1 - CRITICAL)
+
+- [ ] **Update CommandLoop to Use Settings:**
+    - [ ] Inject settings dependency into `CommandLoop` class constructor
+    - [ ] Replace hardcoded values in `setupSignalParameters()`:
+        - [ ] Line 56-60: Use `deviceSettings.minFrequency` instead of hardcoded 700 Hz
+        - [ ] Line 62-66: Use `pulseSettings.pulseFrequency` instead of hardcoded 50 Hz
+        - [ ] Line 68-72: Use `pulseSettings.pulseWidth` instead of hardcoded 5 cycles
+        - [ ] Line 74-78: Use `pulseSettings.pulseRiseTime` instead of hardcoded 10 cycles
+    - [ ] Replace hardcoded amplitude in `tick()`:
+        - [ ] Line 120: Use `deviceSettings.waveformAmplitude` instead of hardcoded 0.01 A
+    - [ ] Add settings validation before starting pattern
+    - [ ] Handle settings changes (apply on next pattern start)
+
+- [ ] **Settings Hot Reload:**
+    - [ ] Detect when settings change while pattern is running
+    - [ ] Option 1: Warn user to restart pattern for changes to take effect
+    - [ ] Option 2: Apply amplitude changes immediately, require restart for frequency changes
+
+### **4.7 Testing & Validation** (Priority 1)
+
+- [ ] **Unit Tests:**
+    - [ ] Test SettingsService load/save operations
+    - [ ] Test validation functions (frequency ranges, amplitude limits, duty cycle)
+    - [ ] Test default value initialization
+    - [ ] Test settings state management in deviceStore
+
+- [ ] **Integration Tests:**
+    - [ ] Test settings persistence across app restarts
+    - [ ] Test CommandLoop uses configured settings (not hardcoded values)
+    - [ ] Test settings validation in UI (error messages, disabled save button)
+    - [ ] Test reset to defaults functionality
+
+- [ ] **Real Device Testing:**
+    - [ ] Test with various min/max frequency settings (500-1500Hz, 700-1200Hz, etc.)
+    - [ ] Test with various amplitude settings (10mA, 50mA, 120mA)
+    - [ ] Test with various pulse parameter combinations
+    - [ ] Verify duty cycle warning appears correctly
+    - [ ] Verify pattern behavior changes with different settings
+    - [ ] Test safety: ensure device respects configured limits
+
+### **4.8 Documentation Updates**
+
+- [ ] **Update User Documentation:**
+    - [ ] Add settings guide to README.md
+    - [ ] Document default values and safe ranges
+    - [ ] Add troubleshooting for settings issues
+
+- [ ] **Update DONE.md:**
+    - [ ] Document completed settings implementation
+    - [ ] List all implemented settings and their defaults
+    - [ ] Document testing results with real device
+
+---
+
+## **📋 Phase 5: Serial/USB Communication (Lower Priority)**
 
 - [ ] **Serial Library Integration:**
     - [ ] Add `react-native-serial-transport` or `@fugood/react-native-usb-serialport` dependency.

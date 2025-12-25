@@ -41,7 +41,7 @@ Since your app involves hardware communication (**Serial/TCP**) and **Protobuf**
 * [x] **Project Initialization:** Latest React Native + Expo + New Architecture.
 * [x] **Protobuf Integration:** `buf` build process + TypeScript modules.
 * [x] **Core Logic Porting:** `stim_math` + `CirclePattern` ported to TypeScript.
-* [x] **TCP/Serial Layer:** `react-native-tcp-socket` + `react-native-serial-transport` + HDLC framing.
+* [x] **TCP Layer:** `react-native-tcp-socket` + HDLC framing (untested on real device).
 * [x] **Protocol API:** `FocStimApiService` for Protobuf-based communication.
 * [x] **State Management:** Zustand store for connection and pattern control.
 * [x] **Command Loop:** `react-native-worklets` high-priority 60Hz loop.

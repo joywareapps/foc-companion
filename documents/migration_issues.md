@@ -3,7 +3,7 @@
 ## 1. Dependency & Version Mismatches
 *   **React Native Version**: Guidelines specify **0.83** (Stable, Dec 2025). Current: `0.81.5`.
 *   **React Version**: Guidelines specify **19.2.x**. Current: `19.1.0`.
-*   **Missing Serial Support**: `DONE.md` and `TODO.md` mark Serial implementation as complete, but `react-native-serial-transport` is missing from `package.json` and there is no serial logic in `src/core/`.
+*   **~~Missing Serial Support~~**: ✅ FIXED - Moved to TODO.md Phase 4 (lower priority). TCP is implemented, Serial/USB is planned but not started.
 *   **Worklets Library**: Guidelines mention `react-native-worklets-core` (likely for Reanimated 4 integration). Current: `react-native-worklets`.
 
 ## 2. Technical Implementation Issues
@@ -15,5 +15,5 @@
 *   **HDLC implementation**: Uses CommonJS `require` for `js-crc` in a TypeScript environment, which is inconsistent with the rest of the ES module-based codebase.
 
 ## 3. Discrepancies in Project Status
-*   **Incomplete MVP**: Despite being marked as COMPLETED in `DONE.md`, the "Serial/USB Layer" is entirely absent from the code.
+*   **~~Incomplete MVP~~**: ✅ FIXED - Documentation now accurate. TCP layer complete (untested), Serial/USB moved to Phase 4 as lower priority.
 *   **Telemetry/Notifications**: `FocStimApiService` identifies notifications but `deviceStore.ts` does not yet subscribe to or utilize them for UI feedback (e.g., current/power metrics).

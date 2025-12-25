@@ -23,12 +23,13 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
 - [x] **TCP Communication Layer:**
     - [x] Implement a TCP socket service using a library like `react-native-tcp-socket`.
     - [x] Implement the HDLC framing/deframing logic in TypeScript to wrap/unwrap Protobuf messages.
+    - [ ] **Test TCP connection on real device** (currently untested).
 - [x] **Protocol API:**
     - [x] Create a `FocStimApiService` that uses the TCP service and generated Protobuf modules to send commands and handle responses.
 - [x] **State Management:**
     - [x] Integrate a state management library (e.g., Zustand) to manage application state, including connection status, device IP, and errors.
 - [x] **High-Frequency Command Loop:**
-    - [x] Set up `react-native-worklets-core`.
+    - [x] Set up `react-native-worklets` (Note: using `react-native-worklets`, not `react-native-worklets-core` as per guidelines).
     - [x] Implement the main command loop on a Worklet to run the "circle" pattern logic and send commands via the `FocStimApiService` at a consistent rate.
 
 ## **📋 Phase 3: User Interface**
@@ -40,3 +41,25 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
     - [x] Display the current connection status (e.g., "Disconnected", "Connecting...", "Connected").
     - [x] Add a "Start/Stop Pattern" button to control the command loop.
     - [ ] (Optional) Display basic output metrics if available from the command loop or device responses.
+
+## **📋 Phase 4: Serial/USB Communication (Lower Priority)**
+
+- [ ] **Serial Library Integration:**
+    - [ ] Add `react-native-serial-transport` or `@fugood/react-native-usb-serialport` dependency.
+    - [ ] Research library compatibility with Expo managed workflow and New Architecture.
+- [ ] **USB Permissions Configuration:**
+    - [ ] Add `android.permission.USB_PERMISSION` via Expo Config Plugin.
+    - [ ] Add `android.hardware.usb.host` feature declaration.
+    - [ ] Implement runtime permission handling for USB access.
+- [ ] **Serial Transport Abstraction:**
+    - [ ] Create `SerialTransport` class mirroring TCP interface.
+    - [ ] Reuse existing HDLC framing/deframing logic.
+    - [ ] Share Protobuf encoding/decoding with TCP implementation.
+- [ ] **Unified API Service:**
+    - [ ] Extend `FocStimApiService` to support both TCP and Serial transports.
+    - [ ] Add transport selection in UI (TCP vs USB).
+    - [ ] Implement device detection for USB-connected FOC-Stim devices.
+- [ ] **Testing & Validation:**
+    - [ ] Test Serial communication with real FOC-Stim device via USB.
+    - [ ] Verify protocol compatibility across both transports.
+    - [ ] Validate permission handling and error scenarios.

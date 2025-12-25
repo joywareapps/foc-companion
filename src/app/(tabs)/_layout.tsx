@@ -42,6 +42,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="pulse-settings"
+        options={{
+          title: 'Pulse',
+          tabBarIcon: ({ color }) => <TabBarIcon name="bolt" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="media"
         options={{
           title: 'Media Sync',

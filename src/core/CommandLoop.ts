@@ -96,11 +96,19 @@ export class CommandLoop {
       value: { axis: AxisType.AXIS_PULSE_RISE_TIME_CYCLES, value: pulseSettings.pulseRiseTime, interval: 0 } as any
     });
 
+    // Set pulse interval randomization from pulse settings
+    // Protocol uses 0.0-1.0 range, UI uses 0-100% range
+    await focStimApi.sendRequest({
+      case: 'requestAxisMoveTo',
+      value: { axis: AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT, value: pulseSettings.pulseIntervalRandom / 100, interval: 0 } as any
+    });
+
     console.log('[CommandLoop] Signal parameters configured:', {
       carrierFrequency: pulseSettings.carrierFrequency,
       pulseFrequency: pulseSettings.pulseFrequency,
       pulseWidth: pulseSettings.pulseWidth,
       pulseRiseTime: pulseSettings.pulseRiseTime,
+      pulseIntervalRandom: pulseSettings.pulseIntervalRandom / 100,
       amplitude: deviceSettings.waveformAmplitude
     });
   }

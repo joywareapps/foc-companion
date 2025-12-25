@@ -4,7 +4,7 @@ import Slider from '@react-native-community/slider';
 import { View, Text } from '@/components/Themed';
 import { useDeviceStore } from '@/store/deviceStore';
 import { validateDeviceSettings, ampsToMilliamps, milliampsToAmps } from '@/services/SettingsValidator';
-import { SettingsLimits, WaveformType } from '@/types/settings';
+import { SettingsLimits } from '@/types/settings';
 import type { DeviceSettings } from '@/types/settings';
 
 export default function DeviceSettingsScreen() {
@@ -16,7 +16,6 @@ export default function DeviceSettingsScreen() {
   const [amplitudeMilliamps, setAmplitudeMilliamps] = useState(
     ampsToMilliamps(deviceSettings.waveformAmplitude)
   );
-  const [waveformType, setWaveformType] = useState(deviceSettings.waveformType);
   const [hasChanges, setHasChanges] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -25,7 +24,6 @@ export default function DeviceSettingsScreen() {
     setMinFrequency(deviceSettings.minFrequency);
     setMaxFrequency(deviceSettings.maxFrequency);
     setAmplitudeMilliamps(ampsToMilliamps(deviceSettings.waveformAmplitude));
-    setWaveformType(deviceSettings.waveformType);
     setHasChanges(false);
   }, [deviceSettings]);
 
@@ -36,7 +34,6 @@ export default function DeviceSettingsScreen() {
       minFrequency,
       maxFrequency,
       waveformAmplitude: milliampsToAmps(amplitudeMilliamps),
-      waveformType,
     };
 
     const validation = validateDeviceSettings(testSettings);
@@ -46,11 +43,10 @@ export default function DeviceSettingsScreen() {
     const changed =
       minFrequency !== deviceSettings.minFrequency ||
       maxFrequency !== deviceSettings.maxFrequency ||
-      amplitudeMilliamps !== ampsToMilliamps(deviceSettings.waveformAmplitude) ||
-      waveformType !== deviceSettings.waveformType;
+      amplitudeMilliamps !== ampsToMilliamps(deviceSettings.waveformAmplitude);
 
     setHasChanges(changed);
-  }, [minFrequency, maxFrequency, amplitudeMilliamps, waveformType, deviceSettings]);
+  }, [minFrequency, maxFrequency, amplitudeMilliamps, deviceSettings]);
 
   const handleSave = async () => {
     if (validationErrors.length > 0) {
@@ -63,7 +59,6 @@ export default function DeviceSettingsScreen() {
       minFrequency,
       maxFrequency,
       waveformAmplitude: milliampsToAmps(amplitudeMilliamps),
-      waveformType,
     };
 
     try {
@@ -185,40 +180,10 @@ export default function DeviceSettingsScreen() {
           <Text style={styles.infoValue}>FOC-Stim V3 / 3-Phase</Text>
         </View>
 
-        {/* Waveform Type Selector */}
-        <View style={styles.settingContainer}>
-          <Text style={styles.settingLabel}>Waveform Type</Text>
-          <View style={styles.buttonGroup}>
-            <Pressable
-              style={[
-                styles.typeButton,
-                waveformType === WaveformType.CONTINUOUS && styles.typeButtonActive,
-              ]}
-              onPress={() => setWaveformType(WaveformType.CONTINUOUS)}>
-              <Text
-                style={[
-                  styles.typeButtonText,
-                  waveformType === WaveformType.CONTINUOUS && styles.typeButtonTextActive,
-                ]}>
-                Continuous
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.typeButton,
-                waveformType === WaveformType.PULSE_BASED && styles.typeButtonActive,
-              ]}
-              onPress={() => setWaveformType(WaveformType.PULSE_BASED)}>
-              <Text
-                style={[
-                  styles.typeButtonText,
-                  waveformType === WaveformType.PULSE_BASED && styles.typeButtonTextActive,
-                ]}>
-                Pulse-Based
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+        <Text style={styles.infoNote}>
+          Note: FOC-Stim devices use electromagnetic field patterns controlled by pulse parameters.
+          All pulse settings are configured in the Pulse Settings screen.
+        </Text>
       </View>
 
       {/* Validation Errors */}
@@ -338,6 +303,13 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  infoNote: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 10,
+    lineHeight: 18,
   },
   buttonGroup: {
     flexDirection: 'row',

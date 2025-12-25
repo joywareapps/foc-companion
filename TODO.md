@@ -121,9 +121,9 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
             - [x] Carrier Frequency slider (editable, respects device min-max from Device Settings)
             - [x] Dynamic range display based on device safety limits
         - [x] **Pulse Parameters:**
-            - [x] Pulse Frequency slider (1-300 Hz, default: 50 Hz, step: 1 Hz)
-            - [x] Pulse Width slider (3-100 cycles, default: 5 cycles, step: 1)
-            - [x] Pulse Rise Time slider (2-100 cycles, default: 10 cycles, step: 1)
+            - [x] Pulse Frequency slider (1-100 Hz, default: 50 Hz, step: 1 Hz)
+            - [x] Pulse Width slider (3-15 cycles, default: 5 cycles, step: 1)
+            - [x] Pulse Rise Time slider (2-5 cycles, default: 3 cycles, step: 1)
             - [x] Pulse Interval Random slider (0-100%, default: 10%, step: 1%)
         - [x] **Duty Cycle Display:**
             - [x] Real-time calculation: `(pulseFreq * pulseWidth) / carrierFreq`

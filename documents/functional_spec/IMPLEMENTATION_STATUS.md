@@ -163,9 +163,9 @@ interface FocStimSettings {
 SettingsLimits = {
   CarrierFrequency: { min: 500, max: 2000 },      // Hz
   WaveformAmplitude: { min: 0.01, max: 0.15 },    // Amps (10-150 mA)
-  PulseFrequency: { min: 1, max: 300 },           // Hz
-  PulseWidth: { min: 3, max: 100 },               // cycles
-  PulseRiseTime: { min: 2, max: 100 },            // cycles
+  PulseFrequency: { min: 1, max: 100 },           // Hz - FOC-Stim hardware limit
+  PulseWidth: { min: 3, max: 15 },                // cycles - FOC-Stim hardware limit
+  PulseRiseTime: { min: 2, max: 5 },              // cycles - FOC-Stim hardware limit
   PulseIntervalRandom: { min: 0, max: 100 },      // %
 }
 ```

@@ -68,7 +68,8 @@ export interface AppSettings {
 }
 
 /**
- * Validation limits from desktop app (stim_math/limits.py)
+ * Validation limits for FOC-Stim hardware
+ * Updated based on actual device capabilities
  */
 export const SettingsLimits = {
   CarrierFrequency: {
@@ -81,15 +82,15 @@ export const SettingsLimits = {
   },
   PulseFrequency: {
     min: 1,     // Hz
-    max: 300,   // Hz
+    max: 100,   // Hz - FOC-Stim hardware limit
   },
   PulseWidth: {
     min: 3,     // cycles
-    max: 100,   // cycles
+    max: 15,    // cycles - FOC-Stim hardware limit
   },
   PulseRiseTime: {
     min: 2,     // cycles
-    max: 100,   // cycles
+    max: 5,     // cycles - FOC-Stim hardware limit
   },
   PulseIntervalRandom: {
     min: 0,     // %
@@ -112,7 +113,7 @@ export const DefaultSettings: AppSettings = {
     carrierFrequency: 700,  // Hz (within min-max range)
     pulseFrequency: 50,     // Hz
     pulseWidth: 5,          // cycles
-    pulseRiseTime: 10,      // cycles
+    pulseRiseTime: 3,       // cycles (within 2-5 range)
     pulseIntervalRandom: 10, // %
   },
   focstim: {

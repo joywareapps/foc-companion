@@ -87,7 +87,7 @@ export default function PulseSettingsScreen() {
         'Carrier Frequency: 700 Hz\n' +
         'Pulse Frequency: 50 Hz\n' +
         'Pulse Width: 5 cycles\n' +
-        'Pulse Rise Time: 10 cycles\n' +
+        'Pulse Rise Time: 3 cycles\n' +
         'Pulse Interval Random: 10%',
       [
         { text: 'Cancel', style: 'cancel' },

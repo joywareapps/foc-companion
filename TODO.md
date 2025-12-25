@@ -111,25 +111,32 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
     - [x] Add ScrollView for accessibility
     - [x] Implement haptic feedback for slider adjustments
 
-### **4.4 Pulse Settings UI** (Priority 2)
+### **4.4 Pulse Settings UI** ✅ COMPLETED
 
-- [ ] **Pulse Settings Tab in Preferences:**
-    - [ ] Create `src/components/PulseSettingsPanel.tsx` component
-    - [ ] Implement UI controls:
-        - [ ] **Carrier Settings:**
-            - [ ] Pulse Carrier Frequency (readonly display from device settings)
-            - [ ] Carrier frequency range display (min-max from device settings)
-        - [ ] **Pulse Parameters:**
-            - [ ] Pulse Frequency slider (1-300 Hz, default: 50 Hz, step: 1 Hz)
-            - [ ] Pulse Width slider (3-100 cycles, default: 5 cycles, step: 1)
-            - [ ] Pulse Rise Time slider (2-100 cycles, default: 10 cycles, step: 1)
-            - [ ] Pulse Interval Random slider (0-100%, default: 10%, step: 1%)
-        - [ ] **Duty Cycle Display:**
-            - [ ] Calculate duty cycle: `(pulseFreq * pulseWidth) / carrierFreq`
-            - [ ] Display percentage with warning icon if > 100%
-            - [ ] Show warning message: "Duty cycle exceeds 100% - reduce pulse width or frequency"
-    - [ ] Add tooltips/help text for each parameter
-    - [ ] Save button with validation
+- [x] **Pulse Settings Screen:**
+    - [x] Create `src/app/(tabs)/pulse-settings.tsx` tab screen
+    - [x] Add "Pulse" tab with bolt icon in navigation
+    - [x] Implement UI controls:
+        - [x] **Carrier Settings:**
+            - [x] Carrier Frequency slider (editable, respects device min-max from Device Settings)
+            - [x] Dynamic range display based on device safety limits
+        - [x] **Pulse Parameters:**
+            - [x] Pulse Frequency slider (1-300 Hz, default: 50 Hz, step: 1 Hz)
+            - [x] Pulse Width slider (3-100 cycles, default: 5 cycles, step: 1)
+            - [x] Pulse Rise Time slider (2-100 cycles, default: 10 cycles, step: 1)
+            - [x] Pulse Interval Random slider (0-100%, default: 10%, step: 1%)
+        - [x] **Duty Cycle Display:**
+            - [x] Real-time calculation: `(pulseFreq * pulseWidth) / carrierFreq`
+            - [x] Display percentage with color (green normal, red > 100%)
+            - [x] Warning box with icon when > 100%
+            - [x] Helpful message: "Duty cycle exceeds 100%! Reduce pulse width or frequency"
+    - [x] Help text for each parameter explaining functionality
+    - [x] Save/Reset buttons with validation
+    - [x] Color-coded sliders for visual distinction
+    - [x] ScrollView for accessibility
+    - [x] **CommandLoop Integration:**
+        - [x] Added AXIS_PULSE_INTERVAL_RANDOM_PERCENT to initialization
+        - [x] All 5 pulse parameters now sent to device before signal start
 
 ### **4.5 FOC-Stim Preferences UI** (Priority 2)
 

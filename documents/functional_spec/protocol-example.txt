@@ -1,0 +1,569 @@
+Request/responses logged in restim, each request is logged with prefix "request: " and each response is logged with prefix "response: "
+
+There might be messages without any prefix (i.e. "signal generation started!") - those are standard restim log output.
+
+request: request {
+  id: 3612
+  request_axis_move_to {
+    axis: AXIS_POSITION_ALPHA
+  }
+}
+
+request: request {
+  id: 3613
+  request_axis_move_to {
+    axis: AXIS_POSITION_BETA
+  }
+}
+
+request: request {
+  id: 3614
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+  }
+}
+
+request: request {
+  id: 3615
+  request_axis_move_to {
+    axis: AXIS_CARRIER_FREQUENCY_HZ
+    value: 700
+  }
+}
+
+request: request {
+  id: 3616
+  request_axis_move_to {
+    axis: AXIS_PULSE_FREQUENCY_HZ
+    value: 50
+  }
+}
+
+request: request {
+  id: 3617
+  request_axis_move_to {
+    axis: AXIS_PULSE_WIDTH_IN_CYCLES
+    value: 5
+  }
+}
+
+request: request {
+  id: 3618
+  request_axis_move_to {
+    axis: AXIS_PULSE_RISE_TIME_CYCLES
+    value: 10
+  }
+}
+
+request: request {
+  id: 3619
+  request_axis_move_to {
+    axis: AXIS_PULSE_INTERVAL_RANDOM_PERCENT
+    value: 0.1
+  }
+}
+
+request: request {
+  id: 3620
+  request_axis_move_to {
+    axis: AXIS_CALIBRATION_3_CENTER
+    value: -0.7
+  }
+}
+
+request: request {
+  id: 3621
+  request_axis_move_to {
+    axis: AXIS_CALIBRATION_3_UP
+  }
+}
+
+request: request {
+  id: 3622
+  request_axis_move_to {
+    axis: AXIS_CALIBRATION_3_LEFT
+  }
+}
+
+request: request {
+  id: 3623
+  request_signal_start {
+    mode: OUTPUT_THREEPHASE
+  }
+}
+
+response: response {
+  id: 3612
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3613
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3614
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3615
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3616
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3617
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3618
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3619
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3620
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3621
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3622
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3623
+  response_signal_start {
+  }
+}
+
+signal generation started!
+request: request {
+  id: 3624
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.00117185561
+    interval: 30
+  }
+}
+
+response: notification {
+  notification_system_stats {
+    focstimv3 {
+      temp_stm32: 33.9682617
+      v_sys_min: 3.70520139
+      v_ref: 2.903
+      v_boost_min: 16.1199474
+      boost_duty_cycle: 1
+      v_sys_max: 3.88791203
+      v_boost_max: 18.6391792
+    }
+  }
+}
+
+response: notification {
+  notification_battery {
+    battery_voltage: 3.982
+    battery_charge_rate_watt: -0.302000016
+    battery_soc: 0.802855194
+    chip_temperature: 30.6500111
+  }
+}
+
+response: response {
+  id: 3624
+  response_axis_move_to {
+  }
+}
+
+request: request {
+  id: 3625
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.00227641128
+    interval: 30
+  }
+}
+
+response: response {
+  id: 3625
+  response_axis_move_to {
+  }
+}
+
+request: request {
+  id: 3626
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.00343324896
+    interval: 30
+  }
+}
+
+response: response {
+  id: 3626
+  response_axis_move_to {
+  }
+}
+
+response: notification {
+  notification_signal_stats {
+    actual_pulse_frequency: 47.2538528
+  }
+}
+
+request: request {
+  id: 3627
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.00460184319
+    interval: 30
+  }
+}
+
+response: response {
+  id: 3627
+  response_axis_move_to {
+  }
+}
+
+request: request {
+  id: 3628
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.00572492601
+    interval: 30
+  }
+}
+
+response: response {
+  id: 3628
+  response_axis_move_to {
+  }
+}
+
+response: notification {
+  notification_potentiometer {
+  }
+}
+
+response: notification {
+  notification_currents {
+    rms_a: 0.000101888712
+    rms_b: 2.3865352e-05
+    rms_c: 8.07472497e-06
+    peak_a: 0.00121123216
+    peak_b: 0.0010701319
+    peak_c: 0.000860921573
+    output_power: 2.20321317e-06
+  }
+}
+
+response: notification {
+  notification_system_stats {
+    focstimv3 {
+      temp_stm32: 33.738102
+      v_sys_min: 3.65562892
+      v_ref: 2.903
+      v_boost_min: 19.2434807
+      boost_duty_cycle: 1
+      v_sys_max: 3.868083
+      v_boost_max: 22.0923328
+    }
+  }
+}
+
+response: notification {
+  notification_battery {
+    battery_voltage: 3.982
+    battery_charge_rate_watt: -0.302000016
+    battery_soc: 0.802855194
+    chip_temperature: 30.6500111
+  }
+}
+
+request: request {
+  id: 3629
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.00687377388
+    interval: 30
+  }
+}
+
+response: response {
+  id: 3629
+  response_axis_move_to {
+  }
+}
+
+request: request {
+  id: 3630
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.00814199354
+    interval: 30
+  }
+}
+
+response: response {
+  id: 3630
+  response_axis_move_to {
+  }
+}
+
+request: request {
+  id: 3631
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.00916617177
+    interval: 30
+  }
+}
+
+response: response {
+  id: 3631
+  response_axis_move_to {
+  }
+}
+
+request: request {
+  id: 3632
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.010323734
+    interval: 30
+  }
+}
+
+response: response {
+  id: 3632
+  response_axis_move_to {
+  }
+}
+
+response: notification {
+  notification_model_estimation {
+    resistance_a: 200
+    resistance_b: 200
+    resistance_c: 200
+  }
+}
+
+request: request {
+  id: 3633
+  request_axis_move_to {
+    axis: AXIS_POSITION_ALPHA
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3634
+  request_axis_move_to {
+    axis: AXIS_POSITION_BETA
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3635
+  request_axis_move_to {
+    axis: AXIS_WAVEFORM_AMPLITUDE_AMPS
+    value: 0.0105052628
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3636
+  request_axis_move_to {
+    axis: AXIS_CARRIER_FREQUENCY_HZ
+    value: 700
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3637
+  request_axis_move_to {
+    axis: AXIS_PULSE_FREQUENCY_HZ
+    value: 50
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3638
+  request_axis_move_to {
+    axis: AXIS_PULSE_WIDTH_IN_CYCLES
+    value: 5
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3639
+  request_axis_move_to {
+    axis: AXIS_PULSE_RISE_TIME_CYCLES
+    value: 10
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3640
+  request_axis_move_to {
+    axis: AXIS_PULSE_INTERVAL_RANDOM_PERCENT
+    value: 0.1
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3641
+  request_axis_move_to {
+    axis: AXIS_CALIBRATION_3_CENTER
+    value: -0.7
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3642
+  request_axis_move_to {
+    axis: AXIS_CALIBRATION_3_UP
+    interval: 30
+  }
+}
+
+request: request {
+  id: 3643
+  request_axis_move_to {
+    axis: AXIS_CALIBRATION_3_LEFT
+    interval: 30
+  }
+}
+
+response: response {
+  id: 3633
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3634
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3635
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3636
+  response_axis_move_to {
+  }
+}
+
+response: notification {
+  notification_system_stats {
+    focstimv3 {
+      temp_stm32: 33.9682617
+      v_sys_min: 3.84400487
+      v_ref: 2.90200019
+      v_boost_min: 21.9196758
+      boost_duty_cycle: 1
+      v_sys_max: 3.86525035
+      v_boost_max: 22.0923328
+    }
+  }
+}
+
+response: notification {
+  notification_battery {
+    battery_voltage: 3.982
+    battery_charge_rate_watt: -0.573
+    battery_soc: 0.802855194
+    chip_temperature: 30.6500111
+  }
+}
+
+response: response {
+  id: 3637
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3638
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3639
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3640
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3641
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3642
+  response_axis_move_to {
+  }
+}
+
+response: response {
+  id: 3643
+  response_axis_move_to {
+  }
+}
+
+closing connection to FOC-Stim
+request: request {
+  id: 3644
+  request_signal_stop {
+  }
+}

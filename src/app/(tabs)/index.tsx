@@ -1,79 +1,158 @@
-import { StyleSheet, Pressable } from 'react-native';
+import { StyleSheet, Pressable, ScrollView } from 'react-native';
 import DeviceConnection from '@/components/DeviceConnection';
 import { View, Text } from '@/components/Themed';
 import { useDeviceStore } from '@/store/deviceStore';
 import Colors from '@/constants/Colors';
 
 export default function TabControlScreen() {
-  const { status, loopRunning, toggleLoop } = useDeviceStore();
+  const { status, loopRunning, toggleLoop, deviceStatus } = useDeviceStore();
   const isConnected = status === 'CONNECTED';
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
       <Text style={styles.title}>FOC Companion</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      
+
       <DeviceConnection />
 
       {isConnected && (
-        <View style={styles.patternContainer}>
-          <Text style={styles.subtitle}>Pattern Control</Text>
-          <Pressable
-            onPress={toggleLoop}
-            style={({ pressed }) => [
-              styles.loopButton,
-              { 
-                backgroundColor: loopRunning ? '#e67e22' : '#27ae60',
-                opacity: pressed ? 0.8 : 1
-              },
-            ]}>
-            <Text style={styles.buttonText}>
-              {loopRunning ? 'Stop Circle Pattern' : 'Start Circle Pattern'}
-            </Text>
-          </Pressable>
-        </View>
+        <>
+          {/* Device Status Display */}
+          {Object.keys(deviceStatus).length > 0 && (
+            <View style={styles.statusContainer}>
+              <Text style={styles.subtitle}>Device Status</Text>
+              <View style={styles.statusGrid}>
+                {deviceStatus.temperature !== undefined && (
+                  <View style={styles.statusItem}>
+                    <Text style={styles.statusLabel}>Temperature</Text>
+                    <Text style={styles.statusValue}>{deviceStatus.temperature.toFixed(1)}°C</Text>
+                  </View>
+                )}
+                {deviceStatus.batteryVoltage !== undefined && (
+                  <View style={styles.statusItem}>
+                    <Text style={styles.statusLabel}>Battery</Text>
+                    <Text style={styles.statusValue}>{deviceStatus.batteryVoltage.toFixed(2)}V</Text>
+                  </View>
+                )}
+                {deviceStatus.batterySoc !== undefined && (
+                  <View style={styles.statusItem}>
+                    <Text style={styles.statusLabel}>Charge</Text>
+                    <Text style={styles.statusValue}>{(deviceStatus.batterySoc * 100).toFixed(0)}%</Text>
+                  </View>
+                )}
+                {deviceStatus.pulseFrequency !== undefined && (
+                  <View style={styles.statusItem}>
+                    <Text style={styles.statusLabel}>Frequency</Text>
+                    <Text style={styles.statusValue}>{deviceStatus.pulseFrequency.toFixed(0)} Hz</Text>
+                  </View>
+                )}
+                {deviceStatus.wallPowerPresent !== undefined && (
+                  <View style={styles.statusItem}>
+                    <Text style={styles.statusLabel}>Power</Text>
+                    <Text style={styles.statusValue}>
+                      {deviceStatus.wallPowerPresent ? 'External' : 'Battery'}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Pattern Control */}
+          <View style={styles.patternContainer}>
+            <Text style={styles.subtitle}>Pattern Control</Text>
+            <Pressable
+              onPress={toggleLoop}
+              style={({ pressed }) => [
+                styles.loopButton,
+                {
+                  backgroundColor: loopRunning ? '#e67e22' : '#27ae60',
+                  opacity: pressed ? 0.8 : 1
+                },
+              ]}>
+              <Text style={styles.buttonText}>
+                {loopRunning ? 'Stop Circle Pattern' : 'Start Circle Pattern'}
+              </Text>
+            </Pressable>
+          </View>
+        </>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollContainer: {
     flex: 1,
+  },
+  contentContainer: {
     alignItems: 'center',
-    paddingTop: 40,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: 10,
     textAlign: 'center',
   },
   separator: {
-    marginVertical: 20,
+    marginVertical: 15,
     height: 1,
     width: '80%',
   },
-  patternContainer: {
-    marginTop: 30,
+  statusContainer: {
+    marginTop: 15,
     width: '90%',
-    padding: 20,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#3498db',
+    borderRadius: 8,
+    backgroundColor: 'rgba(52, 152, 219, 0.05)',
+  },
+  statusGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statusItem: {
+    width: '48%',
+    marginBottom: 8,
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  statusLabel: {
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 2,
+  },
+  statusValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+  patternContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+    width: '90%',
+    padding: 15,
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 10,
+    borderRadius: 8,
   },
   loopButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 30,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
     borderRadius: 8,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     textAlign: 'center',
   },

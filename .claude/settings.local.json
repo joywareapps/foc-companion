@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm view:*)",
+      "Bash(npx expo-doctor)",
+      "Bash(npm install:*)",
+      "Bash(npx expo install --check)",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx expo start --clear)",
+      "Bash(grep:*)",
+      "Bash(find:*)"
+    ]
+  }
+}

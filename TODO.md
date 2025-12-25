@@ -23,14 +23,20 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
 - [x] **TCP Communication Layer:**
     - [x] Implement a TCP socket service using a library like `react-native-tcp-socket`.
     - [x] Implement the HDLC framing/deframing logic in TypeScript to wrap/unwrap Protobuf messages.
-    - [ ] **Test TCP connection on real device** (currently untested).
+    - [x] **Test TCP connection on real device** - ✅ VERIFIED WORKING (2025-12-25)
 - [x] **Protocol API:**
     - [x] Create a `FocStimApiService` that uses the TCP service and generated Protobuf modules to send commands and handle responses.
+    - [x] Implement `startSignal()` and `stopSignal()` methods for signal control.
+    - [x] Add notification handler for real-time device status updates.
 - [x] **State Management:**
-    - [x] Integrate a state management library (e.g., Zustand) to manage application state, including connection status, device IP, and errors.
+    - [x] Integrate a state management library (Zustand) to manage application state, including connection status, device IP, and errors.
+    - [x] Add device status tracking (temperature, battery, pulse frequency).
 - [x] **High-Frequency Command Loop:**
-    - [x] Set up `react-native-worklets` (Note: using `react-native-worklets`, not `react-native-worklets-core` as per guidelines).
-    - [x] Implement the main command loop on a Worklet to run the "circle" pattern logic and send commands via the `FocStimApiService` at a consistent rate.
+    - [x] Remove `react-native-worklets` dependency (incompatible with Expo SDK 54).
+    - [x] Implement command loop using `setInterval` (60Hz @ ~16ms).
+    - [x] Add signal parameter initialization (carrier frequency, pulse parameters).
+    - [x] Implement threephase algorithm (position + amplitude updates).
+    - [x] **Verify circle pattern execution on real device** - ✅ WORKING (2025-12-25)
 
 ## **📋 Phase 3: User Interface**
 
@@ -40,7 +46,8 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
     - [x] Add a "Connect/Disconnect" button that uses the `FocStimApiService` and updates the application state.
     - [x] Display the current connection status (e.g., "Disconnected", "Connecting...", "Connected").
     - [x] Add a "Start/Stop Pattern" button to control the command loop.
-    - [ ] (Optional) Display basic output metrics if available from the command loop or device responses.
+    - [x] Display device status metrics (temperature, battery voltage/charge, pulse frequency, power source).
+    - [x] Optimize UI layout with ScrollView for compact display and full accessibility.
 
 ## **📋 Phase 4: Serial/USB Communication (Lower Priority)**
 

@@ -1,32 +1,79 @@
 import { create } from 'zustand';
 import { focStimApi } from '@/core/FocStimApiService';
 import { commandLoop } from '@/core/CommandLoop';
+import type { Notification } from '@/generated/protobuf/focstim_rpc_pb';
 
 export type ConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
+
+export interface DeviceStatus {
+  temperature?: number;
+  batteryVoltage?: number;
+  batterySoc?: number;
+  wallPowerPresent?: boolean;
+  pulseFrequency?: number;
+  vDrive?: number;
+  lastUpdate?: number;
+}
 
 interface DeviceState {
   status: ConnectionStatus;
   ipAddress: string;
   error: string | null;
   loopRunning: boolean;
+  deviceStatus: DeviceStatus;
   setIpAddress: (ip: string) => void;
   connect: () => Promise<void>;
-  disconnect: () => void;
-  toggleLoop: () => void;
+  disconnect: () => Promise<void>;
+  toggleLoop: () => Promise<void>;
 }
 
 export const useDeviceStore = create<DeviceState>((set, get) => {
   // Setup API listeners
-  focStimApi.onConnectionError = (error) => {
+  focStimApi.onConnectionError = async (error) => {
     set({ status: 'ERROR', error });
-    commandLoop.stop();
+    await commandLoop.stop();
     set({ loopRunning: false });
   };
-  
-  focStimApi.onDisconnect = () => {
-    set({ status: 'DISCONNECTED', error: null });
-    commandLoop.stop();
+
+  focStimApi.onDisconnect = async () => {
+    set({ status: 'DISCONNECTED', error: null, deviceStatus: {} });
+    await commandLoop.stop();
     set({ loopRunning: false });
+  };
+
+  // Handle device notifications
+  focStimApi.onNotification = (notification: Notification) => {
+    const updates: Partial<DeviceStatus> = { lastUpdate: Date.now() };
+
+    // Extract system stats (temperature, voltages)
+    if (notification.notification.case === 'notificationSystemStats') {
+      const systemStats = notification.notification.value;
+      if (systemStats.system.case === 'focstimv3') {
+        updates.temperature = systemStats.system.value.tempStm32;
+      }
+    }
+
+    // Extract battery stats
+    if (notification.notification.case === 'notificationBattery') {
+      const battery = notification.notification.value;
+      updates.batteryVoltage = battery.batteryVoltage;
+      updates.batterySoc = battery.batterySoc;
+      updates.wallPowerPresent = battery.wallPowerPresent;
+    }
+
+    // Extract signal stats
+    if (notification.notification.case === 'notificationSignalStats') {
+      const signalStats = notification.notification.value;
+      updates.pulseFrequency = signalStats.actualPulseFrequency;
+      updates.vDrive = signalStats.vDrive;
+    }
+
+    // Update state with new values
+    if (Object.keys(updates).length > 1) { // More than just lastUpdate
+      set((state) => ({
+        deviceStatus: { ...state.deviceStatus, ...updates }
+      }));
+    }
   };
 
   return {
@@ -34,6 +81,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
     ipAddress: '192.168.1.1',
     error: null,
     loopRunning: false,
+    deviceStatus: {},
     setIpAddress: (ip) => {
       set({ ipAddress: ip });
     },
@@ -54,21 +102,26 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
         set({ status: 'ERROR', error: err.message });
       }
     },
-    disconnect: () => {
-      commandLoop.stop();
+    disconnect: async () => {
+      await commandLoop.stop();
       focStimApi.disconnect();
       set({ status: 'DISCONNECTED', loopRunning: false });
     },
-    toggleLoop: () => {
+    toggleLoop: async () => {
       const { loopRunning, status } = get();
       if (status !== 'CONNECTED') return;
 
       if (loopRunning) {
-        commandLoop.stop();
+        await commandLoop.stop();
         set({ loopRunning: false });
       } else {
-        commandLoop.start();
-        set({ loopRunning: true });
+        try {
+          await commandLoop.start();
+          set({ loopRunning: true });
+        } catch (err: any) {
+          console.error('[DeviceStore] Failed to start pattern:', err);
+          set({ error: `Failed to start pattern: ${err.message}` });
+        }
       }
     },
   };

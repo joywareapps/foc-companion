@@ -1,12 +1,13 @@
 import TcpSocket from 'react-native-tcp-socket';
 import { HDLC } from './hdlc';
-import { 
-  RpcMessageSchema, 
-  RequestSchema, 
+import {
+  RpcMessageSchema,
+  RequestSchema,
   type Request,
   type Response,
   type Notification
 } from '../generated/protobuf/focstim_rpc_pb';
+import { OutputMode } from '../generated/protobuf/constants_pb';
 import { create, toBinary, fromBinary } from '@bufbuild/protobuf';
 
 export class FocStimApiService {
@@ -118,6 +119,22 @@ export class FocStimApiService {
       });
 
       this.tcpSocket.write(framedData);
+    });
+  }
+
+  public async startSignal(mode: OutputMode = OutputMode.OUTPUT_THREEPHASE): Promise<void> {
+    console.log(`[FocStimApi] Starting signal output with mode=${mode}`);
+    await this.sendRequest({
+      case: 'requestSignalStart',
+      value: { mode }
+    });
+  }
+
+  public async stopSignal(): Promise<void> {
+    console.log('[FocStimApi] Stopping signal output');
+    await this.sendRequest({
+      case: 'requestSignalStop',
+      value: {}
     });
   }
 }

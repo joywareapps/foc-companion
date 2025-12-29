@@ -28,6 +28,7 @@ export class SettingsService {
   /**
    * Load device settings from storage
    * Returns default settings if not found or invalid
+   * Automatically migrates missing fields to new defaults
    */
   static async loadDeviceSettings(): Promise<DeviceSettings> {
     try {
@@ -37,7 +38,18 @@ export class SettingsService {
       }
 
       const settings: DeviceSettings = JSON.parse(stored);
-      return settings;
+
+      // Migrate missing calibration fields (added in later version)
+      const migratedSettings: DeviceSettings = {
+        ...DefaultSettings.device,
+        ...settings,
+        // Ensure calibration fields exist with defaults if missing
+        calibration3Center: settings.calibration3Center ?? DefaultSettings.device.calibration3Center,
+        calibration3Up: settings.calibration3Up ?? DefaultSettings.device.calibration3Up,
+        calibration3Left: settings.calibration3Left ?? DefaultSettings.device.calibration3Left,
+      };
+
+      return migratedSettings;
     } catch (error) {
       console.error('[SettingsService] Error loading device settings:', error);
       return DefaultSettings.device;

@@ -179,7 +179,7 @@ export class CommandLoop {
     // Send commands to device (interval in ms for device to interpolate to this value)
     const interval = 50;
 
-    // Get current amplitude from settings
+    // Get current settings from store (allows live updates during playback)
     const { deviceSettings } = useDeviceStore.getState();
     const targetAmplitude = deviceSettings.waveformAmplitude;
 
@@ -195,6 +195,11 @@ export class CommandLoop {
     // Send amplitude update with ramp (required for threephase mode)
     // Ramps from 0 to target amplitude over 5 seconds
     this.sendUpdate(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmplitude, interval);
+
+    // Send calibration parameters (allows live adjustment during playback)
+    this.sendUpdate(AxisType.AXIS_CALIBRATION_3_CENTER, deviceSettings.calibration3Center, interval);
+    this.sendUpdate(AxisType.AXIS_CALIBRATION_3_UP, deviceSettings.calibration3Up, interval);
+    this.sendUpdate(AxisType.AXIS_CALIBRATION_3_LEFT, deviceSettings.calibration3Left, interval);
   }
 
   private async sendUpdate(axis: AxisType, value: number, interval: number) {

@@ -102,13 +102,13 @@ request_signal_start(mode=OUTPUT_THREEPHASE)
 - Signal parameters configured from settings before start
 - Pattern loop uses `interval=50` for all updates
 - Amplitude now dynamic from `deviceSettings.waveformAmplitude`
+- `AXIS_PULSE_INTERVAL_RANDOM_PERCENT` from user settings (0-100% range)
+- `AXIS_CALIBRATION_3_CENTER` (hardcoded: -0.7)
+- `AXIS_CALIBRATION_3_UP` (hardcoded: 0)
+- `AXIS_CALIBRATION_3_LEFT` (hardcoded: 0)
 
 **⚠️ Not Yet Implemented:**
-- `AXIS_WAVEFORM_AMPLITUDE_AMPS` initial reset to 0
-- `AXIS_PULSE_INTERVAL_RANDOM_PERCENT` (default 0.1 = 10%)
-- `AXIS_CALIBRATION_3_CENTER` (default -0.7)
-- `AXIS_CALIBRATION_3_UP` (default 0)
-- `AXIS_CALIBRATION_3_LEFT` (default 0)
+- `AXIS_WAVEFORM_AMPLITUDE_AMPS` initial reset to 0 (Phase 4.8)
 
 ---
 
@@ -369,11 +369,11 @@ From `src/generated/protobuf/constants_pb.ts`:
 | `AXIS_CARRIER_FREQUENCY_HZ` | `pulseSettings.carrierFrequency` | 700 Hz | ✅ |
 | `AXIS_PULSE_FREQUENCY_HZ` | `pulseSettings.pulseFrequency` | 50 Hz | ✅ |
 | `AXIS_PULSE_WIDTH_IN_CYCLES` | `pulseSettings.pulseWidth` | 5 cycles | ✅ |
-| `AXIS_PULSE_RISE_TIME_CYCLES` | `pulseSettings.pulseRiseTime` | 10 cycles | ✅ |
-| `AXIS_PULSE_INTERVAL_RANDOM_PERCENT` | `pulseSettings.pulseIntervalRandom` | 0.1 (10%) | ❌ |
-| `AXIS_CALIBRATION_3_CENTER` | Hardcoded | -0.7 | ❌ |
-| `AXIS_CALIBRATION_3_UP` | Hardcoded | 0 | ❌ |
-| `AXIS_CALIBRATION_3_LEFT` | Hardcoded | 0 | ❌ |
+| `AXIS_PULSE_RISE_TIME_CYCLES` | `pulseSettings.pulseRiseTime` | 3 cycles | ✅ |
+| `AXIS_PULSE_INTERVAL_RANDOM_PERCENT` | `pulseSettings.pulseIntervalRandom` | 0.1 (10%) | ✅ |
+| `AXIS_CALIBRATION_3_CENTER` | Hardcoded | -0.7 | ✅ |
+| `AXIS_CALIBRATION_3_UP` | Hardcoded | 0 | ✅ |
+| `AXIS_CALIBRATION_3_LEFT` | Hardcoded | 0 | ✅ |
 
 ### Request Message Structure
 
@@ -446,13 +446,10 @@ From `src/generated/protobuf/constants_pb.ts`:
 - ✅ Real device communication working
 
 ### What's Missing
-- ⚠️ Pulse Settings UI (all sliders implemented in Device Settings can be template)
-- ⚠️ Calibration parameters (3 axes)
-- ⚠️ Pulse interval random setting
-- ⚠️ Initial amplitude reset to 0
+- ⚠️ Initial amplitude reset to 0 (Phase 4.8 - optional enhancement)
 
 ### Priority Next Steps
-1. Create Pulse Settings UI with duty cycle display (Phase 4.4)
-2. Add missing calibration parameters to CommandLoop (Phase 4.7)
-3. Add pulse interval random to CommandLoop (Phase 4.4)
+1. ✅ ~~Create Pulse Settings UI with duty cycle display (Phase 4.4)~~ - COMPLETED
+2. ✅ ~~Add missing calibration parameters to CommandLoop (Phase 4.7)~~ - COMPLETED
+3. ✅ ~~Add pulse interval random to CommandLoop (Phase 4.4)~~ - COMPLETED
 4. Test all settings changes with real device (Phase 4.7)

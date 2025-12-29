@@ -106,9 +106,7 @@ request_signal_start(mode=OUTPUT_THREEPHASE)
 - `AXIS_CALIBRATION_3_CENTER` (hardcoded: -0.5)
 - `AXIS_CALIBRATION_3_UP` (hardcoded: 0)
 - `AXIS_CALIBRATION_3_LEFT` (hardcoded: 0)
-
-**⚠️ Not Yet Implemented:**
-- `AXIS_WAVEFORM_AMPLITUDE_AMPS` initial reset to 0 (Phase 4.8)
+- `AXIS_WAVEFORM_AMPLITUDE_AMPS` initial reset to 0 with 5-second ramp (Phase 4.8)
 
 ---
 
@@ -446,10 +444,11 @@ From `src/generated/protobuf/constants_pb.ts`:
 - ✅ Real device communication working
 
 ### What's Missing
-- ⚠️ Initial amplitude reset to 0 (Phase 4.8 - optional enhancement)
+- Nothing! All protocol features implemented ✅
 
 ### Priority Next Steps
 1. ✅ ~~Create Pulse Settings UI with duty cycle display (Phase 4.4)~~ - COMPLETED
 2. ✅ ~~Add missing calibration parameters to CommandLoop (Phase 4.7)~~ - COMPLETED
 3. ✅ ~~Add pulse interval random to CommandLoop (Phase 4.4)~~ - COMPLETED
-4. Test all settings changes with real device (Phase 4.7)
+4. ✅ ~~Add amplitude ramp from 0 to target over 5 seconds (Phase 4.8)~~ - COMPLETED
+5. Test all settings changes with real device (Phase 4.7)

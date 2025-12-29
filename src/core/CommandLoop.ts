@@ -8,7 +8,9 @@ export class CommandLoop {
   private pattern = new CirclePattern(1.0, 2.0); // Amplitude=1.0 (full range), velocity=2.0 rad/s
   private isRunning = false;
   private lastTimestamp = 0;
+  private startTimestamp = 0;
   private intervalId: ReturnType<typeof setInterval> | null = null;
+  private readonly RAMP_DURATION_MS = 5000; // 5 seconds amplitude ramp
 
   // Device coordinate system: normalized float values (typically -1.0 to +1.0 or 0.0 to 1.0)
   // Pattern outputs absolute positions in this range
@@ -44,10 +46,11 @@ export class CommandLoop {
 
       this.isRunning = true;
       this.lastTimestamp = Date.now();
+      this.startTimestamp = Date.now();
 
       // Start the loop using setInterval (60Hz = ~16ms)
       this.intervalId = setInterval(() => this.tick(), 16);
-      console.log('[CommandLoop] Pattern loop started');
+      console.log('[CommandLoop] Pattern loop started with 5-second amplitude ramp');
     } catch (err) {
       console.error('[CommandLoop] Failed to start signal:', err);
       throw err;
@@ -70,6 +73,12 @@ export class CommandLoop {
     await focStimApi.sendRequest({
       case: 'requestAxisMoveTo',
       value: { axis: AxisType.AXIS_POSITION_BETA, value: 0, interval: 0 } as any
+    });
+
+    // Reset amplitude to 0 before starting (will ramp up during playback)
+    await focStimApi.sendRequest({
+      case: 'requestAxisMoveTo',
+      value: { axis: AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, value: 0, interval: 0 } as any
     });
 
     // Set carrier frequency from pulse settings
@@ -172,14 +181,20 @@ export class CommandLoop {
 
     // Get current amplitude from settings
     const { deviceSettings } = useDeviceStore.getState();
+    const targetAmplitude = deviceSettings.waveformAmplitude;
+
+    // Calculate ramped amplitude (0 to target over RAMP_DURATION_MS)
+    const elapsedMs = now - this.startTimestamp;
+    const rampProgress = Math.min(elapsedMs / this.RAMP_DURATION_MS, 1.0);
+    const currentAmplitude = targetAmplitude * rampProgress;
 
     // Send position updates (as per threephase_algorithm.py)
     this.sendUpdate(AxisType.AXIS_POSITION_ALPHA, pos.x, interval);
     this.sendUpdate(AxisType.AXIS_POSITION_BETA, pos.y, interval);
 
-    // Send amplitude update (required for threephase mode)
-    // Use amplitude from device settings (default: 0.120 amps / 120 mA)
-    this.sendUpdate(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, deviceSettings.waveformAmplitude, interval);
+    // Send amplitude update with ramp (required for threephase mode)
+    // Ramps from 0 to target amplitude over 5 seconds
+    this.sendUpdate(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmplitude, interval);
   }
 
   private async sendUpdate(axis: AxisType, value: number, interval: number) {

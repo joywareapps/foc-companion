@@ -1,1 +1,3 @@
 source-repos/
+.agent-instructions/
+.claude/settings.local.json

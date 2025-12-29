@@ -16,6 +16,9 @@ export default function DeviceSettingsScreen() {
   const [amplitudeMilliamps, setAmplitudeMilliamps] = useState(
     ampsToMilliamps(deviceSettings.waveformAmplitude)
   );
+  const [calibration3Center, setCalibration3Center] = useState(deviceSettings.calibration3Center);
+  const [calibration3Up, setCalibration3Up] = useState(deviceSettings.calibration3Up);
+  const [calibration3Left, setCalibration3Left] = useState(deviceSettings.calibration3Left);
   const [hasChanges, setHasChanges] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -24,6 +27,9 @@ export default function DeviceSettingsScreen() {
     setMinFrequency(deviceSettings.minFrequency);
     setMaxFrequency(deviceSettings.maxFrequency);
     setAmplitudeMilliamps(ampsToMilliamps(deviceSettings.waveformAmplitude));
+    setCalibration3Center(deviceSettings.calibration3Center);
+    setCalibration3Up(deviceSettings.calibration3Up);
+    setCalibration3Left(deviceSettings.calibration3Left);
     setHasChanges(false);
   }, [deviceSettings]);
 
@@ -34,6 +40,9 @@ export default function DeviceSettingsScreen() {
       minFrequency,
       maxFrequency,
       waveformAmplitude: milliampsToAmps(amplitudeMilliamps),
+      calibration3Center,
+      calibration3Up,
+      calibration3Left,
     };
 
     const validation = validateDeviceSettings(testSettings);
@@ -43,10 +52,13 @@ export default function DeviceSettingsScreen() {
     const changed =
       minFrequency !== deviceSettings.minFrequency ||
       maxFrequency !== deviceSettings.maxFrequency ||
-      amplitudeMilliamps !== ampsToMilliamps(deviceSettings.waveformAmplitude);
+      amplitudeMilliamps !== ampsToMilliamps(deviceSettings.waveformAmplitude) ||
+      calibration3Center !== deviceSettings.calibration3Center ||
+      calibration3Up !== deviceSettings.calibration3Up ||
+      calibration3Left !== deviceSettings.calibration3Left;
 
     setHasChanges(changed);
-  }, [minFrequency, maxFrequency, amplitudeMilliamps, deviceSettings]);
+  }, [minFrequency, maxFrequency, amplitudeMilliamps, calibration3Center, calibration3Up, calibration3Left, deviceSettings]);
 
   const handleSave = async () => {
     if (validationErrors.length > 0) {
@@ -59,6 +71,9 @@ export default function DeviceSettingsScreen() {
       minFrequency,
       maxFrequency,
       waveformAmplitude: milliampsToAmps(amplitudeMilliamps),
+      calibration3Center,
+      calibration3Up,
+      calibration3Left,
     };
 
     try {
@@ -75,7 +90,10 @@ export default function DeviceSettingsScreen() {
       'Are you sure you want to reset all settings to defaults?\n\n' +
         'Min Frequency: 500 Hz\n' +
         'Max Frequency: 1500 Hz\n' +
-        'Amplitude: 120 mA',
+        'Amplitude: 120 mA\n' +
+        'Calibration Center: -0.5\n' +
+        'Calibration Up: 0\n' +
+        'Calibration Left: 0',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -167,6 +185,77 @@ export default function DeviceSettingsScreen() {
           <Text style={styles.rangeLabel}>
             Range: {ampsToMilliamps(SettingsLimits.WaveformAmplitude.min)}-
             {ampsToMilliamps(SettingsLimits.WaveformAmplitude.max)} mA
+          </Text>
+        </View>
+      </View>
+
+      {/* Calibration Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Calibration</Text>
+        <Text style={styles.sectionDescription}>
+          3-phase output calibration parameters for fine-tuning device behavior
+        </Text>
+
+        {/* Calibration Center */}
+        <View style={styles.settingContainer}>
+          <View style={styles.settingHeader}>
+            <Text style={styles.settingLabel}>Center Calibration</Text>
+            <Text style={styles.settingValue}>{calibration3Center.toFixed(2)}</Text>
+          </View>
+          <Slider
+            style={styles.slider}
+            minimumValue={SettingsLimits.Calibration3Phase.min}
+            maximumValue={SettingsLimits.Calibration3Phase.max}
+            step={0.1}
+            value={calibration3Center}
+            onValueChange={setCalibration3Center}
+            minimumTrackTintColor="#9b59b6"
+            maximumTrackTintColor="#bdc3c7"
+          />
+          <Text style={styles.rangeLabel}>
+            Range: {SettingsLimits.Calibration3Phase.min} to {SettingsLimits.Calibration3Phase.max}
+          </Text>
+        </View>
+
+        {/* Calibration Up */}
+        <View style={styles.settingContainer}>
+          <View style={styles.settingHeader}>
+            <Text style={styles.settingLabel}>Up Calibration</Text>
+            <Text style={styles.settingValue}>{calibration3Up.toFixed(2)}</Text>
+          </View>
+          <Slider
+            style={styles.slider}
+            minimumValue={SettingsLimits.Calibration3Phase.min}
+            maximumValue={SettingsLimits.Calibration3Phase.max}
+            step={0.1}
+            value={calibration3Up}
+            onValueChange={setCalibration3Up}
+            minimumTrackTintColor="#9b59b6"
+            maximumTrackTintColor="#bdc3c7"
+          />
+          <Text style={styles.rangeLabel}>
+            Range: {SettingsLimits.Calibration3Phase.min} to {SettingsLimits.Calibration3Phase.max}
+          </Text>
+        </View>
+
+        {/* Calibration Left */}
+        <View style={styles.settingContainer}>
+          <View style={styles.settingHeader}>
+            <Text style={styles.settingLabel}>Left Calibration</Text>
+            <Text style={styles.settingValue}>{calibration3Left.toFixed(2)}</Text>
+          </View>
+          <Slider
+            style={styles.slider}
+            minimumValue={SettingsLimits.Calibration3Phase.min}
+            maximumValue={SettingsLimits.Calibration3Phase.max}
+            step={0.1}
+            value={calibration3Left}
+            onValueChange={setCalibration3Left}
+            minimumTrackTintColor="#9b59b6"
+            maximumTrackTintColor="#bdc3c7"
+          />
+          <Text style={styles.rangeLabel}>
+            Range: {SettingsLimits.Calibration3Phase.min} to {SettingsLimits.Calibration3Phase.max}
           </Text>
         </View>
       </View>

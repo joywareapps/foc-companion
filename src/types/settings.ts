@@ -32,6 +32,9 @@ export interface DeviceSettings {
   minFrequency: number;      // Hz, range: 500-2000, default: 500
   maxFrequency: number;      // Hz, range: 500-2000, default: 1500
   waveformAmplitude: number; // Amps, range: 0.01-0.15, default: 0.120
+  calibration3Center: number; // 3-phase center calibration, range: -2.0 to 2.0, default: -0.5
+  calibration3Up: number;     // 3-phase up calibration, range: -2.0 to 2.0, default: 0
+  calibration3Left: number;   // 3-phase left calibration, range: -2.0 to 2.0, default: 0
 }
 
 /**
@@ -96,6 +99,10 @@ export const SettingsLimits = {
     min: 0,     // %
     max: 100,   // %
   },
+  Calibration3Phase: {
+    min: -2.0,  // normalized float
+    max: 2.0,   // normalized float
+  },
 } as const;
 
 /**
@@ -108,6 +115,9 @@ export const DefaultSettings: AppSettings = {
     minFrequency: 500,      // Hz
     maxFrequency: 1500,     // Hz (user requested default)
     waveformAmplitude: 0.120, // 120 mA (desktop default, not 10 mA!)
+    calibration3Center: -0.5, // 3-phase center calibration
+    calibration3Up: 0,        // 3-phase up calibration
+    calibration3Left: 0,      // 3-phase left calibration
   },
   pulse: {
     carrierFrequency: 700,  // Hz (within min-max range)

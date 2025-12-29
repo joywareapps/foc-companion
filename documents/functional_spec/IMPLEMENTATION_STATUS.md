@@ -103,7 +103,7 @@ request_signal_start(mode=OUTPUT_THREEPHASE)
 - Pattern loop uses `interval=50` for all updates
 - Amplitude now dynamic from `deviceSettings.waveformAmplitude`
 - `AXIS_PULSE_INTERVAL_RANDOM_PERCENT` from user settings (0-100% range)
-- `AXIS_CALIBRATION_3_CENTER` (hardcoded: -0.7)
+- `AXIS_CALIBRATION_3_CENTER` (hardcoded: -0.5)
 - `AXIS_CALIBRATION_3_UP` (hardcoded: 0)
 - `AXIS_CALIBRATION_3_LEFT` (hardcoded: 0)
 
@@ -371,7 +371,7 @@ From `src/generated/protobuf/constants_pb.ts`:
 | `AXIS_PULSE_WIDTH_IN_CYCLES` | `pulseSettings.pulseWidth` | 5 cycles | ✅ |
 | `AXIS_PULSE_RISE_TIME_CYCLES` | `pulseSettings.pulseRiseTime` | 3 cycles | ✅ |
 | `AXIS_PULSE_INTERVAL_RANDOM_PERCENT` | `pulseSettings.pulseIntervalRandom` | 0.1 (10%) | ✅ |
-| `AXIS_CALIBRATION_3_CENTER` | Hardcoded | -0.7 | ✅ |
+| `AXIS_CALIBRATION_3_CENTER` | Hardcoded | -0.5 | ✅ |
 | `AXIS_CALIBRATION_3_UP` | Hardcoded | 0 | ✅ |
 | `AXIS_CALIBRATION_3_LEFT` | Hardcoded | 0 | ✅ |
 

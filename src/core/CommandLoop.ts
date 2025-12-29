@@ -107,7 +107,7 @@ export class CommandLoop {
     // These are required for proper FOC-Stim 3-phase output calibration
     await focStimApi.sendRequest({
       case: 'requestAxisMoveTo',
-      value: { axis: AxisType.AXIS_CALIBRATION_3_CENTER, value: -0.7, interval: 0 } as any
+      value: { axis: AxisType.AXIS_CALIBRATION_3_CENTER, value: -0.5, interval: 0 } as any
     });
 
     await focStimApi.sendRequest({
@@ -126,7 +126,7 @@ export class CommandLoop {
       pulseWidth: pulseSettings.pulseWidth,
       pulseRiseTime: pulseSettings.pulseRiseTime,
       pulseIntervalRandom: pulseSettings.pulseIntervalRandom / 100,
-      calibration3Center: -0.7,
+      calibration3Center: -0.5,
       calibration3Up: 0,
       calibration3Left: 0,
       amplitude: deviceSettings.waveformAmplitude

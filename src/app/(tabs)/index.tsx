@@ -1,11 +1,12 @@
 import { StyleSheet, Pressable, ScrollView } from 'react-native';
+import Slider from '@react-native-community/slider';
 import DeviceConnection from '@/components/DeviceConnection';
 import { View, Text } from '@/components/Themed';
 import { useDeviceStore } from '@/store/deviceStore';
 import Colors from '@/constants/Colors';
 
 export default function TabControlScreen() {
-  const { status, loopRunning, toggleLoop, deviceStatus } = useDeviceStore();
+  const { status, loopRunning, toggleLoop, deviceStatus, patternSpeed, setPatternSpeed } = useDeviceStore();
   const isConnected = status === 'CONNECTED';
 
   return (
@@ -46,6 +47,25 @@ export default function TabControlScreen() {
                 {loopRunning ? 'Stop Circle Pattern' : 'Start Circle Pattern'}
               </Text>
             </Pressable>
+
+            {/* Pattern Speed Slider */}
+            <View style={styles.speedContainer}>
+              <View style={styles.speedHeader}>
+                <Text style={styles.speedLabel}>Pattern Speed</Text>
+                <Text style={styles.speedValue}>{patternSpeed.toFixed(1)} rad/s</Text>
+              </View>
+              <Slider
+                style={styles.slider}
+                minimumValue={0.1}
+                maximumValue={5.0}
+                step={0.1}
+                value={patternSpeed}
+                onValueChange={setPatternSpeed}
+                minimumTrackTintColor="#3498db"
+                maximumTrackTintColor="#bdc3c7"
+              />
+              <Text style={styles.rangeLabel}>Range: 0.1 to 5.0 rad/s</Text>
+            </View>
           </View>
         </>
       )}
@@ -111,5 +131,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  speedContainer: {
+    marginTop: 20,
+  },
+  speedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  speedLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2c3e50',
+  },
+  speedValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#3498db',
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  rangeLabel: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    textAlign: 'center',
+    marginTop: 4,
   },
 });

@@ -26,6 +26,9 @@ interface DeviceState {
   loopRunning: boolean;
   deviceStatus: DeviceStatus;
 
+  // Pattern control
+  patternSpeed: number; // rad/s, default 2.0
+
   // Settings state
   deviceSettings: DeviceSettings;
   pulseSettings: PulseSettings;
@@ -37,6 +40,9 @@ interface DeviceState {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   toggleLoop: () => Promise<void>;
+
+  // Pattern actions
+  setPatternSpeed: (speed: number) => void;
 
   // Settings actions
   loadSettings: () => Promise<void>;
@@ -103,6 +109,9 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
     loopRunning: false,
     deviceStatus: {},
 
+    // Initial pattern control
+    patternSpeed: 2.0, // rad/s
+
     // Initial settings state (will be loaded from storage)
     deviceSettings: DefaultSettings.device,
     pulseSettings: DefaultSettings.pulse,
@@ -151,6 +160,12 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
           set({ error: `Failed to start pattern: ${err.message}` });
         }
       }
+    },
+
+    // Pattern actions
+    setPatternSpeed: (speed: number) => {
+      set({ patternSpeed: speed });
+      commandLoop.setPatternSpeed(speed);
     },
 
     // Settings actions

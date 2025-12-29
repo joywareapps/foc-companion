@@ -166,6 +166,11 @@ export class CommandLoop {
     }
   }
 
+  public setPatternSpeed(speed: number) {
+    this.pattern.setVelocity(speed);
+    console.log('[CommandLoop] Pattern speed updated to:', speed, 'rad/s');
+  }
+
   private tick = () => {
     if (!this.isRunning) return;
 

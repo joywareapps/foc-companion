@@ -3,7 +3,7 @@ import { focStimApi } from '@/core/FocStimApiService';
 import { commandLoop } from '@/core/CommandLoop';
 import type { Notification } from '@/generated/protobuf/focstim_rpc_pb';
 import { SettingsService } from '@/services/SettingsService';
-import type { DeviceSettings, PulseSettings, FocStimSettings } from '@/types/settings';
+import type { DeviceSettings, PulseSettings, FocStimSettings, MediaSyncSettings } from '@/types/settings';
 import { DefaultSettings } from '@/types/settings';
 
 export type ConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
@@ -33,6 +33,7 @@ interface DeviceState {
   deviceSettings: DeviceSettings;
   pulseSettings: PulseSettings;
   focstimSettings: FocStimSettings;
+  mediaSyncSettings: MediaSyncSettings;
   settingsLoaded: boolean;
 
   // Connection actions
@@ -49,6 +50,7 @@ interface DeviceState {
   saveDeviceSettings: (settings: DeviceSettings) => Promise<void>;
   savePulseSettings: (settings: PulseSettings) => Promise<void>;
   saveFocStimSettings: (settings: FocStimSettings) => Promise<void>;
+  saveMediaSyncSettings: (settings: MediaSyncSettings) => Promise<void>;
   resetToDefaults: () => Promise<void>;
 }
 
@@ -116,6 +118,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
     deviceSettings: DefaultSettings.device,
     pulseSettings: DefaultSettings.pulse,
     focstimSettings: DefaultSettings.focstim,
+    mediaSyncSettings: DefaultSettings.mediaSync,
     settingsLoaded: false,
 
     // Connection actions
@@ -183,6 +186,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
           deviceSettings: settings.device,
           pulseSettings: settings.pulse,
           focstimSettings: settings.focstim,
+          mediaSyncSettings: settings.mediaSync,
           settingsLoaded: true,
         });
 
@@ -238,6 +242,17 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
       }
     },
 
+    saveMediaSyncSettings: async (settings: MediaSyncSettings) => {
+      try {
+        await SettingsService.saveMediaSyncSettings(settings);
+        set({ mediaSyncSettings: settings });
+        console.log('[DeviceStore] Media Sync settings saved');
+      } catch (error) {
+        console.error('[DeviceStore] Error saving Media Sync settings:', error);
+        throw error;
+      }
+    },
+
     resetToDefaults: async () => {
       try {
         await SettingsService.resetToDefaults();
@@ -245,6 +260,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
           deviceSettings: DefaultSettings.device,
           pulseSettings: DefaultSettings.pulse,
           focstimSettings: DefaultSettings.focstim,
+          mediaSyncSettings: DefaultSettings.mediaSync,
         });
         console.log('[DeviceStore] Settings reset to defaults');
       } catch (error) {

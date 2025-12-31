@@ -7,7 +7,10 @@ import {
   DeviceSettings,
   PulseSettings,
   FocStimSettings,
+  MediaSyncSettings,
   DefaultSettings,
+  FunscriptLocation,
+  FunscriptLocationType,
 } from '@/types/settings';
 import { validateAppSettings } from './SettingsValidator';
 
@@ -18,6 +21,7 @@ export const STORAGE_KEYS = {
   DEVICE_SETTINGS: '@foccompanion/device_settings',
   PULSE_SETTINGS: '@foccompanion/pulse_settings',
   FOCSTIM_SETTINGS: '@foccompanion/focstim_settings',
+  MEDIA_SYNC_SETTINGS: '@foccompanion/media_sync_settings',
 } as const;
 
 /**
@@ -140,17 +144,92 @@ export class SettingsService {
   }
 
   /**
+   * Load media sync settings from storage
+   * Returns default settings if not found or invalid
+   * Migrates from old schemas to new location-based schema
+   */
+  static async loadMediaSyncSettings(): Promise<MediaSyncSettings> {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEYS.MEDIA_SYNC_SETTINGS);
+      if (!stored) {
+        return DefaultSettings.mediaSync;
+      }
+
+      const settings: any = JSON.parse(stored);
+
+      // Migration 1: Old SMB schema → funscriptDirectories
+      if (settings.smbEnabled !== undefined || settings.smbShare !== undefined) {
+        console.log('[SettingsService] Migrating from old SMB schema');
+        settings.funscriptDirectories = [];
+        delete settings.smbEnabled;
+        delete settings.smbShare;
+        delete settings.smbUsername;
+        delete settings.smbPassword;
+      }
+
+      // Migration 2: funscriptDirectories array → funscriptLocations
+      if (settings.funscriptDirectories && !settings.funscriptLocations) {
+        console.log('[SettingsService] Migrating from funscriptDirectories to funscriptLocations');
+        const locations: FunscriptLocation[] = settings.funscriptDirectories.map((path: string, index: number) => ({
+          id: `migrated-local-${index}`,
+          name: `Local Directory ${index + 1}`,
+          type: 'local' as FunscriptLocationType,
+          enabled: true,
+          localPath: path,
+        }));
+
+        const migratedSettings: MediaSyncSettings = {
+          hereSphereEnabled: settings.hereSphereEnabled || false,
+          hereSphereIp: settings.hereSphereIp || '',
+          hereSpherePort: settings.hereSpherePort || 23554,
+          funscriptLocations: locations,
+        };
+
+        // Save migrated settings
+        await this.saveMediaSyncSettings(migratedSettings);
+        return migratedSettings;
+      }
+
+      // Ensure funscriptLocations exists (backwards compatibility)
+      if (!settings.funscriptLocations) {
+        settings.funscriptLocations = [];
+      }
+
+      return settings as MediaSyncSettings;
+    } catch (error) {
+      console.error('[SettingsService] Error loading media sync settings:', error);
+      return DefaultSettings.mediaSync;
+    }
+  }
+
+  /**
+   * Save media sync settings to storage
+   */
+  static async saveMediaSyncSettings(settings: MediaSyncSettings): Promise<void> {
+    try {
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.MEDIA_SYNC_SETTINGS,
+        JSON.stringify(settings)
+      );
+    } catch (error) {
+      console.error('[SettingsService] Error saving media sync settings:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Load all settings from storage
    * Returns default settings for any missing components
    */
   static async loadAllSettings(): Promise<AppSettings> {
-    const [device, pulse, focstim] = await Promise.all([
+    const [device, pulse, focstim, mediaSync] = await Promise.all([
       this.loadDeviceSettings(),
       this.loadPulseSettings(),
       this.loadFocStimSettings(),
+      this.loadMediaSyncSettings(),
     ]);
 
-    return { device, pulse, focstim };
+    return { device, pulse, focstim, mediaSync };
   }
 
   /**
@@ -167,6 +246,7 @@ export class SettingsService {
       this.saveDeviceSettings(settings.device),
       this.savePulseSettings(settings.pulse),
       this.saveFocStimSettings(settings.focstim),
+      this.saveMediaSyncSettings(settings.mediaSync),
     ]);
   }
 
@@ -185,6 +265,7 @@ export class SettingsService {
       STORAGE_KEYS.DEVICE_SETTINGS,
       STORAGE_KEYS.PULSE_SETTINGS,
       STORAGE_KEYS.FOCSTIM_SETTINGS,
+      STORAGE_KEYS.MEDIA_SYNC_SETTINGS,
     ]);
   }
 

@@ -20,8 +20,8 @@ export class CommandLoop {
     if (this.isRunning) return;
 
     // Validate settings before starting
-    const { deviceSettings, pulseSettings, focstimSettings } = useDeviceStore.getState();
-    const validation = validateAppSettings({ device: deviceSettings, pulse: pulseSettings, focstim: focstimSettings });
+    const { deviceSettings, pulseSettings, focstimSettings, mediaSyncSettings } = useDeviceStore.getState();
+    const validation = validateAppSettings({ device: deviceSettings, pulse: pulseSettings, focstim: focstimSettings, mediaSync: mediaSyncSettings });
 
     if (!validation.valid) {
       const errorMessage = `Invalid settings: ${validation.errors.join(', ')}`;

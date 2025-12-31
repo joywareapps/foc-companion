@@ -61,6 +61,44 @@ export interface FocStimSettings {
 }
 
 /**
+ * Funscript location type (WebDAV share or local directory)
+ */
+export type FunscriptLocationType = 'webdav' | 'local';
+
+/**
+ * Individual funscript location configuration
+ * Can be either WebDAV network share or local directory
+ */
+export interface FunscriptLocation {
+  id: string;                      // Unique identifier (UUID)
+  name: string;                    // User-friendly name (e.g., "NAS Movies", "Phone Downloads")
+  type: FunscriptLocationType;     // 'webdav' or 'local'
+  enabled: boolean;                // Whether to search this location
+
+  // WebDAV-specific fields (when type === 'webdav')
+  webdavUrl?: string;              // WebDAV server URL (e.g., http://192.168.1.10/webdav/movies)
+  webdavUsername?: string;         // WebDAV username for authentication
+  webdavPassword?: string;         // WebDAV password for authentication
+
+  // Local-specific fields (when type === 'local')
+  localPath?: string;              // Local directory path (e.g., /storage/emulated/0/Download)
+}
+
+/**
+ * Media Sync settings for HereSphere integration
+ */
+export interface MediaSyncSettings {
+  // HereSphere player configuration
+  hereSphereEnabled: boolean;      // default: false
+  hereSphereIp: string;            // default: ''
+  hereSpherePort: number;          // default: 23554
+
+  // Funscript location configuration
+  // Multiple locations (SMB shares and/or local directories)
+  funscriptLocations: FunscriptLocation[];  // default: []
+}
+
+/**
  * Complete application settings
  * Combines all settings categories
  */
@@ -68,6 +106,7 @@ export interface AppSettings {
   device: DeviceSettings;
   pulse: PulseSettings;
   focstim: FocStimSettings;
+  mediaSync: MediaSyncSettings;
 }
 
 /**
@@ -132,6 +171,12 @@ export const DefaultSettings: AppSettings = {
     wifiSsid: '',
     wifiPassword: '',
     wifiIp: '',
+  },
+  mediaSync: {
+    hereSphereEnabled: false,
+    hereSphereIp: '',
+    hereSpherePort: 23554,           // Default HereSphere port
+    funscriptLocations: [],          // Empty by default, user must configure locations
   },
 };
 

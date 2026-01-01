@@ -8,8 +8,9 @@ import { webdavService } from '@/services/WebDAVService';
 import type { FunscriptLocation } from '@/types/settings';
 
 export default function TabMediaSyncScreen() {
-  const { mediaSyncSettings, saveMediaSyncSettings, status: deviceStatus } = useDeviceStore();
+  const { mediaSyncSettings, saveMediaSyncSettings, status: deviceStatus, isPlaybackActive, playbackSource } = useDeviceStore();
   const isDeviceConnected = deviceStatus === 'CONNECTED';
+  const isPlaying = isPlaybackActive && playbackSource === 'mediaSync';
 
   // HereSphere settings
   const [hereSphereEnabled, setHereSphereEnabled] = useState(mediaSyncSettings.hereSphereEnabled);
@@ -34,8 +35,7 @@ export default function TabMediaSyncScreen() {
   const [webdavPassword, setWebdavPassword] = useState('');
   const [localPath, setLocalPath] = useState('');
 
-  // Playback state
-  const [isPlaying, setIsPlaying] = useState(false);
+  // Playback status display state
   const [playbackStatus, setPlaybackStatus] = useState('');
   const [detailedStatus, setDetailedStatus] = useState<any>(null);
 
@@ -166,14 +166,12 @@ export default function TabMediaSyncScreen() {
       if (isPlaying) {
         // Stop playback
         await syncedPlayback.stop();
-        setIsPlaying(false);
         setPlaybackStatus('Stopped');
         Alert.alert('Stopped', 'Synced playback stopped');
       } else {
         // Start playback
         setPlaybackStatus('Starting...');
         await syncedPlayback.start(hereSphereIp, port, enabledLocations);
-        setIsPlaying(true);
         setPlaybackStatus('Ready - Play a video in HereSphere');
         Alert.alert(
           'Started',
@@ -183,7 +181,6 @@ export default function TabMediaSyncScreen() {
       }
     } catch (error: any) {
       Alert.alert('Error', `Playback error: ${error.message}`);
-      setIsPlaying(false);
       setPlaybackStatus(`Error: ${error.message}`);
     }
   };

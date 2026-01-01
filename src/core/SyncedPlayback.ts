@@ -35,12 +35,23 @@ export class SyncedPlayback {
       return;
     }
 
+    // Check if another playback source is active
+    const deviceStore = useDeviceStore.getState();
+    if (!deviceStore.canStartPlayback('mediaSync')) {
+      const error = `Cannot start media sync: ${deviceStore.playbackSource} is currently playing`;
+      console.error('[SyncedPlayback]', error);
+      throw new Error(error);
+    }
+
     console.log('[SyncedPlayback] Starting synced playback...');
     console.log(`[SyncedPlayback] Funscript locations: ${funscriptLocations.map(l => l.name).join(', ')}`);
 
     this.funscriptLocations = funscriptLocations;
 
     try {
+      // Set playback active before starting
+      deviceStore.setPlaybackActive('mediaSync');
+
       // Configure HereSphere connection
       hereSphereService.configure(hereSphereIp, hereSpherePort);
 
@@ -59,6 +70,8 @@ export class SyncedPlayback {
       console.log('[SyncedPlayback] Synced playback started');
     } catch (error: any) {
       console.error('[SyncedPlayback] Failed to start:', error);
+      // Clear playback state on error
+      deviceStore.clearPlaybackActive();
       await this.stop();
       throw error;
     }
@@ -92,10 +105,15 @@ export class SyncedPlayback {
       this.lastPosition = 0;
       this.currentState = ConnectionState.NOT_CONNECTED;
 
+      // Clear playback state
+      useDeviceStore.getState().clearPlaybackActive();
+
       console.log('[SyncedPlayback] Synced playback stopped');
     } catch (error) {
       console.error('[SyncedPlayback] Error during stop:', error);
       this.isRunning = false;
+      // Always clear playback state even on error
+      useDeviceStore.getState().clearPlaybackActive();
     }
   }
 

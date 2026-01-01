@@ -7,6 +7,7 @@ import type { DeviceSettings, PulseSettings, FocStimSettings, MediaSyncSettings 
 import { DefaultSettings } from '@/types/settings';
 
 export type ConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
+export type PlaybackSource = 'pattern' | 'mediaSync' | null;
 
 export interface DeviceStatus {
   temperature?: number;
@@ -26,6 +27,10 @@ interface DeviceState {
   loopRunning: boolean;
   deviceStatus: DeviceStatus;
 
+  // Centralized playback state
+  isPlaybackActive: boolean;
+  playbackSource: PlaybackSource;
+
   // Pattern control
   patternSpeed: number; // rad/s, default 2.0
 
@@ -42,6 +47,11 @@ interface DeviceState {
   disconnect: () => Promise<void>;
   toggleLoop: () => Promise<void>;
 
+  // Playback state actions
+  setPlaybackActive: (source: PlaybackSource) => void;
+  clearPlaybackActive: () => void;
+  canStartPlayback: (requestedSource: PlaybackSource) => boolean;
+
   // Pattern actions
   setPatternSpeed: (speed: number) => void;
 
@@ -57,15 +67,17 @@ interface DeviceState {
 export const useDeviceStore = create<DeviceState>((set, get) => {
   // Setup API listeners
   focStimApi.onConnectionError = async (error) => {
+    console.error('[DeviceStore] Connection error, clearing playback state:', error);
     set({ status: 'ERROR', error });
     await commandLoop.stop();
-    set({ loopRunning: false });
+    set({ loopRunning: false, isPlaybackActive: false, playbackSource: null });
   };
 
   focStimApi.onDisconnect = async () => {
+    console.log('[DeviceStore] Disconnected, clearing playback state');
     set({ status: 'DISCONNECTED', error: null, deviceStatus: {} });
     await commandLoop.stop();
-    set({ loopRunning: false });
+    set({ loopRunning: false, isPlaybackActive: false, playbackSource: null });
   };
 
   // Handle device notifications
@@ -111,6 +123,10 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
     loopRunning: false,
     deviceStatus: {},
 
+    // Initial playback state
+    isPlaybackActive: false,
+    playbackSource: null,
+
     // Initial pattern control
     patternSpeed: 2.0, // rad/s
 
@@ -145,7 +161,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
     disconnect: async () => {
       await commandLoop.stop();
       focStimApi.disconnect();
-      set({ status: 'DISCONNECTED', loopRunning: false });
+      set({ status: 'DISCONNECTED', loopRunning: false, isPlaybackActive: false, playbackSource: null });
     },
     toggleLoop: async () => {
       const { loopRunning, status } = get();
@@ -154,15 +170,45 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
       if (loopRunning) {
         await commandLoop.stop();
         set({ loopRunning: false });
+        get().clearPlaybackActive();
       } else {
+        // Check if another playback source is active
+        if (!get().canStartPlayback('pattern')) {
+          const { playbackSource } = get();
+          set({ error: `Cannot start pattern: ${playbackSource} is currently playing` });
+          console.warn(`[DeviceStore] Cannot start pattern while ${playbackSource} is active`);
+          return;
+        }
+
         try {
+          get().setPlaybackActive('pattern');
           await commandLoop.start();
           set({ loopRunning: true });
         } catch (err: any) {
           console.error('[DeviceStore] Failed to start pattern:', err);
           set({ error: `Failed to start pattern: ${err.message}` });
+          get().clearPlaybackActive();
         }
       }
+    },
+
+    // Playback state actions
+    setPlaybackActive: (source: PlaybackSource) => {
+      console.log(`[DeviceStore] Setting playback active: ${source}`);
+      set({ isPlaybackActive: true, playbackSource: source });
+    },
+
+    clearPlaybackActive: () => {
+      console.log('[DeviceStore] Clearing playback active');
+      set({ isPlaybackActive: false, playbackSource: null });
+    },
+
+    canStartPlayback: (requestedSource: PlaybackSource) => {
+      const { isPlaybackActive, playbackSource } = get();
+      if (!isPlaybackActive) return true;
+      if (playbackSource === requestedSource) return true; // Same source can restart
+      console.warn(`[DeviceStore] Cannot start ${requestedSource}: ${playbackSource} is already active`);
+      return false;
     },
 
     // Pattern actions

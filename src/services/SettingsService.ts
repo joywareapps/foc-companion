@@ -185,9 +185,15 @@ export class SettingsService {
           funscriptLocations: locations,
         };
 
-        // Save migrated settings
+        // Save migrated settings (this removes funscriptDirectories from storage)
         await this.saveMediaSyncSettings(migratedSettings);
         return migratedSettings;
+      }
+
+      // Clean up old funscriptDirectories field if it exists (shouldn't happen after migration)
+      if (settings.funscriptDirectories) {
+        console.log('[SettingsService] Removing legacy funscriptDirectories field');
+        delete settings.funscriptDirectories;
       }
 
       // Ensure funscriptLocations exists (backwards compatibility)

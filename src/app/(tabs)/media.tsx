@@ -972,7 +972,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     padding: 20,
     width: '100%',
@@ -984,6 +984,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+    color: '#fff',
   },
   typeSelector: {
     flexDirection: 'row',
@@ -994,8 +995,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: '#444',
+    backgroundColor: '#2c2c2c',
   },
   typeButtonActive: {
     backgroundColor: '#3498db',
@@ -1003,7 +1004,7 @@ const styles = StyleSheet.create({
   },
   typeButtonText: {
     fontSize: 14,
-    color: '#666',
+    color: '#aaa',
   },
   typeButtonTextActive: {
     color: '#fff',
@@ -1022,10 +1023,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#ddd',
+    backgroundColor: '#444',
   },
   cancelButtonText: {
-    color: '#333',
+    color: '#fff',
     fontSize: 15,
     fontWeight: 'bold',
   },

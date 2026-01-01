@@ -1,7 +1,10 @@
 import { create } from 'zustand';
+import { Alert } from 'react-native';
 import { focStimApi } from '@/core/FocStimApiService';
 import { commandLoop } from '@/core/CommandLoop';
+import { syncedPlayback } from '@/core/SyncedPlayback';
 import type { Notification } from '@/generated/protobuf/focstim_rpc_pb';
+import type { DeviceError } from '@/core/DeviceNotificationLogger';
 import { SettingsService } from '@/services/SettingsService';
 import type { DeviceSettings, PulseSettings, FocStimSettings, MediaSyncSettings } from '@/types/settings';
 import { DefaultSettings } from '@/types/settings';
@@ -78,6 +81,68 @@ export const useDeviceStore = create<DeviceState>((set, get) => {
     set({ status: 'DISCONNECTED', error: null, deviceStatus: {} });
     await commandLoop.stop();
     set({ loopRunning: false, isPlaybackActive: false, playbackSource: null });
+  };
+
+  // Handle device errors (current limit, boot, timeout, etc.)
+  focStimApi.onDeviceError = async (error: DeviceError) => {
+    console.error('[DeviceStore] Device error detected, stopping playback:', error);
+
+    // Stop all playback immediately
+    const { playbackSource } = get();
+    if (playbackSource === 'pattern') {
+      await commandLoop.stop();
+    } else if (playbackSource === 'mediaSync') {
+      await syncedPlayback.stop();
+    }
+
+    // Clear playback state
+    set({ loopRunning: false, isPlaybackActive: false, playbackSource: null });
+
+    // Format error message for user
+    let errorMessage = error.message;
+    let errorTitle = 'Device Error';
+
+    switch (error.type) {
+      case 'current_limit':
+        errorTitle = 'Current Limit Exceeded';
+        errorMessage = 'The device stopped playback due to excessive current.\n\n';
+        if (error.details) {
+          errorMessage += `Details: ${error.details}\n\n`;
+        }
+        errorMessage += 'This is a safety feature. Please check your settings and try again with lower amplitude.';
+        break;
+
+      case 'boot':
+        errorTitle = 'Device Reset';
+        errorMessage = 'The device has rebooted unexpectedly.\n\n';
+        errorMessage += 'This may indicate a firmware crash or power issue. Playback has been stopped.';
+        break;
+
+      case 'timeout':
+        errorTitle = 'Communication Timeout';
+        errorMessage = 'Lost communication with device.\n\n';
+        if (error.details) {
+          errorMessage += `${error.details}\n\n`;
+        }
+        errorMessage += 'Playback has been stopped.';
+        break;
+
+      default:
+        if (error.details) {
+          errorMessage += `\n\n${error.details}`;
+        }
+        break;
+    }
+
+    errorMessage += `\n\nTime: ${error.timestamp.toLocaleTimeString()}`;
+
+    // Show alert to user
+    Alert.alert(errorTitle, errorMessage, [
+      { text: 'OK', style: 'default' }
+    ]);
+
+    // Set error state
+    set({ error: error.message });
   };
 
   // Handle device notifications

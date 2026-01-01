@@ -4,6 +4,16 @@
 import type { Notification } from '../generated/protobuf/focstim_rpc_pb';
 
 /**
+ * Device error information
+ */
+export interface DeviceError {
+  type: 'current_limit' | 'boot' | 'timeout' | 'unknown';
+  message: string;
+  details?: string;
+  timestamp: Date;
+}
+
+/**
  * Logger for all device notifications and events
  * Helps track down timeout issues and device communication problems
  */
@@ -12,6 +22,13 @@ export class DeviceNotificationLogger {
   private bootNotificationCount = 0;
   private debugStringCount = 0;
   private logEnabled = true; // Enable by default for debugging
+
+  // Error callback
+  public onDeviceError: ((error: DeviceError) => void) | null = null;
+
+  // Track recent current limit error to capture follow-up current values
+  private lastCurrentLimitError: DeviceError | null = null;
+  private lastCurrentLimitTimestamp: number = 0;
 
   /**
    * Enable or disable notification logging
@@ -98,14 +115,98 @@ export class DeviceNotificationLogger {
     console.error(`[DeviceLogger] 🚨 BOOT NOTIFICATION RECEIVED (#${this.bootNotificationCount})`);
     console.error(`[DeviceLogger]    Device has rebooted unexpectedly!`);
     console.error(`[DeviceLogger]    This indicates a critical device error or reset`);
+
+    // Trigger error callback
+    if (this.onDeviceError) {
+      this.onDeviceError({
+        type: 'boot',
+        message: 'Device rebooted unexpectedly',
+        details: `Boot notification #${this.bootNotificationCount} received`,
+        timestamp: new Date(),
+      });
+    }
   }
 
   /**
    * Log debug string from device
+   * Detects error patterns and triggers error callback
    */
   private logDebugString(message: string) {
     this.debugStringCount++;
     console.warn(`[DeviceLogger] 💬 Debug String (#${this.debugStringCount}): ${message}`);
+
+    // Detect error patterns
+    const lowerMessage = message.toLowerCase();
+
+    // Check if this is current values following a recent current limit error
+    if (lowerMessage.includes('currents were:') && this.lastCurrentLimitError) {
+      const timeSinceError = Date.now() - this.lastCurrentLimitTimestamp;
+
+      // If within 2 seconds of the current limit error, parse and update
+      if (timeSinceError < 2000) {
+        console.log('[DeviceLogger] Capturing current values for current limit error');
+
+        // Parse current values from message like "currents were: 0.003083 -0.001749 -0.297658"
+        const currentsMatch = message.match(/currents were:\s*([\d\.\-\s]+)/i);
+        if (currentsMatch) {
+          const currentsStr = currentsMatch[1].trim();
+          const currents = currentsStr.split(/\s+/).map(parseFloat);
+
+          // Update the error details with formatted current values
+          const enhancedDetails = `${this.lastCurrentLimitError.details}\n\nMeasured currents:\n` +
+            `  Channel A: ${currents[0]?.toFixed(3) || 'N/A'} A\n` +
+            `  Channel B: ${currents[1]?.toFixed(3) || 'N/A'} A\n` +
+            `  Channel C: ${currents[2]?.toFixed(3) || 'N/A'} A\n` +
+            (currents[3] !== undefined ? `  Channel D: ${currents[3].toFixed(3)} A` : '');
+
+          // Trigger updated error callback
+          if (this.onDeviceError) {
+            this.onDeviceError({
+              ...this.lastCurrentLimitError,
+              details: enhancedDetails,
+            });
+          }
+        }
+
+        // Clear the tracked error
+        this.lastCurrentLimitError = null;
+        this.lastCurrentLimitTimestamp = 0;
+        return; // Don't process as a new error
+      }
+    }
+
+    // Current limit exceeded error
+    if (lowerMessage.includes('current limit exceeded')) {
+      console.error('[DeviceLogger] 🚨 CRITICAL ERROR: Current limit exceeded');
+
+      const error: DeviceError = {
+        type: 'current_limit',
+        message: 'Current limit exceeded',
+        details: message,
+        timestamp: new Date(),
+      };
+
+      // Store for potential follow-up current values
+      this.lastCurrentLimitError = error;
+      this.lastCurrentLimitTimestamp = Date.now();
+
+      if (this.onDeviceError) {
+        this.onDeviceError(error);
+      }
+    }
+
+    // Other potential error patterns
+    if (lowerMessage.includes('error') || lowerMessage.includes('fault') || lowerMessage.includes('failed')) {
+      console.error('[DeviceLogger] 🚨 Device error detected:', message);
+      if (this.onDeviceError) {
+        this.onDeviceError({
+          type: 'unknown',
+          message: 'Device error',
+          details: message,
+          timestamp: new Date(),
+        });
+      }
+    }
   }
 
   /**
@@ -182,6 +283,16 @@ export class DeviceNotificationLogger {
       console.error(`[DeviceLogger]    ⚠️ WARNING: More than 20 pending requests!`);
       console.error(`[DeviceLogger]    Device may be overwhelmed or communication is failing`);
     }
+
+    // Trigger error callback
+    if (this.onDeviceError) {
+      this.onDeviceError({
+        type: 'timeout',
+        message: 'Request timeout',
+        details: `Request ${requestId} timed out. ${pendingRequestIds.length} pending requests.`,
+        timestamp: new Date(),
+      });
+    }
   }
 
   /**
@@ -214,6 +325,8 @@ export class DeviceNotificationLogger {
     this.notificationCount = 0;
     this.bootNotificationCount = 0;
     this.debugStringCount = 0;
+    this.lastCurrentLimitError = null;
+    this.lastCurrentLimitTimestamp = 0;
   }
 
   /**

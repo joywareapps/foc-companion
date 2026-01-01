@@ -13,7 +13,7 @@ import {
 } from '../generated/protobuf/messages_pb';
 import { OutputMode } from '../generated/protobuf/constants_pb';
 import { create, toBinary, fromBinary } from '@bufbuild/protobuf';
-import { deviceLogger } from './DeviceNotificationLogger';
+import { deviceLogger, type DeviceError } from './DeviceNotificationLogger';
 
 export class FocStimApiService {
   private hdlc = new HDLC();
@@ -25,6 +25,7 @@ export class FocStimApiService {
   public onNotification: ((notification: Notification) => void) | null = null;
   public onConnectionError: ((error: string) => void) | null = null;
   public onDisconnect: (() => void) | null = null;
+  public onDeviceError: ((error: DeviceError) => void) | null = null;
 
   public get connected(): boolean {
     return this.isConnected;
@@ -32,6 +33,14 @@ export class FocStimApiService {
 
   public async connectTcp(host: string, port: number = 55533): Promise<void> {
     deviceLogger.logSessionStart(host, port);
+
+    // Set up device error callback to forward to API callback
+    deviceLogger.onDeviceError = (error: DeviceError) => {
+      console.error('[FocStimApi] Device error detected:', error);
+      if (this.onDeviceError) {
+        this.onDeviceError(error);
+      }
+    };
 
     return new Promise((resolve, reject) => {
       try {

@@ -11,7 +11,17 @@
       "Bash(npm uninstall:*)",
       "Bash(npx expo start --clear)",
       "Bash(grep:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(cat:*)",
+      "Bash(npx expo install:*)",
+      "Bash(npx:*)",
+      "Bash(npx --package=typescript tsc:*)",
+      "Bash(ls:*)",
+      "Bash(npm run android:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(git restore:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

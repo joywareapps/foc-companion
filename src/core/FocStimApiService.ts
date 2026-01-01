@@ -13,6 +13,7 @@ import {
 } from '../generated/protobuf/messages_pb';
 import { OutputMode } from '../generated/protobuf/constants_pb';
 import { create, toBinary, fromBinary } from '@bufbuild/protobuf';
+import { deviceLogger } from './DeviceNotificationLogger';
 
 export class FocStimApiService {
   private hdlc = new HDLC();
@@ -30,10 +31,13 @@ export class FocStimApiService {
   }
 
   public async connectTcp(host: string, port: number = 55533): Promise<void> {
+    deviceLogger.logSessionStart(host, port);
+
     return new Promise((resolve, reject) => {
       try {
         this.tcpSocket = TcpSocket.createConnection({ host, port }, () => {
           this.isConnected = true;
+          console.log(`[FocStimApi] Connected to ${host}:${port}`);
           resolve();
         });
 
@@ -42,15 +46,18 @@ export class FocStimApiService {
         });
 
         this.tcpSocket.on('error', (error: any) => {
+          deviceLogger.logConnectionError(error.message);
           if (this.onConnectionError) this.onConnectionError(error.message);
           reject(error);
         });
 
         this.tcpSocket.on('close', () => {
+          deviceLogger.logDisconnect();
           this.cleanup();
           if (this.onDisconnect) this.onDisconnect();
         });
       } catch (err: any) {
+        deviceLogger.logConnectionError(err.message);
         reject(err);
       }
     });
@@ -74,7 +81,7 @@ export class FocStimApiService {
     for (const frame of frames) {
       try {
         const rpcMessage = fromBinary(RpcMessageSchema, frame);
-        
+
         if (rpcMessage.message.case === 'response') {
           const response = rpcMessage.message.value;
           const callback = this.pendingRequests.get(response.id);
@@ -83,12 +90,27 @@ export class FocStimApiService {
             this.pendingRequests.delete(response.id);
           }
         } else if (rpcMessage.message.case === 'notification') {
+          const notification = rpcMessage.message.value;
+
+          // Log all notifications for debugging
+          deviceLogger.logNotification(notification);
+
+          // Check for boot notification - indicates device reset (critical error)
+          if (notification.notification.case === 'notificationBoot') {
+            console.error('[FocStimApi] 🚨 Boot notification received - device has reset!');
+            // Optionally trigger disconnect or error handling
+            if (this.onConnectionError) {
+              this.onConnectionError('Device reset unexpectedly (boot notification received)');
+            }
+          }
+
+          // Forward notification to callback
           if (this.onNotification) {
-            this.onNotification(rpcMessage.message.value);
+            this.onNotification(notification);
           }
         }
       } catch (err) {
-        console.error('Failed to decode Protobuf frame:', err);
+        console.error('[FocStimApi] Failed to decode Protobuf frame:', err);
       }
     }
   }
@@ -113,13 +135,18 @@ export class FocStimApiService {
     return new Promise((resolve, reject) => {
       // Set timeout for request
       const timeout = setTimeout(() => {
+        // Log timeout with pending request information
+        const pendingIds = Array.from(this.pendingRequests.keys());
+        deviceLogger.logTimeout(id, pendingIds);
+
         this.pendingRequests.delete(id);
-        reject(new Error('Request timeout'));
+        reject(new Error(`Request timeout (ID: ${id})`));
       }, 5000);
 
       this.pendingRequests.set(id, (response) => {
         clearTimeout(timeout);
         if (response.error) {
+          console.error(`[FocStimApi] Device error code: ${response.error.code}`);
           reject(new Error(`Device error code: ${response.error.code}`));
         } else {
           resolve(response);
@@ -144,6 +171,21 @@ export class FocStimApiService {
       case: 'requestSignalStop',
       value: create(RequestSignalStopSchema, {})
     });
+  }
+
+  /**
+   * Enable or disable device notification logging
+   * Useful for debugging timeout issues and device communication problems
+   */
+  public setNotificationLogging(enabled: boolean): void {
+    deviceLogger.setLoggingEnabled(enabled);
+  }
+
+  /**
+   * Get notification logging statistics
+   */
+  public getNotificationStats() {
+    return deviceLogger.getStats();
   }
 }
 

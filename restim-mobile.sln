@@ -1,0 +1,54 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "restim-maui", "restim-maui", "{D443B8C3-D981-939D-E462-1510587A017B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestimMaui", "restim-maui\RestimMaui.csproj", "{F6BE7223-94A3-62CC-572E-E2CEC5161979}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "node_modules", "node_modules", "{96B791EA-1461-393C-30A2-480DD2263FF0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "react-native-fs", "react-native-fs", "{97C7F8FF-3FF5-497E-73C1-99B56902AB87}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "windows", "windows", "{F34D77CC-036F-A8C8-F3FF-0F6893CFBF50}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RNFS", "src\node_modules\react-native-fs\windows\RNFS\RNFS.csproj", "{B4F3A3BA-DC24-0041-E38A-546A8014812B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RNFS.Net46", "src\node_modules\react-native-fs\windows\RNFS.Net46\RNFS.Net46.csproj", "{4A31512F-EB6A-32F1-1B24-6288D2ADA220}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F6BE7223-94A3-62CC-572E-E2CEC5161979}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6BE7223-94A3-62CC-572E-E2CEC5161979}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6BE7223-94A3-62CC-572E-E2CEC5161979}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6BE7223-94A3-62CC-572E-E2CEC5161979}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4F3A3BA-DC24-0041-E38A-546A8014812B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4F3A3BA-DC24-0041-E38A-546A8014812B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4F3A3BA-DC24-0041-E38A-546A8014812B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4F3A3BA-DC24-0041-E38A-546A8014812B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A31512F-EB6A-32F1-1B24-6288D2ADA220}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A31512F-EB6A-32F1-1B24-6288D2ADA220}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A31512F-EB6A-32F1-1B24-6288D2ADA220}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A31512F-EB6A-32F1-1B24-6288D2ADA220}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F6BE7223-94A3-62CC-572E-E2CEC5161979} = {D443B8C3-D981-939D-E462-1510587A017B}
+		{96B791EA-1461-393C-30A2-480DD2263FF0} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{97C7F8FF-3FF5-497E-73C1-99B56902AB87} = {96B791EA-1461-393C-30A2-480DD2263FF0}
+		{F34D77CC-036F-A8C8-F3FF-0F6893CFBF50} = {97C7F8FF-3FF5-497E-73C1-99B56902AB87}
+		{B4F3A3BA-DC24-0041-E38A-546A8014812B} = {F34D77CC-036F-A8C8-F3FF-0F6893CFBF50}
+		{4A31512F-EB6A-32F1-1B24-6288D2ADA220} = {F34D77CC-036F-A8C8-F3FF-0F6893CFBF50}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {08AF32B4-BC37-4C8D-98A9-AA63F3714D33}
+	EndGlobalSection
+EndGlobal

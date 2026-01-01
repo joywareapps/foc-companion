@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="c5716308-0779-427b-864c-a0277aec8cbd"
+    Publisher="CN=goran"
+    Version="1.0.0.0" />
+
+  <Properties>
+    <DisplayName>FOC Companion</DisplayName>
+    <PublisherDisplayName>Joyware Apps</PublisherDisplayName>
+    <Logo>Resources\Images\logo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="$targetnametoken$.exe"
+      EntryPoint="$targetentrypoint$">
+      <uap:VisualElements
+        DisplayName="FOC Companion"
+        Description="FOC-Stim Companion App"
+        BackgroundColor="transparent"
+        Square150x150Logo="Resources\Images\logo.png"
+        Square44x44Logo="Resources\Images\logo.png">
+        <uap:DefaultTile Wide310x150Logo="Resources\Images\logo.png" />
+        <uap:SplashScreen Image="Resources\Images\logo.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <Capability Name="internetClient" />
+    <!-- Needed for TCP/Serial -->
+    <Capability Name="privateNetworkClientServer" />
+  </Capabilities>
+
+</Package>

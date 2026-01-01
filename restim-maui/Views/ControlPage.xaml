@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:RestimMaui.ViewModels"
+             x:Class="RestimMaui.Views.ControlPage"
+             Title="Control">
+    
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+            <Label Text="FOC Companion" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" />
+            
+            <!-- Connection Card -->
+            <Frame BorderColor="Gray" CornerRadius="10" Padding="15">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding ConnectionStatus}" TextColor="{Binding ConnectionColor}" 
+                           FontSize="18" HorizontalOptions="Center" FontAttributes="Bold"/>
+                    
+                    <Button Text="{Binding ConnectionStatus, StringFormat='{0}'}" 
+                            Command="{Binding ConnectCommand}"
+                            BackgroundColor="{Binding ConnectionColor}"
+                            TextColor="White"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Status -->
+            <Frame BorderColor="#3498db" BackgroundColor="#103498db" CornerRadius="10" Padding="10">
+                <HorizontalStackLayout Spacing="15" HorizontalOptions="Center">
+                    <Label Text="{Binding Temperature}" />
+                    <Label Text="|" />
+                    <Label Text="{Binding BatteryVoltage}" />
+                    <Label Text="{Binding BatterySoc}" />
+                </HorizontalStackLayout>
+            </Frame>
+
+            <!-- Pattern Control -->
+            <Frame BorderColor="#ddd" CornerRadius="10" Padding="15">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Pattern Control" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center" />
+                    
+                    <Button Text="{Binding ButtonText}" 
+                            Command="{Binding ToggleLoopCommand}"
+                            BackgroundColor="{Binding ButtonColor}"
+                            HeightRequest="50"/>
+
+                    <Label Text="Pattern Speed (rad/s)" FontAttributes="Bold"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="0.1" Maximum="10.0" Value="{Binding PatternSpeed}" />
+                        <Label Grid.Column="1" Text="{Binding PatternSpeed, StringFormat='{0:F1}'}" WidthRequest="40"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

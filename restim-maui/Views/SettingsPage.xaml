@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:RestimMaui.ViewModels"
+             x:Class="RestimMaui.Views.SettingsPage"
+             Title="Settings">
+
+    <VerticalStackLayout Padding="20" Spacing="15">
+        <Label Text="Global Settings" FontSize="18" FontAttributes="Bold" />
+        
+        <Label Text="FOC-Stim Device IP" />
+        <Entry Text="{Binding WifiIp}" Placeholder="192.168.1.1" />
+        
+        <Button Text="Save" Command="{Binding SaveCommand}" BackgroundColor="#27ae60"/>
+        
+        <Label Text="Version 1.0 (MAUI Prototype)" 
+               HorizontalOptions="Center" 
+               VerticalOptions="End" 
+               TextColor="Gray" />
+    </VerticalStackLayout>
+</ContentPage>

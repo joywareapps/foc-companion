@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:RestimMaui.ViewModels"
+             x:Class="RestimMaui.Views.MediaSyncPage"
+             Title="Media">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="HereSphere Sync" FontSize="18" FontAttributes="Bold" />
+            
+            <HorizontalStackLayout Spacing="10">
+                <Switch IsToggled="{Binding Enabled}" />
+                <Label Text="Enable HereSphere Integration" VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+
+            <Entry Placeholder="IP Address" Text="{Binding Ip}" />
+            <Entry Placeholder="Port" Text="{Binding Port}" Keyboard="Numeric" />
+
+            <BoxView HeightRequest="1" Color="Gray" Margin="0,10"/>
+            
+            <Label Text="Funscript Locations" FontSize="18" FontAttributes="Bold" />
+            <CollectionView ItemsSource="{Binding Locations}" HeightRequest="200">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Padding="10" Margin="0,5" BorderColor="Gray">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <VerticalStackLayout Grid.Column="0">
+                                    <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                    <Label Text="{Binding Type}" FontSize="12" TextColor="Gray"/>
+                                </VerticalStackLayout>
+                                <Button Grid.Column="1" Text="X" 
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MediaSyncViewModel}}, Path=RemoveLocationCommand}"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="Red" HeightRequest="35" WidthRequest="40"/>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Button Text="Add Location" Command="{Binding AddLocationCommand}" />
+            <Button Text="Save Media Settings" Command="{Binding SaveCommand}" BackgroundColor="#27ae60" Margin="0,20,0,0"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

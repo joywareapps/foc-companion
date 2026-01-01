@@ -1,3 +1,12 @@
 source-repos/
 .agent-instructions/
 .claude/settings.local.json
+
+# .NET artifacts
+**/bin/
+**/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/

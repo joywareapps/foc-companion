@@ -23,6 +23,11 @@ export class SyncedPlayback {
   private currentFunscriptPos: number = 0;
   private currentDevicePos: number = 0;
 
+  // Pause/resume handling
+  private isPaused = false;
+  private resumeStartTime: number = 0;
+  private readonly RESUME_RAMP_DURATION_MS = 2000; // 2 seconds amplitude ramp on resume
+
   /**
    * Start synced playback
    * @param hereSphereIp HereSphere player IP address
@@ -104,6 +109,8 @@ export class SyncedPlayback {
       this.isRunning = false;
       this.lastPosition = 0;
       this.currentState = ConnectionState.NOT_CONNECTED;
+      this.isPaused = false;
+      this.resumeStartTime = 0;
 
       // Clear playback state
       useDeviceStore.getState().clearPlaybackActive();
@@ -112,6 +119,8 @@ export class SyncedPlayback {
     } catch (error) {
       console.error('[SyncedPlayback] Error during stop:', error);
       this.isRunning = false;
+      this.isPaused = false;
+      this.resumeStartTime = 0;
       // Always clear playback state even on error
       useDeviceStore.getState().clearPlaybackActive();
     }
@@ -132,10 +141,30 @@ export class SyncedPlayback {
       await this.loadFunscriptsForVideo(status.identifier);
     }
 
-    // Only update position if we have a funscript and are playing
-    if (!this.funscript || state !== ConnectionState.CONNECTED_AND_PLAYING || !status) {
+    // Detect pause/resume transitions
+    const wasPaused = this.isPaused;
+    this.isPaused = (state === ConnectionState.CONNECTED_AND_PAUSED);
+
+    // Handle pause transition (playing → paused)
+    if (!wasPaused && this.isPaused) {
+      console.log('[SyncedPlayback] Video paused - ramping amplitude down');
+      await this.handlePause();
+    }
+
+    // Handle resume transition (paused → playing)
+    if (wasPaused && !this.isPaused && state === ConnectionState.CONNECTED_AND_PLAYING) {
+      console.log('[SyncedPlayback] Video resumed - ramping amplitude up');
+      this.resumeStartTime = Date.now();
+    }
+
+    // Only update position if we have a funscript and status
+    if (!this.funscript || !status) {
       return;
     }
+
+    // Update position even when paused (but with 0 amplitude)
+    // This keeps position tracking accurate for when we resume
+    const isPlaying = state === ConnectionState.CONNECTED_AND_PLAYING;
 
     // Get current playback time in milliseconds
     this.currentTimeMs = status.currentTime * 1000;
@@ -146,7 +175,41 @@ export class SyncedPlayback {
     // Convert to device position (-1 to 1)
     this.currentDevicePos = FunscriptService.funscriptToDevicePosition(this.currentFunscriptPos);
 
-    // Only update if position changed significantly (>1% change)
+    // Calculate amplitude based on pause/resume state
+    const { deviceSettings } = useDeviceStore.getState();
+    const targetAmplitude = deviceSettings.waveformAmplitude;
+    let currentAmplitude = targetAmplitude;
+
+    if (this.isPaused) {
+      // While paused, amplitude is 0
+      currentAmplitude = 0;
+    } else if (isPlaying && this.resumeStartTime > 0) {
+      // Resume ramp (0 to target over RESUME_RAMP_DURATION_MS)
+      const elapsedMs = Date.now() - this.resumeStartTime;
+      const rampProgress = Math.min(elapsedMs / this.RESUME_RAMP_DURATION_MS, 1.0);
+      currentAmplitude = targetAmplitude * rampProgress;
+
+      // Clear resume start time once ramp is complete
+      if (rampProgress >= 1.0) {
+        this.resumeStartTime = 0;
+      }
+    }
+
+    // Update amplitude if changed
+    try {
+      await focStimApi.sendRequest({
+        case: 'requestAxisMoveTo',
+        value: {
+          axis: AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS,
+          value: currentAmplitude,
+          interval: 16
+        } as any
+      });
+    } catch (error) {
+      console.error('[SyncedPlayback] Failed to update amplitude:', error);
+    }
+
+    // Only update position if changed significantly (>1% change)
     if (Math.abs(this.currentDevicePos - this.lastPosition) > 0.01) {
       try {
         // Update device position
@@ -165,6 +228,25 @@ export class SyncedPlayback {
       } catch (error) {
         console.error('[SyncedPlayback] Failed to update position:', error);
       }
+    }
+  }
+
+  /**
+   * Handle pause - ramp amplitude down to 0
+   */
+  private async handlePause() {
+    try {
+      // Ramp amplitude down to 0 over 500ms
+      await focStimApi.sendRequest({
+        case: 'requestAxisMoveTo',
+        value: {
+          axis: AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS,
+          value: 0,
+          interval: 500
+        } as any
+      });
+    } catch (error) {
+      console.error('[SyncedPlayback] Failed to ramp down amplitude on pause:', error);
     }
   }
 

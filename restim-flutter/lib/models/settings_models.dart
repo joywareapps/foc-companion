@@ -57,7 +57,7 @@ class PulseSettings {
 
 class FocStimSettings {
   String wifiIp = "192.168.1.1";
-  int wifiPort = 8080;
+  int wifiPort = 55533;
 
   Map<String, dynamic> toJson() => {
     'wifiIp': wifiIp,
@@ -66,7 +66,7 @@ class FocStimSettings {
 
   FocStimSettings.fromJson(Map<String, dynamic> json) {
     wifiIp = json['wifiIp'] ?? "192.168.1.1";
-    wifiPort = json['wifiPort'] ?? 8080;
+    wifiPort = json['wifiPort'] ?? 55533;
   }
   
   FocStimSettings();

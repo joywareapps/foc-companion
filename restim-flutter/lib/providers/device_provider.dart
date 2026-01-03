@@ -37,7 +37,8 @@ class DeviceProvider with ChangeNotifier {
 
   Future<void> connect() async {
     try {
-      connectionStatus = "Connecting...";
+      connectionStatus = "Connecting to ${settings.focStim.wifiIp}:${settings.focStim.wifiPort}...";
+      print("Attempting connection to ${settings.focStim.wifiIp}:${settings.focStim.wifiPort}");
       notifyListeners();
       await api.connectTcp(settings.focStim.wifiIp, settings.focStim.wifiPort);
       connectionStatus = "Connected";
@@ -66,10 +67,15 @@ class DeviceProvider with ChangeNotifier {
   }
 
   void _handleNotification(Notification n) {
+    print("Received notification: ${n.whichNotification()}");
+    
     // Parse notifications to update state (temp, battery, etc)
     if (n.hasNotificationSystemStats()) {
-       if (n.notificationSystemStats.hasFocstimv3()) {
-         temperature = "${n.notificationSystemStats.focstimv3.tempStm32.toStringAsFixed(1)}°C";
+       final stats = n.notificationSystemStats;
+       if (stats.hasFocstimv3()) {
+         temperature = "${stats.focstimv3.tempStm32.toStringAsFixed(1)}°C";
+       } else if (stats.hasEsc1()) {
+         temperature = "${stats.esc1.tempStm32.toStringAsFixed(1)}°C";
        }
     }
     if (n.hasNotificationBattery()) {

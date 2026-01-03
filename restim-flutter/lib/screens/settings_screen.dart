@@ -11,12 +11,14 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _ipController = TextEditingController();
+  final TextEditingController _portController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     _ipController.text = settings.focStim.wifiIp;
+    _portController.text = settings.focStim.wifiPort.toString();
   }
 
   @override
@@ -38,10 +40,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           keyboardType: TextInputType.number,
         ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _portController,
+          decoration: const InputDecoration(
+            labelText: "FOC-Stim Device Port",
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.router),
+          ),
+          keyboardType: TextInputType.number,
+        ),
         const SizedBox(height: 20),
         FilledButton(
           onPressed: () {
             settings.focStim.wifiIp = _ipController.text;
+            settings.focStim.wifiPort = int.tryParse(_portController.text) ?? 55533;
             settings.saveSettings();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Settings Saved")),

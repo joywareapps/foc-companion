@@ -47,6 +47,7 @@ class FocStimApiService {
   }
 
   void _onData(Uint8List data) {
+    // print("RX: ${data.length} bytes");
     List<Uint8List> frames = _hdlc.parse(data);
     for (var frame in frames) {
       try {
@@ -54,6 +55,7 @@ class FocStimApiService {
         if (message.hasResponse()) {
           _handleResponse(message.response);
         } else if (message.hasNotification()) {
+          // print("Notification: ${message.notification.whichNotification()}");
           onNotification?.call(message.notification);
         }
       } catch (e) {

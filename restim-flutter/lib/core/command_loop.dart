@@ -18,22 +18,32 @@ class CommandLoop {
 
   Future<void> start() async {
     if (_isRunning) return;
+    print("CommandLoop: Starting...");
     
     // Setup params
-    await _setupParams();
-    await _api.startSignal();
+    try {
+      await _setupParams();
+      print("CommandLoop: Params setup complete. Starting signal...");
+      await _api.startSignal();
+      print("CommandLoop: Signal started.");
 
-    _isRunning = true;
-    _startTime = DateTime.now().millisecondsSinceEpoch / 1000.0;
-    
-    // 60Hz loop
-    _timer = Timer.periodic(const Duration(milliseconds: 16), _tick);
+      _isRunning = true;
+      _startTime = DateTime.now().millisecondsSinceEpoch / 1000.0;
+      
+      // 60Hz loop
+      _timer = Timer.periodic(const Duration(milliseconds: 16), _tick);
+    } catch (e) {
+      print("CommandLoop: Error starting: $e");
+      _isRunning = false;
+    }
   }
 
   Future<void> stop() async {
+    print("CommandLoop: Stopping...");
     _timer?.cancel();
     _isRunning = false;
     await _api.stopSignal();
+    print("CommandLoop: Stopped.");
   }
 
   void _tick(Timer timer) async {
@@ -52,19 +62,20 @@ class CommandLoop {
 
     try {
       // Send updates
-      await _api.sendRequest(Request()
+      // Don't await these to prevent blocking the loop if one is slow
+      _api.sendRequest(Request()
         ..requestAxisMoveTo = (RequestAxisMoveTo()
           ..axis = AxisType.AXIS_POSITION_ALPHA
           ..value = pos.x
           ..interval = 50));
           
-      await _api.sendRequest(Request()
+      _api.sendRequest(Request()
         ..requestAxisMoveTo = (RequestAxisMoveTo()
           ..axis = AxisType.AXIS_POSITION_BETA
           ..value = pos.y
           ..interval = 50));
 
-      await _api.sendRequest(Request()
+      _api.sendRequest(Request()
         ..requestAxisMoveTo = (RequestAxisMoveTo()
           ..axis = AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS
           ..value = currentAmp
@@ -75,7 +86,9 @@ class CommandLoop {
   }
 
   Future<void> _setupParams() async {
+    print("CommandLoop: Setting up params...");
     Future<void> send(AxisType axis, double val) async {
+      print("CommandLoop: Sending $axis = $val");
       await _api.sendRequest(Request()
         ..requestAxisMoveTo = (RequestAxisMoveTo()
           ..axis = axis
@@ -86,11 +99,23 @@ class CommandLoop {
     var p = _settings.pulse;
     var d = _settings.device;
 
+    // Initialize position axes to 0
+    await send(AxisType.AXIS_POSITION_ALPHA, 0);
+    await send(AxisType.AXIS_POSITION_BETA, 0);
+    
+    // Reset amplitude to 0
+    await send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, 0);
+
+    // Pulse settings
     await send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, p.carrierFrequency);
     await send(AxisType.AXIS_PULSE_FREQUENCY_HZ, p.pulseFrequency);
     await send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, p.pulseWidth);
+    await send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, p.pulseRiseTime);
+    await send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT, p.pulseIntervalRandom / 100.0);
     
+    // Calibration settings
     await send(AxisType.AXIS_CALIBRATION_3_CENTER, d.calibration3Center);
-    // ... others
+    await send(AxisType.AXIS_CALIBRATION_3_UP, d.calibration3Up);
+    await send(AxisType.AXIS_CALIBRATION_3_LEFT, d.calibration3Left);
   }
 }

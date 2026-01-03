@@ -45,7 +45,7 @@ namespace RestimMaui.ViewModels
             s.Calibration3Left = CalLeft;
 
             await _settingsService.SaveAsync();
-            await Application.Current.MainPage.DisplayAlert("Success", "Settings saved", "OK");
+            await Application.Current.Windows[0].Page.DisplayAlert("Success", "Settings saved", "OK");
         }
 
         [RelayCommand]

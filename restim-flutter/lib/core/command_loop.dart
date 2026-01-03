@@ -35,6 +35,7 @@ class CommandLoop {
     } catch (e) {
       print("CommandLoop: Error starting: $e");
       _isRunning = false;
+      throw e;
     }
   }
 

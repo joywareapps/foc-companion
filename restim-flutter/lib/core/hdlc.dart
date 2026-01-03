@@ -29,6 +29,8 @@ class Hdlc {
 
           if (computedCrc == packetCrc) {
             resultingFrames.add(payload);
+          } else {
+            print("HDLC: CRC Mismatch! Computed: 0x${computedCrc.toRadixString(16)}, Packet: 0x${packetCrc.toRadixString(16)}");
           }
         }
         _reset();
@@ -93,14 +95,19 @@ class Hdlc {
     _pendingPayload.clear();
   }
 
-  // CRC-16-CCITT (X.25)
+  // CRC-16/X-25 (Poly 0x1021, Init 0xFFFF, RefIn/RefOut, XorOut 0xFFFF)
+  // Implemented using reversed poly 0x8408 for LSB-first processing
   static int _crc16(Uint8List data) {
     int crc = 0xFFFF;
     for (int b in data) {
-      int x = (crc >> 8) ^ b;
-      x ^= (x >> 4);
-      crc = (crc << 8) ^ (x << 12) ^ (x << 5) ^ x;
-      crc &= 0xFFFF; // Keep 16-bit
+      crc ^= b;
+      for (int i = 0; i < 8; i++) {
+        if ((crc & 1) != 0) {
+          crc = (crc >> 1) ^ 0x8408;
+        } else {
+          crc >>= 1;
+        }
+      }
     }
     return crc ^ 0xFFFF;
   }

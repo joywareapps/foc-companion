@@ -53,6 +53,7 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
   - Research alternatives to Play Store (F-Droid, Amazon, Samsung, etc.)
   - **Focus:** Quick beta distribution to testers
   - **Bonus:** GitHub Actions automation, local build + upload
+  - **Link-based testing (no email required):** Firebase signup links, GitHub releases, S3
   - Platforms analyzed: Firebase App Distribution (RECOMMENDED), GitHub Releases, TestFairy, App Center, F-Droid, S3
   - Implementation plan for multi-tier distribution (Beta → Public Beta → Production)
 

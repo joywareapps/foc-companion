@@ -464,6 +464,204 @@ https://d123456.cloudfront.net/releases/v1.2.0/app.apk
 
 ---
 
+### 1.5 Link-Based Testing Methods (No Email Required)
+
+**Important:** For community beta testing, link-based methods eliminate the friction of collecting/managing tester emails.
+
+#### Firebase App Distribution - Signup Links (RECOMMENDED)
+**Method:** Create public signup link for tester self-registration
+
+**How it works:**
+1. Enable signup link in Firebase Console
+2. Share link anywhere (Discord, website, social media)
+3. Testers click link, sign in with Google account (once)
+4. They automatically get access to all builds
+5. Receive update notifications via Firebase app
+
+**Setup:**
+```
+Firebase Console → App Distribution → Testers & Groups
+→ Create Group → Enable "Share signup link"
+```
+
+**Example Link:**
+```
+https://appdistribution.firebase.google.com/testerapps/1:123456789:android:abcdef
+```
+
+**Pros:**
+- ✅ **No email collection** - Testers self-register
+- ✅ **Self-service** - No waiting for invitation
+- ✅ **Shareable anywhere** - Discord, Slack, website, email
+- ✅ **Still get all Firebase benefits** - Analytics, crash reports, update notifications
+- ✅ **Control access** - Can disable link at any time
+- ✅ **See who signed up** - Tester list in Firebase Console
+
+**Cons:**
+- ⚠️ Requires Google account for testers (one-time)
+- ⚠️ Link can be shared beyond your control
+- ⚠️ Less privacy than email invites
+
+**Automation:**
+- GitHub Actions: Same as email-based Firebase distribution
+- Local CLI: Same as email-based
+- Just share the signup link instead of adding individual emails
+
+**Quick Beta Capability:** ✅ EXCELLENT (instant for testers)
+**Best For:** Community beta testing, Discord communities, semi-public betas
+
+**Discord Announcement Example:**
+```markdown
+🎮 **FOC Companion Beta Testing**
+
+Want to test the latest features? Join our beta program!
+
+📱 **Beta Signup:** https://appdistribution.firebase.google.com/...
+
+After signing up, you'll get access to the latest beta builds 
+and be notified when new versions are available.
+
+**Requirements:**
+- Android device
+- FOC-Stim hardware  
+- Google account (one-time signup)
+
+Questions? Ask in #foc-companion-support
+```
+
+---
+
+#### GitHub Releases - Direct Download Links
+**Method:** Upload APK to release, share direct download link
+
+**Setup:**
+```bash
+# Create release with APK
+gh release create v1.0.0-beta ./app.apk --title "Public Beta v1.0.0"
+```
+
+**Share Direct Download Link:**
+```
+https://github.com/joywareapps/restim-mobile/releases/download/v1.0.0-beta/app.apk
+```
+
+**Pros:**
+- ✅ **No signup required** - Anyone with link can download
+- ✅ **Already have setup** - GitHub repo exists
+- ✅ **Version tracking** - All releases documented
+- ✅ **Free unlimited** - No storage/bandwidth limits
+- ✅ **Share anywhere** - Discord, website, email
+
+**Cons:**
+- ⚠️ **No auto-update** - Testers must manually check
+- ⚠️ **No analytics** - Don't know who downloaded
+- ⚠️ **Manual install** - Users must enable "Unknown sources"
+
+**Quick Beta Capability:** ✅ EXCELLENT (instant download)
+**Best For:** Open source projects, public betas, technical users
+
+---
+
+#### TestFairy - Public Links
+**Method:** Each build gets shareable install link
+
+**Setup:**
+```bash
+# Upload via API
+curl -s -F "file=@app.apk" \
+     -F "api_key=YOUR_KEY" \
+     https://upload.testfairy.com/api/upload
+```
+
+**Share Link:**
+```
+https://testfairy.com/projects/joyware-apps/builds/123
+```
+
+**Pros:**
+- ✅ **No signup for testers** - Click link, install
+- ✅ **Session recording** - See how testers use app
+- ✅ **Crash reports** - Detailed analytics
+- ✅ **Feedback in-app** - Testers can report issues
+
+**Cons:**
+- ⚠️ **Free tier limited** - 2 apps, 500 MB storage
+- ⚠️ **Paid plans** - $49/month for more
+- ⚠️ **Privacy concerns** - Session recording
+
+**Quick Beta Capability:** ✅ EXCELLENT
+**Best For:** Teams wanting detailed testing analytics
+
+---
+
+#### App Center - Public Distribution Groups
+**Method:** Create public group with shareable link
+
+**Setup:**
+```
+App Center → Distribute → Groups → Create Group
+→ Enable "Allow public access" → Get share link
+```
+
+**Pros:**
+- ✅ **Free tier available** - Unlimited apps
+- ✅ **Analytics included** - Usage tracking
+- ✅ **No signup for testers** - Just download
+- ✅ **Good automation** - CLI, API, GitHub Actions
+
+**Cons:**
+- ⚠️ Requires Microsoft account (for you, not testers)
+- ⚠️ Less popular than Firebase
+
+**Quick Beta Capability:** ✅ EXCELLENT
+**Best For:** Microsoft ecosystem teams
+
+---
+
+#### S3/CloudFlare R2 - Direct Hosting
+**Method:** Upload APK, share public URL
+
+**Setup:**
+```bash
+# Upload to S3 with public access
+aws s3 cp app.apk s3://my-bucket/beta/app.apk --acl public-read
+
+# Share direct link
+https://my-bucket.s3.amazonaws.com/beta/app.apk
+```
+
+**Pros:**
+- ✅ **Maximum control** - You own everything
+- ✅ **Extremely cheap** - <$1/month typically
+- ✅ **No signup** - Direct download
+- ✅ **CDN available** - Fast global delivery
+
+**Cons:**
+- ⚠️ **No updates/notifications** - Pure file hosting
+- ⚠️ **No analytics** - Unless you add them
+- ⚠️ **Manual management** - Version control, etc.
+
+**Quick Beta Capability:** ✅ GOOD (instant, but manual)
+**Best For:** Maximum control, cost-sensitive projects
+
+---
+
+### 1.6 Link-Based vs Email Comparison
+
+| Method | Privacy | Friction | Control | Updates | Best For |
+|--------|---------|----------|---------|---------|----------|
+| **Email Invites** | High | High (wait) | High | ✅ Yes | Private betas, internal |
+| **Firebase Signup Link** | Medium | Low (self-serve) | Medium | ✅ Yes | **Community betas** |
+| **GitHub Releases** | Low | Very Low | Low | ❌ No | Public betas, OSS |
+| **Direct APK Link** | Low | Very Low | Low | ❌ No | Quick sharing |
+
+**Recommendation:**
+- **Community Discord:** Firebase signup link (share once, testers self-register)
+- **Public Website:** GitHub releases link (versioned, documented)
+- **Internal Testing:** Firebase email invites (controlled access)
+
+---
+
 ## Part 2: Comparison Matrix
 
 ### Quick Decision Matrix
@@ -496,14 +694,21 @@ https://d123456.cloudfront.net/releases/v1.2.0/app.apk
 
 ### Recommended Approach: Multi-Tier Distribution
 
-#### Tier 1: Rapid Beta Testing (Firebase App Distribution)
-**Use for:** Daily/weekly builds, internal testing, quick feedback cycles
+#### Tier 1: Rapid Beta Testing (Firebase Signup Links - RECOMMENDED)
+**Use for:** Community testing, Discord members, semi-public betas
+
+**Why Signup Links:**
+- ✅ **No email management** - Testers self-register
+- ✅ **Instant access** - Share link once, anyone can join
+- ✅ **Still get updates** - Testers notified of new builds
+- ✅ **Discord-friendly** - Perfect for community servers
 
 **Setup:**
 1. Create Firebase project
 2. Enable App Distribution
-3. Add tester email addresses (or use groups)
-4. Set up GitHub Actions workflow
+3. Create tester group with signup link enabled
+4. Share link in Discord #beta-testing channel
+5. Testers self-register and get instant access
 
 **Workflow:**
 ```yaml
@@ -532,7 +737,7 @@ jobs:
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
-          groups: beta-testers
+          groups: beta-testers  # Group with signup link enabled
           file: restim-flutter/build/app/outputs/flutter-apk/app-release.apk
           releaseNotes: |
             Beta build from ${{ github.sha }}
@@ -540,11 +745,35 @@ jobs:
 ```
 
 **Benefits:**
-- Testers get email notification immediately
-- One-click install from email
-- Update notifications for new builds
+- Testers see new builds immediately after signup
+- No manual email management
+- Update notifications built-in
 - Crash reporting built-in (Crashlytics)
 - Free tier sufficient for most apps
+- Perfect for Discord communities
+
+**Discord Announcement Template:**
+```markdown
+🎮 **[App Name] Beta Testing**
+
+Join our beta program and test upcoming features!
+
+📱 **Sign up here:** [Firebase Signup Link]
+
+After signing up:
+1. Install Firebase App Distribution app (link provided)
+2. Download latest beta build
+3. Install and start testing!
+
+You'll be notified when new versions are available.
+
+**Requirements:**
+- Android device
+- Google account (for one-time signup)
+- [App-specific hardware/requirements]
+
+Questions? Ask in #app-support
+```
 
 **Local Build + Upload:**
 ```bash
@@ -734,13 +963,22 @@ FIREBASE_CREDENTIALS - Service account JSON (base64 encoded)
 
 ## Part 6: Decision Checklist
 
-### Choose Firebase App Distribution if:
-- ✅ Want fastest beta distribution
+### Choose Firebase Signup Links if:
+- ✅ Want no-hassle tester registration
+- ✅ Testing with Discord/Slack community
 - ✅ Want update notifications for testers
 - ✅ Want analytics and crash reporting
-- ✅ Want easy tester management
+- ✅ Don't want to manage email lists
 - ✅ Using GitHub Actions or other CI/CD
 - ✅ Want free solution
+- **→ BEST FOR COMMUNITY BETA TESTING**
+
+### Choose Firebase Email Invites if:
+- ✅ Want controlled, private beta
+- ✅ Know exactly who should have access
+- ✅ Need to limit beta to specific people
+- ✅ Want update notifications and analytics
+- **→ BEST FOR PRIVATE/INTERNAL TESTING**
 
 ### Choose GitHub Releases if:
 - ✅ Project is open source
@@ -748,24 +986,36 @@ FIREBASE_CREDENTIALS - Service account JSON (base64 encoded)
 - ✅ Testers are technical users
 - ✅ Don't need auto-updates or analytics
 - ✅ Want zero cost
+- ✅ Want versioned, documented releases
+- **→ BEST FOR OPEN SOURCE PUBLIC BETAS**
 
 ### Choose TestFairy if:
 - ✅ Want detailed session analytics
 - ✅ Willing to pay for advanced features
 - ✅ Need in-app feedback from testers
 - ✅ Team wants comprehensive testing tools
+- **→ BEST FOR DETAILED TESTING ANALYTICS**
 
 ### Choose App Center if:
 - ✅ Using Microsoft ecosystem
 - ✅ Want built-in CI/CD
 - ✅ Want free tier with good limits
 - ✅ Need cross-platform support
+- **→ BEST FOR MICROSOFT-BASED TEAMS**
 
 ### Choose F-Droid if:
 - ✅ App is fully open source
 - ✅ Targeting privacy-focused users
 - ✅ Don't mind slow review process
 - ✅ Want permanent, discoverable distribution
+- **→ BEST FOR PRODUCTION OPEN SOURCE RELEASES**
+
+### Choose S3/CloudFlare if:
+- ✅ Want maximum control
+- ✅ Don't need update notifications
+- ✅ Want lowest possible cost
+- ✅ Comfortable with manual management
+- **→ BEST FOR COST-SENSITIVE, CONTROL-FOCUSED PROJECTS**
 
 ---
 

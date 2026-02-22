@@ -235,6 +235,6 @@ Potential improvements:
 
 ## Related Documentation
 
-- [Media Sync Usage](../MEDIA_SYNC_USAGE.md) - User guide
+- [Media Sync Usage](./MEDIA_SYNC_USAGE.md) - User guide
 - [Centralized Playback State](./centralized-playback-state.md) - Playback state management
-- [Device Notification Logging](./device-notification-logging.md) - Debugging tool
+- [Device Notification Logging](../archive/device-notification-logging.md) - Debugging tool

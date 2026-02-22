@@ -215,6 +215,6 @@ Potential improvements:
 
 ## Related Documentation
 
-- [Device Notification Logging](./device-notification-logging.md) - Helps debug state issues
-- [Media Sync Usage](../MEDIA_SYNC_USAGE.md) - User guide for media sync
-- [Quick Start](../QUICK_START.md) - Basic usage guide
+- [Device Notification Logging](../archive/device-notification-logging.md) - Helps debug state issues
+- [Media Sync Usage](./MEDIA_SYNC_USAGE.md) - User guide for media sync
+- [Quick Start](../../QUICK_START.md) - Basic usage guide

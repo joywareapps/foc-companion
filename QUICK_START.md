@@ -52,4 +52,4 @@
 - **Protobuf errors:** Ensure you have the `protoc` compiler installed and run the generation script.
 - **Build errors:** Run `flutter clean` and then `flutter pub get`.
 
-For detailed network troubleshooting, see [NETWORK_TROUBLESHOOTING.md](NETWORK_TROUBLESHOOTING.md).
+For detailed network troubleshooting, see [NETWORK_TROUBLESHOOTING.md](documents/features-parked/NETWORK_TROUBLESHOOTING.md).

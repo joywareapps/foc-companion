@@ -43,4 +43,4 @@ When a video starts playing in HereSphere:
 - **Funscript Not Loading**: Verify the funscript filename matches the video filename (e.g., `video1.mp4` and `video1.funscript`).
 - **Sync Issues**: Check for high network latency or jitter. Use a stable 5GHz WiFi connection for best results.
 
-For more details on network issues, see [NETWORK_TROUBLESHOOTING.md](NETWORK_TROUBLESHOOTING.md).
+For more details on network issues, see [NETWORK_TROUBLESHOOTING.md](./NETWORK_TROUBLESHOOTING.md).

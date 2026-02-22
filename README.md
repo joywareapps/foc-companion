@@ -25,9 +25,9 @@ FOC-Stim is an open-hardware device designed for high-performance electromagneti
 
 To get started with the application, please see the [QUICK_START.md](QUICK_START.md) guide.
 
-For detailed network setup and troubleshooting, refer to [NETWORK_TROUBLESHOOTING.md](NETWORK_TROUBLESHOOTING.md).
+For detailed network setup and troubleshooting, refer to [NETWORK_TROUBLESHOOTING.md](documents/features-parked/NETWORK_TROUBLESHOOTING.md).
 
-For information on media synchronization with HereSphere, see [MEDIA_SYNC_USAGE.md](MEDIA_SYNC_USAGE.md).
+For information on media synchronization with HereSphere, see [MEDIA_SYNC_USAGE.md](documents/features-parked/MEDIA_SYNC_USAGE.md).
 
 ## Security
 

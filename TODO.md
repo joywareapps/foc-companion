@@ -27,6 +27,15 @@ Develop the "FOC Companion" Android application using Flutter. The app connects 
 - **Status:** 🟢 Complete (Research Phase)
 - **Summary:** Firebase App Distribution recommended for beta testing.
 
+### Task 06: Randomization Parameter Check ⚠️
+- **Priority:** MEDIUM
+- **Status:** 🟡 Needs Investigation
+- **Summary:**
+  - Check if pulse interval randomization parameter is still supported by firmware
+  - Verify `AXIS_PULSE_INTERVAL_RANDOM_PERCENT` axis in command loop
+  - Review FOC-stim proto files for randomization support
+  - Update app UI if feature deprecated, or fix implementation if broken
+
 ---
 
 ## **📋 Phase 1: Core Implementation (Flutter)**

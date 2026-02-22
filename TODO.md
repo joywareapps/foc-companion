@@ -15,10 +15,10 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
 - **Summary:** FOC-Stim firmware changed from `stm32_firmware_version` (string) to `stm32_firmware_version_2` (FirmwareVersion message). Protobuf files regenerated from FOC-stim repo, app updated, and tested working with latest firmware.
 
 ### Task 02: 4-Phase Support Implementation
-- **Priority:** MEDIUM
-- **Status:** 🟡 Planning
-- **Prompt:** `todo/02-4phase-support.md`
-- **Summary:** Investigate desktop app's 4-phase implementation, plan mobile support, design UX for mode switching. Constraint: mode can only change when not playing.
+- **Priority:** ~~MEDIUM~~ COMPLETED ✅
+- **Status:** 🟢 Complete - 4-phase mode support implemented and working
+- **Prompt:** ~~`todo/02-4phase-support.md`~~ (removed - task complete)
+- **Summary:** Investigated desktop app's 4-phase implementation, implemented mobile support with UX for mode switching. Mode can only change when device is not playing.
 
 ### Task 03: Pattern System Overhaul 🎨
 - **Priority:** MEDIUM

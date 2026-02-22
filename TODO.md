@@ -6,6 +6,22 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
 
 ---
 
+## 🔥 PRIORITY TASKS (See `todo/` folder for detailed prompts)
+
+### Task 01: Fix Firmware Version Reporting ⚠️ BREAKING
+- **Priority:** HIGH
+- **Status:** 🔴 Blocked - Breaking change in FOC-Stim firmware API
+- **Prompt:** `todo/01-firmware-version-fix.md`
+- **Summary:** FOC-Stim firmware changed from `stm32_firmware_version` (string) to `stm32_firmware_version_2` (FirmwareVersion message). Mobile app cannot connect to devices with new firmware until protobuf and version parsing are updated.
+
+### Task 02: 4-Phase Support Implementation
+- **Priority:** MEDIUM
+- **Status:** 🟡 Planning
+- **Prompt:** `todo/02-4phase-support.md`
+- **Summary:** Investigate desktop app's 4-phase implementation, plan mobile support, design UX for mode switching. Constraint: mode can only change when not playing.
+
+---
+
 ## **📋 Phase 1: Project Setup & Core Dependencies**
 
 - [x] **Project Initialization:**

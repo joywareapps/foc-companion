@@ -1,31 +1,56 @@
+enum DeviceMode { threePhase, fourPhase }
+
 class DeviceSettings {
   double minFrequency = 500;
   double maxFrequency = 1500;
   double waveformAmplitude = 0.120; // 120mA
-  
-  // Calibration
+  DeviceMode deviceMode = DeviceMode.threePhase;
+
+  // 3-Phase calibration
   double calibration3Center = -0.5;
   double calibration3Up = 0.0;
   double calibration3Left = 0.0;
+
+  // 4-Phase calibration
+  double calibration4Center = 0.0;
+  double calibration4A = 0.0;
+  double calibration4B = 0.0;
+  double calibration4C = 0.0;
+  double calibration4D = 0.0;
 
   Map<String, dynamic> toJson() => {
         'minFrequency': minFrequency,
         'maxFrequency': maxFrequency,
         'waveformAmplitude': waveformAmplitude,
+        'deviceMode': deviceMode.name,
         'calibration3Center': calibration3Center,
         'calibration3Up': calibration3Up,
         'calibration3Left': calibration3Left,
+        'calibration4Center': calibration4Center,
+        'calibration4A': calibration4A,
+        'calibration4B': calibration4B,
+        'calibration4C': calibration4C,
+        'calibration4D': calibration4D,
       };
 
   DeviceSettings.fromJson(Map<String, dynamic> json) {
     minFrequency = json['minFrequency'] ?? 500;
     maxFrequency = json['maxFrequency'] ?? 1500;
     waveformAmplitude = json['waveformAmplitude'] ?? 0.120;
+    deviceMode = DeviceMode.values.firstWhere(
+      (e) => e.name == json['deviceMode'],
+      orElse: () => DeviceMode.threePhase,
+    );
     calibration3Center = json['calibration3Center'] ?? -0.5;
     calibration3Up = json['calibration3Up'] ?? 0.0;
     calibration3Left = json['calibration3Left'] ?? 0.0;
+    calibration4Center = json['calibration4Center'] ?? 0.0;
+    calibration4A = json['calibration4A'] ?? 0.0;
+    calibration4B = json['calibration4B'] ?? 0.0;
+    calibration4C = json['calibration4C'] ?? 0.0;
+    calibration4D = json['calibration4D'] ?? 0.0;
   }
-  
+
   DeviceSettings();
 }
 

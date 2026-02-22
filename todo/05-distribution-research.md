@@ -833,7 +833,7 @@ jobs:
             1. Download APK from assets below
             2. Enable "Install from unknown sources" in Android settings
             3. Open APK and install
-            4. See [README](README.md) for usage instructions
+            4. See [README](../README.md) for usage instructions
             
             ### Changes
             - New pattern system with driver cockpit

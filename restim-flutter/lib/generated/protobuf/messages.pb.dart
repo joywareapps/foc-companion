@@ -19,6 +19,108 @@ import 'constants.pbenum.dart' as $0;
 
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
 
+class FirmwareVersion extends $pb.GeneratedMessage {
+  factory FirmwareVersion({
+    $core.int? major,
+    $core.int? minor,
+    $core.int? revision,
+    $core.String? branch,
+    $core.String? comment,
+  }) {
+    final result = create();
+    if (major != null) result.major = major;
+    if (minor != null) result.minor = minor;
+    if (revision != null) result.revision = revision;
+    if (branch != null) result.branch = branch;
+    if (comment != null) result.comment = comment;
+    return result;
+  }
+
+  FirmwareVersion._();
+
+  factory FirmwareVersion.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory FirmwareVersion.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'FirmwareVersion',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aI(1, _omitFieldNames ? '' : 'major', fieldType: $pb.PbFieldType.OU3)
+    ..aI(2, _omitFieldNames ? '' : 'minor', fieldType: $pb.PbFieldType.OU3)
+    ..aI(3, _omitFieldNames ? '' : 'revision', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(4, _omitFieldNames ? '' : 'branch')
+    ..aOS(5, _omitFieldNames ? '' : 'comment')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FirmwareVersion clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  FirmwareVersion copyWith(void Function(FirmwareVersion) updates) =>
+      super.copyWith((message) => updates(message as FirmwareVersion))
+          as FirmwareVersion;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static FirmwareVersion create() => FirmwareVersion._();
+  @$core.override
+  FirmwareVersion createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static FirmwareVersion getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<FirmwareVersion>(create);
+  static FirmwareVersion? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.int get major => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set major($core.int value) => $_setUnsignedInt32(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasMajor() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearMajor() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.int get minor => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set minor($core.int value) => $_setUnsignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMinor() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMinor() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get revision => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set revision($core.int value) => $_setUnsignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasRevision() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearRevision() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get branch => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set branch($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasBranch() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearBranch() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get comment => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set comment($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasComment() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearComment() => $_clearField(5);
+}
+
 /// general commands
 class RequestFirmwareVersion extends $pb.GeneratedMessage {
   factory RequestFirmwareVersion() => create();
@@ -62,12 +164,12 @@ class RequestFirmwareVersion extends $pb.GeneratedMessage {
 class ResponseFirmwareVersion extends $pb.GeneratedMessage {
   factory ResponseFirmwareVersion({
     $0.BoardIdentifier? board,
-    $core.String? stm32FirmwareVersion,
+    FirmwareVersion? stm32FirmwareVersion2,
   }) {
     final result = create();
     if (board != null) result.board = board;
-    if (stm32FirmwareVersion != null)
-      result.stm32FirmwareVersion = stm32FirmwareVersion;
+    if (stm32FirmwareVersion2 != null)
+      result.stm32FirmwareVersion2 = stm32FirmwareVersion2;
     return result;
   }
 
@@ -86,7 +188,9 @@ class ResponseFirmwareVersion extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aE<$0.BoardIdentifier>(1, _omitFieldNames ? '' : 'board',
         enumValues: $0.BoardIdentifier.values)
-    ..aOS(2, _omitFieldNames ? '' : 'stm32FirmwareVersion')
+    ..aOM<FirmwareVersion>(3, _omitFieldNames ? '' : 'stm32FirmwareVersion2',
+        protoName: 'stm32_firmware_version_2',
+        subBuilder: FirmwareVersion.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -118,14 +222,16 @@ class ResponseFirmwareVersion extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearBoard() => $_clearField(1);
 
-  @$pb.TagNumber(2)
-  $core.String get stm32FirmwareVersion => $_getSZ(1);
-  @$pb.TagNumber(2)
-  set stm32FirmwareVersion($core.String value) => $_setString(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasStm32FirmwareVersion() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearStm32FirmwareVersion() => $_clearField(2);
+  @$pb.TagNumber(3)
+  FirmwareVersion get stm32FirmwareVersion2 => $_getN(1);
+  @$pb.TagNumber(3)
+  set stm32FirmwareVersion2(FirmwareVersion value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasStm32FirmwareVersion2() => $_has(1);
+  @$pb.TagNumber(3)
+  void clearStm32FirmwareVersion2() => $_clearField(3);
+  @$pb.TagNumber(3)
+  FirmwareVersion ensureStm32FirmwareVersion2() => $_ensure(1);
 }
 
 class RequestCapabilitiesGet extends $pb.GeneratedMessage {
@@ -174,6 +280,7 @@ class ResponseCapabilitiesGet extends $pb.GeneratedMessage {
     $core.bool? battery,
     $core.bool? potentiometer,
     $core.double? maximumWaveformAmplitudeAmps,
+    $core.bool? lsm6dsox,
   }) {
     final result = create();
     if (threephase != null) result.threephase = threephase;
@@ -182,6 +289,7 @@ class ResponseCapabilitiesGet extends $pb.GeneratedMessage {
     if (potentiometer != null) result.potentiometer = potentiometer;
     if (maximumWaveformAmplitudeAmps != null)
       result.maximumWaveformAmplitudeAmps = maximumWaveformAmplitudeAmps;
+    if (lsm6dsox != null) result.lsm6dsox = lsm6dsox;
     return result;
   }
 
@@ -204,6 +312,7 @@ class ResponseCapabilitiesGet extends $pb.GeneratedMessage {
     ..aOB(4, _omitFieldNames ? '' : 'potentiometer')
     ..aD(5, _omitFieldNames ? '' : 'maximumWaveformAmplitudeAmps',
         fieldType: $pb.PbFieldType.OF)
+    ..aOB(6, _omitFieldNames ? '' : 'lsm6dsox')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -270,6 +379,15 @@ class ResponseCapabilitiesGet extends $pb.GeneratedMessage {
   $core.bool hasMaximumWaveformAmplitudeAmps() => $_has(4);
   @$pb.TagNumber(5)
   void clearMaximumWaveformAmplitudeAmps() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.bool get lsm6dsox => $_getBF(5);
+  @$pb.TagNumber(6)
+  set lsm6dsox($core.bool value) => $_setBool(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasLsm6dsox() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearLsm6dsox() => $_clearField(6);
 }
 
 class RequestSignalStart extends $pb.GeneratedMessage {
@@ -1211,6 +1329,233 @@ class ResponseWifiIPGet extends $pb.GeneratedMessage {
   $core.bool hasIp() => $_has(0);
   @$pb.TagNumber(1)
   void clearIp() => $_clearField(1);
+}
+
+/// sensors
+class RequestLSM6DSOXStart extends $pb.GeneratedMessage {
+  factory RequestLSM6DSOXStart({
+    $core.double? imuSamplerate,
+    $core.double? accFullscale,
+    $core.double? gyrFullscale,
+  }) {
+    final result = create();
+    if (imuSamplerate != null) result.imuSamplerate = imuSamplerate;
+    if (accFullscale != null) result.accFullscale = accFullscale;
+    if (gyrFullscale != null) result.gyrFullscale = gyrFullscale;
+    return result;
+  }
+
+  RequestLSM6DSOXStart._();
+
+  factory RequestLSM6DSOXStart.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory RequestLSM6DSOXStart.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RequestLSM6DSOXStart',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aD(1, _omitFieldNames ? '' : 'imuSamplerate',
+        fieldType: $pb.PbFieldType.OF)
+    ..aD(2, _omitFieldNames ? '' : 'accFullscale',
+        fieldType: $pb.PbFieldType.OF)
+    ..aD(3, _omitFieldNames ? '' : 'gyrFullscale',
+        fieldType: $pb.PbFieldType.OF)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RequestLSM6DSOXStart clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RequestLSM6DSOXStart copyWith(void Function(RequestLSM6DSOXStart) updates) =>
+      super.copyWith((message) => updates(message as RequestLSM6DSOXStart))
+          as RequestLSM6DSOXStart;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static RequestLSM6DSOXStart create() => RequestLSM6DSOXStart._();
+  @$core.override
+  RequestLSM6DSOXStart createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static RequestLSM6DSOXStart getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RequestLSM6DSOXStart>(create);
+  static RequestLSM6DSOXStart? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.double get imuSamplerate => $_getN(0);
+  @$pb.TagNumber(1)
+  set imuSamplerate($core.double value) => $_setFloat(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasImuSamplerate() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearImuSamplerate() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get accFullscale => $_getN(1);
+  @$pb.TagNumber(2)
+  set accFullscale($core.double value) => $_setFloat(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasAccFullscale() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearAccFullscale() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.double get gyrFullscale => $_getN(2);
+  @$pb.TagNumber(3)
+  set gyrFullscale($core.double value) => $_setFloat(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasGyrFullscale() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearGyrFullscale() => $_clearField(3);
+}
+
+class ResponseLSM6DSOXStart extends $pb.GeneratedMessage {
+  factory ResponseLSM6DSOXStart({
+    $core.double? accSensitivity,
+    $core.double? gyrSensitivity,
+  }) {
+    final result = create();
+    if (accSensitivity != null) result.accSensitivity = accSensitivity;
+    if (gyrSensitivity != null) result.gyrSensitivity = gyrSensitivity;
+    return result;
+  }
+
+  ResponseLSM6DSOXStart._();
+
+  factory ResponseLSM6DSOXStart.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ResponseLSM6DSOXStart.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ResponseLSM6DSOXStart',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aD(1, _omitFieldNames ? '' : 'accSensitivity',
+        fieldType: $pb.PbFieldType.OF)
+    ..aD(2, _omitFieldNames ? '' : 'gyrSensitivity',
+        fieldType: $pb.PbFieldType.OF)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResponseLSM6DSOXStart clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResponseLSM6DSOXStart copyWith(
+          void Function(ResponseLSM6DSOXStart) updates) =>
+      super.copyWith((message) => updates(message as ResponseLSM6DSOXStart))
+          as ResponseLSM6DSOXStart;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ResponseLSM6DSOXStart create() => ResponseLSM6DSOXStart._();
+  @$core.override
+  ResponseLSM6DSOXStart createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static ResponseLSM6DSOXStart getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ResponseLSM6DSOXStart>(create);
+  static ResponseLSM6DSOXStart? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.double get accSensitivity => $_getN(0);
+  @$pb.TagNumber(1)
+  set accSensitivity($core.double value) => $_setFloat(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAccSensitivity() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAccSensitivity() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get gyrSensitivity => $_getN(1);
+  @$pb.TagNumber(2)
+  set gyrSensitivity($core.double value) => $_setFloat(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasGyrSensitivity() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearGyrSensitivity() => $_clearField(2);
+}
+
+class RequestLSM6DSOXStop extends $pb.GeneratedMessage {
+  factory RequestLSM6DSOXStop() => create();
+
+  RequestLSM6DSOXStop._();
+
+  factory RequestLSM6DSOXStop.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory RequestLSM6DSOXStop.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RequestLSM6DSOXStop',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RequestLSM6DSOXStop clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RequestLSM6DSOXStop copyWith(void Function(RequestLSM6DSOXStop) updates) =>
+      super.copyWith((message) => updates(message as RequestLSM6DSOXStop))
+          as RequestLSM6DSOXStop;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static RequestLSM6DSOXStop create() => RequestLSM6DSOXStop._();
+  @$core.override
+  RequestLSM6DSOXStop createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static RequestLSM6DSOXStop getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RequestLSM6DSOXStop>(create);
+  static RequestLSM6DSOXStop? _defaultInstance;
+}
+
+class ResponseLSM6DSOXStop extends $pb.GeneratedMessage {
+  factory ResponseLSM6DSOXStop() => create();
+
+  ResponseLSM6DSOXStop._();
+
+  factory ResponseLSM6DSOXStop.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ResponseLSM6DSOXStop.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ResponseLSM6DSOXStop',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResponseLSM6DSOXStop clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResponseLSM6DSOXStop copyWith(void Function(ResponseLSM6DSOXStop) updates) =>
+      super.copyWith((message) => updates(message as ResponseLSM6DSOXStop))
+          as ResponseLSM6DSOXStop;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ResponseLSM6DSOXStop create() => ResponseLSM6DSOXStop._();
+  @$core.override
+  ResponseLSM6DSOXStop createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static ResponseLSM6DSOXStop getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ResponseLSM6DSOXStop>(create);
+  static ResponseLSM6DSOXStop? _defaultInstance;
 }
 
 /// debug commands

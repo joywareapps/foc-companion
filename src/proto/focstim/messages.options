@@ -1,2 +1,0 @@
-focstim_rpc.RequestWifiParametersSet.ssid max_size:32
-focstim_rpc.RequestWifiParametersSet.password max_size:64

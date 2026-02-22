@@ -951,12 +951,12 @@ class NotificationLSM6DSOX extends $pb.GeneratedMessage {
       _omitMessageNames ? '' : 'NotificationLSM6DSOX',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..aI(1, _omitFieldNames ? '' : 'accX')
-    ..aI(2, _omitFieldNames ? '' : 'accY')
-    ..aI(3, _omitFieldNames ? '' : 'accZ')
-    ..aI(4, _omitFieldNames ? '' : 'gyrX')
-    ..aI(5, _omitFieldNames ? '' : 'gyrY')
-    ..aI(6, _omitFieldNames ? '' : 'gyrZ')
+    ..aI(1, _omitFieldNames ? '' : 'accX', fieldType: $pb.PbFieldType.OS3)
+    ..aI(2, _omitFieldNames ? '' : 'accY', fieldType: $pb.PbFieldType.OS3)
+    ..aI(3, _omitFieldNames ? '' : 'accZ', fieldType: $pb.PbFieldType.OS3)
+    ..aI(4, _omitFieldNames ? '' : 'gyrX', fieldType: $pb.PbFieldType.OS3)
+    ..aI(5, _omitFieldNames ? '' : 'gyrY', fieldType: $pb.PbFieldType.OS3)
+    ..aI(6, _omitFieldNames ? '' : 'gyrZ', fieldType: $pb.PbFieldType.OS3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1031,6 +1031,60 @@ class NotificationLSM6DSOX extends $pb.GeneratedMessage {
   $core.bool hasGyrZ() => $_has(5);
   @$pb.TagNumber(6)
   void clearGyrZ() => $_clearField(6);
+}
+
+class NotificationPressure extends $pb.GeneratedMessage {
+  factory NotificationPressure({
+    $core.double? pressure,
+  }) {
+    final result = create();
+    if (pressure != null) result.pressure = pressure;
+    return result;
+  }
+
+  NotificationPressure._();
+
+  factory NotificationPressure.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory NotificationPressure.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'NotificationPressure',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aD(1, _omitFieldNames ? '' : 'pressure', fieldType: $pb.PbFieldType.OF)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationPressure clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationPressure copyWith(void Function(NotificationPressure) updates) =>
+      super.copyWith((message) => updates(message as NotificationPressure))
+          as NotificationPressure;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static NotificationPressure create() => NotificationPressure._();
+  @$core.override
+  NotificationPressure createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static NotificationPressure getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<NotificationPressure>(create);
+  static NotificationPressure? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.double get pressure => $_getN(0);
+  @$pb.TagNumber(1)
+  set pressure($core.double value) => $_setFloat(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasPressure() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPressure() => $_clearField(1);
 }
 
 class NotificationDebugString extends $pb.GeneratedMessage {

@@ -1,105 +1,55 @@
-# Quick Start - Media Sync Fix
+# Quick Start Guide
 
-## Issues Fixed
+## Prerequisites
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (latest stable version)
+- Android Studio or VS Code with Flutter extension
+- An Android device or emulator
 
-1. **Buffer polyfill added** - React Native doesn't have Node.js Buffer API (global polyfill + explicit import)
-2. **Route cache issue** - Metro bundler needs cache cleared
-3. **Module import order** - Buffer polyfill loads before services
+## Initial Setup
 
-## Steps to Fix
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/joywareapps/restim-mobile.git
+   cd restim-mobile
+   ```
 
-### 1. Clear Metro Cache and Restart
+2. **Navigate to the Flutter project:**
+   ```bash
+   cd restim-flutter
+   ```
 
-```bash
-cd src
+3. **Install dependencies:**
+   ```bash
+   flutter pub get
+   ```
 
-# Clear all caches
-npx expo start --clear
-```
+4. **Generate Protobuf files:**
+   ```bash
+   # On Linux/macOS
+   ./generate_protos.sh
+   
+   # On Windows
+   generate_protos.bat
+   ```
 
-**Or if that doesn't work:**
+5. **Run the application:**
+   ```bash
+   flutter run
+   ```
 
-```bash
-cd src
+## Connecting to FOC-Stim
 
-# Clear Metro cache
-rm -rf .expo
-rm -rf node_modules/.cache
+1. Power on your FOC-Stim device.
+2. Ensure your phone and the device are on the same WiFi network.
+3. Open the app and go to the **Settings** tab.
+4. Enter the **IP Address** of your FOC-Stim device (default is usually `192.168.1.1` if in AP mode).
+5. Click **Save Settings**.
+6. Go to the **Control** tab and click **Connect**.
 
-# Restart
-npx expo start
-```
+## Troubleshooting
 
-### 2. Rebuild the App (REQUIRED for network changes)
+- **Connection failed:** Verify the IP address is correct and both devices are on the same network.
+- **Protobuf errors:** Ensure you have the `protoc` compiler installed and run the generation script.
+- **Build errors:** Run `flutter clean` and then `flutter pub get`.
 
-The `app.json` network security changes require a native rebuild:
-
-```bash
-cd src
-
-# For Android
-npx expo run:android
-
-# For iOS
-npx expo run:ios
-```
-
-**Important:** Just clearing cache and running `expo start` won't apply the network security changes. You MUST rebuild.
-
-## Verification
-
-After rebuilding, you should see:
-
-1. **No route errors** - "media" route should load correctly
-2. **No Buffer errors** - Buffer polyfill is working
-3. **TCP connection available** - HereSphere service can create sockets
-
-## Test the Fix
-
-1. Open the app
-2. Go to Media Sync tab (should not crash)
-3. Configure HereSphere:
-   - IP: `192.168.178.30` (or your HereSphere IP)
-   - Port: `23554`
-4. Click "Test HereSphere Connection"
-5. Watch console logs:
-
-**Expected output:**
-```
-[HereSphere] Configured: 192.168.178.30:23554
-[HereSphere] Connecting to 192.168.178.30:23554...
-[HereSphere] Connected to TCP socket
-[HereSphere] Sent keep-alive
-```
-
-## If Still Having Issues
-
-### Route Error Persists
-```bash
-# Nuclear option: delete all caches
-cd src
-rm -rf .expo
-rm -rf node_modules/.cache
-rm -rf node_modules
-npm install
-npx expo start --clear
-```
-
-### Buffer Error Persists
-- Check that `app/_layout.tsx` has the Buffer polyfill at the top
-- Restart Metro bundler completely
-
-### Connection Error
-- Verify you rebuilt the app (not just restarted Metro)
-- Check HereSphere is running on the correct IP/port
-- Use `telnet 192.168.178.30 23554` to test from computer
-
-## What Was Changed
-
-### Files Modified:
-1. **`app/_layout.tsx`** - Added Buffer polyfill
-2. **`package.json`** - Added `buffer` dependency
-3. **`app.json`** - Network security settings (requires rebuild)
-
-### No Code Changes Needed
-The media.tsx file is correct, just needed cache clear.
+For detailed network troubleshooting, see [NETWORK_TROUBLESHOOTING.md](documents/features-parked/NETWORK_TROUBLESHOOTING.md).

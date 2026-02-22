@@ -226,20 +226,33 @@ final $typed_data.Uint8List notificationBatteryDescriptor = $convert.base64Decod
 const NotificationLSM6DSOX$json = {
   '1': 'NotificationLSM6DSOX',
   '2': [
-    {'1': 'acc_x', '3': 1, '4': 1, '5': 5, '10': 'accX'},
-    {'1': 'acc_y', '3': 2, '4': 1, '5': 5, '10': 'accY'},
-    {'1': 'acc_z', '3': 3, '4': 1, '5': 5, '10': 'accZ'},
-    {'1': 'gyr_x', '3': 4, '4': 1, '5': 5, '10': 'gyrX'},
-    {'1': 'gyr_y', '3': 5, '4': 1, '5': 5, '10': 'gyrY'},
-    {'1': 'gyr_z', '3': 6, '4': 1, '5': 5, '10': 'gyrZ'},
+    {'1': 'acc_x', '3': 1, '4': 1, '5': 17, '10': 'accX'},
+    {'1': 'acc_y', '3': 2, '4': 1, '5': 17, '10': 'accY'},
+    {'1': 'acc_z', '3': 3, '4': 1, '5': 17, '10': 'accZ'},
+    {'1': 'gyr_x', '3': 4, '4': 1, '5': 17, '10': 'gyrX'},
+    {'1': 'gyr_y', '3': 5, '4': 1, '5': 17, '10': 'gyrY'},
+    {'1': 'gyr_z', '3': 6, '4': 1, '5': 17, '10': 'gyrZ'},
   ],
 };
 
 /// Descriptor for `NotificationLSM6DSOX`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List notificationLSM6DSOXDescriptor = $convert.base64Decode(
-    'ChROb3RpZmljYXRpb25MU002RFNPWBITCgVhY2NfeBgBIAEoBVIEYWNjWBITCgVhY2NfeRgCIA'
-    'EoBVIEYWNjWRITCgVhY2NfehgDIAEoBVIEYWNjWhITCgVneXJfeBgEIAEoBVIEZ3lyWBITCgVn'
-    'eXJfeRgFIAEoBVIEZ3lyWRITCgVneXJfehgGIAEoBVIEZ3lyWg==');
+    'ChROb3RpZmljYXRpb25MU002RFNPWBITCgVhY2NfeBgBIAEoEVIEYWNjWBITCgVhY2NfeRgCIA'
+    'EoEVIEYWNjWRITCgVhY2NfehgDIAEoEVIEYWNjWhITCgVneXJfeBgEIAEoEVIEZ3lyWBITCgVn'
+    'eXJfeRgFIAEoEVIEZ3lyWRITCgVneXJfehgGIAEoEVIEZ3lyWg==');
+
+@$core.Deprecated('Use notificationPressureDescriptor instead')
+const NotificationPressure$json = {
+  '1': 'NotificationPressure',
+  '2': [
+    {'1': 'pressure', '3': 1, '4': 1, '5': 2, '10': 'pressure'},
+  ],
+};
+
+/// Descriptor for `NotificationPressure`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List notificationPressureDescriptor =
+    $convert.base64Decode(
+        'ChROb3RpZmljYXRpb25QcmVzc3VyZRIaCghwcmVzc3VyZRgBIAEoAlIIcHJlc3N1cmU=');
 
 @$core.Deprecated('Use notificationDebugStringDescriptor instead')
 const NotificationDebugString$json = {

@@ -2,11 +2,46 @@ source-repos/
 .agent-instructions/
 .claude/settings.local.json
 
-# .NET artifacts
-**/bin/
-**/obj/
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Secrets
+*.secret
+*.pem
+*.key
+credentials.json
+secrets.json
+
+# Flutter
+**/android/
+**/ios/
+**/windows/
+**/build/
+**/.dart_tool/
+**/.packages
+**/.flutter-plugins*
+**/.generated/
+
+# React Native / Expo
+**/.expo/
+**/dist/
+**/web-build/
+**/node_modules/
+
+# OS/IDEs
+.vscode/
+.idea/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
 .vs/
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.apk
+*.aab
+*.ipa

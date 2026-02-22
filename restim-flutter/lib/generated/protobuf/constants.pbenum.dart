@@ -53,6 +53,14 @@ class AxisType extends $pb.ProtobufEnum {
       AxisType._(43, _omitEnumNames ? '' : 'AXIS_CALIBRATION_4_C');
   static const AxisType AXIS_CALIBRATION_4_D =
       AxisType._(44, _omitEnumNames ? '' : 'AXIS_CALIBRATION_4_D');
+  static const AxisType AXIS_ELECTRODE_1_POWER =
+      AxisType._(50, _omitEnumNames ? '' : 'AXIS_ELECTRODE_1_POWER');
+  static const AxisType AXIS_ELECTRODE_2_POWER =
+      AxisType._(51, _omitEnumNames ? '' : 'AXIS_ELECTRODE_2_POWER');
+  static const AxisType AXIS_ELECTRODE_3_POWER =
+      AxisType._(52, _omitEnumNames ? '' : 'AXIS_ELECTRODE_3_POWER');
+  static const AxisType AXIS_ELECTRODE_4_POWER =
+      AxisType._(53, _omitEnumNames ? '' : 'AXIS_ELECTRODE_4_POWER');
 
   static const $core.List<AxisType> values = <AxisType>[
     AXIS_UNKNOWN,
@@ -73,6 +81,10 @@ class AxisType extends $pb.ProtobufEnum {
     AXIS_CALIBRATION_4_B,
     AXIS_CALIBRATION_4_C,
     AXIS_CALIBRATION_4_D,
+    AXIS_ELECTRODE_1_POWER,
+    AXIS_ELECTRODE_2_POWER,
+    AXIS_ELECTRODE_3_POWER,
+    AXIS_ELECTRODE_4_POWER,
   ];
 
   static final $core.Map<$core.int, AxisType> _byValue =
@@ -113,15 +125,18 @@ class OutputMode extends $pb.ProtobufEnum {
       OutputMode._(2, _omitEnumNames ? '' : 'OUTPUT_THREEPHASE');
   static const OutputMode OUTPUT_FOURPHASE =
       OutputMode._(3, _omitEnumNames ? '' : 'OUTPUT_FOURPHASE');
+  static const OutputMode OUTPUT_FOURPHASE_INDIVIDUAL_ELECTRODES = OutputMode._(
+      4, _omitEnumNames ? '' : 'OUTPUT_FOURPHASE_INDIVIDUAL_ELECTRODES');
 
   static const $core.List<OutputMode> values = <OutputMode>[
     OUTPUT_UNKNOWN,
     OUTPUT_THREEPHASE,
     OUTPUT_FOURPHASE,
+    OUTPUT_FOURPHASE_INDIVIDUAL_ELECTRODES,
   ];
 
   static final $core.List<OutputMode?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 3);
+      $pb.ProtobufEnum.$_initByValueList(values, 4);
   static OutputMode? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 

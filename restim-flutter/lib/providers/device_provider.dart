@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:restim_flutter/models/settings_models.dart';
 import 'package:restim_flutter/services/focstim_api_service.dart';
 import 'package:restim_flutter/providers/settings_provider.dart';
 import 'package:restim_flutter/core/command_loop.dart';
@@ -7,9 +8,11 @@ import 'package:restim_flutter/generated/protobuf/focstim_rpc.pb.dart';
 class DeviceProvider with ChangeNotifier {
   final FocStimApiService api = FocStimApiService();
   SettingsProvider settings;
-  CommandLoop? _loop;
+  CommandLoop? _threePhaseLoop;
+  FourPhaseCommandLoop? _fourPhaseLoop;
 
   String connectionStatus = "Disconnected";
+  String firmwareVersion = '';
   String temperature = "--";
   String batteryVoltage = "--";
   bool isLoopRunning = false;
@@ -19,15 +22,17 @@ class DeviceProvider with ChangeNotifier {
     api.onDisconnect = () {
       connectionStatus = "Disconnected";
       isLoopRunning = false;
-      _loop?.stop();
+      _threePhaseLoop?.stop();
+      _fourPhaseLoop?.stop();
       notifyListeners();
     };
     api.onError = (err) {
       connectionStatus = "Error: $err";
       notifyListeners();
     };
-    
-    _loop = CommandLoop(api, settings);
+
+    _threePhaseLoop = CommandLoop(api, settings);
+    _fourPhaseLoop = FourPhaseCommandLoop(api, settings);
   }
 
   void updateSettings(SettingsProvider newSettings) {
@@ -41,15 +46,27 @@ class DeviceProvider with ChangeNotifier {
       print("Attempting connection to ${settings.focStim.wifiIp}:${settings.focStim.wifiPort}");
       notifyListeners();
       await api.connectTcp(settings.focStim.wifiIp, settings.focStim.wifiPort);
-      connectionStatus = "Connected";
+
+      connectionStatus = "Checking firmware...";
+      notifyListeners();
+      final resp = await api.requestFirmwareVersion();
+      api.validateFirmwareVersion(resp); // throws on mismatch
+
+      final v = resp.stm32FirmwareVersion2;
+      firmwareVersion = 'v${v.major}.${v.minor}.${v.revision} (${v.branch})';
+      connectionStatus = "Connected ($firmwareVersion)";
     } catch (e) {
       connectionStatus = "Error: $e";
+      api.disconnect();
     }
     notifyListeners();
   }
 
+  DeviceMode get deviceMode => settings.device.deviceMode;
+
   Future<void> disconnect() async {
-    await _loop?.stop();
+    await _threePhaseLoop?.stop();
+    await _fourPhaseLoop?.stop();
     api.disconnect();
   }
 
@@ -57,10 +74,18 @@ class DeviceProvider with ChangeNotifier {
     if (!api.isConnected) return;
 
     if (isLoopRunning) {
-      await _loop?.stop();
+      if (deviceMode == DeviceMode.fourPhase) {
+        await _fourPhaseLoop?.stop();
+      } else {
+        await _threePhaseLoop?.stop();
+      }
       isLoopRunning = false;
     } else {
-      await _loop?.start();
+      if (deviceMode == DeviceMode.fourPhase) {
+        await _fourPhaseLoop?.start();
+      } else {
+        await _threePhaseLoop?.start();
+      }
       isLoopRunning = true;
     }
     notifyListeners();

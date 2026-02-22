@@ -15,6 +15,24 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
+@$core.Deprecated('Use firmwareVersionDescriptor instead')
+const FirmwareVersion$json = {
+  '1': 'FirmwareVersion',
+  '2': [
+    {'1': 'major', '3': 1, '4': 1, '5': 13, '10': 'major'},
+    {'1': 'minor', '3': 2, '4': 1, '5': 13, '10': 'minor'},
+    {'1': 'revision', '3': 3, '4': 1, '5': 13, '10': 'revision'},
+    {'1': 'branch', '3': 4, '4': 1, '5': 9, '10': 'branch'},
+    {'1': 'comment', '3': 5, '4': 1, '5': 9, '10': 'comment'},
+  ],
+};
+
+/// Descriptor for `FirmwareVersion`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List firmwareVersionDescriptor = $convert.base64Decode(
+    'Cg9GaXJtd2FyZVZlcnNpb24SFAoFbWFqb3IYASABKA1SBW1ham9yEhQKBW1pbm9yGAIgASgNUg'
+    'VtaW5vchIaCghyZXZpc2lvbhgDIAEoDVIIcmV2aXNpb24SFgoGYnJhbmNoGAQgASgJUgZicmFu'
+    'Y2gSGAoHY29tbWVudBgFIAEoCVIHY29tbWVudA==');
+
 @$core.Deprecated('Use requestFirmwareVersionDescriptor instead')
 const RequestFirmwareVersion$json = {
   '1': 'RequestFirmwareVersion',
@@ -37,11 +55,12 @@ const ResponseFirmwareVersion$json = {
       '10': 'board'
     },
     {
-      '1': 'stm32_firmware_version',
-      '3': 2,
+      '1': 'stm32_firmware_version_2',
+      '3': 3,
       '4': 1,
-      '5': 9,
-      '10': 'stm32FirmwareVersion'
+      '5': 11,
+      '6': '.focstim_rpc.FirmwareVersion',
+      '10': 'stm32FirmwareVersion2'
     },
   ],
 };
@@ -49,8 +68,8 @@ const ResponseFirmwareVersion$json = {
 /// Descriptor for `ResponseFirmwareVersion`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List responseFirmwareVersionDescriptor = $convert.base64Decode(
     'ChdSZXNwb25zZUZpcm13YXJlVmVyc2lvbhIyCgVib2FyZBgBIAEoDjIcLmZvY3N0aW1fcnBjLk'
-    'JvYXJkSWRlbnRpZmllclIFYm9hcmQSNAoWc3RtMzJfZmlybXdhcmVfdmVyc2lvbhgCIAEoCVIU'
-    'c3RtMzJGaXJtd2FyZVZlcnNpb24=');
+    'JvYXJkSWRlbnRpZmllclIFYm9hcmQSVQoYc3RtMzJfZmlybXdhcmVfdmVyc2lvbl8yGAMgASgL'
+    'MhwuZm9jc3RpbV9ycGMuRmlybXdhcmVWZXJzaW9uUhVzdG0zMkZpcm13YXJlVmVyc2lvbjI=');
 
 @$core.Deprecated('Use requestCapabilitiesGetDescriptor instead')
 const RequestCapabilitiesGet$json = {
@@ -76,6 +95,7 @@ const ResponseCapabilitiesGet$json = {
       '5': 2,
       '10': 'maximumWaveformAmplitudeAmps'
     },
+    {'1': 'lsm6dsox', '3': 6, '4': 1, '5': 8, '10': 'lsm6dsox'},
   ],
 };
 
@@ -84,7 +104,8 @@ final $typed_data.Uint8List responseCapabilitiesGetDescriptor = $convert.base64D
     'ChdSZXNwb25zZUNhcGFiaWxpdGllc0dldBIeCgp0aHJlZXBoYXNlGAEgASgIUgp0aHJlZXBoYX'
     'NlEhwKCWZvdXJwaGFzZRgCIAEoCFIJZm91cnBoYXNlEhgKB2JhdHRlcnkYAyABKAhSB2JhdHRl'
     'cnkSJAoNcG90ZW50aW9tZXRlchgEIAEoCFINcG90ZW50aW9tZXRlchJFCh9tYXhpbXVtX3dhdm'
-    'Vmb3JtX2FtcGxpdHVkZV9hbXBzGAUgASgCUhxtYXhpbXVtV2F2ZWZvcm1BbXBsaXR1ZGVBbXBz');
+    'Vmb3JtX2FtcGxpdHVkZV9hbXBzGAUgASgCUhxtYXhpbXVtV2F2ZWZvcm1BbXBsaXR1ZGVBbXBz'
+    'EhoKCGxzbTZkc294GAYgASgIUghsc202ZHNveA==');
 
 @$core.Deprecated('Use requestSignalStartDescriptor instead')
 const RequestSignalStart$json = {
@@ -311,6 +332,54 @@ const ResponseWifiIPGet$json = {
 /// Descriptor for `ResponseWifiIPGet`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List responseWifiIPGetDescriptor =
     $convert.base64Decode('ChFSZXNwb25zZVdpZmlJUEdldBIOCgJpcBgBIAEoDVICaXA=');
+
+@$core.Deprecated('Use requestLSM6DSOXStartDescriptor instead')
+const RequestLSM6DSOXStart$json = {
+  '1': 'RequestLSM6DSOXStart',
+  '2': [
+    {'1': 'imu_samplerate', '3': 1, '4': 1, '5': 2, '10': 'imuSamplerate'},
+    {'1': 'acc_fullscale', '3': 2, '4': 1, '5': 2, '10': 'accFullscale'},
+    {'1': 'gyr_fullscale', '3': 3, '4': 1, '5': 2, '10': 'gyrFullscale'},
+  ],
+};
+
+/// Descriptor for `RequestLSM6DSOXStart`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List requestLSM6DSOXStartDescriptor = $convert.base64Decode(
+    'ChRSZXF1ZXN0TFNNNkRTT1hTdGFydBIlCg5pbXVfc2FtcGxlcmF0ZRgBIAEoAlINaW11U2FtcG'
+    'xlcmF0ZRIjCg1hY2NfZnVsbHNjYWxlGAIgASgCUgxhY2NGdWxsc2NhbGUSIwoNZ3lyX2Z1bGxz'
+    'Y2FsZRgDIAEoAlIMZ3lyRnVsbHNjYWxl');
+
+@$core.Deprecated('Use responseLSM6DSOXStartDescriptor instead')
+const ResponseLSM6DSOXStart$json = {
+  '1': 'ResponseLSM6DSOXStart',
+  '2': [
+    {'1': 'acc_sensitivity', '3': 1, '4': 1, '5': 2, '10': 'accSensitivity'},
+    {'1': 'gyr_sensitivity', '3': 2, '4': 1, '5': 2, '10': 'gyrSensitivity'},
+  ],
+};
+
+/// Descriptor for `ResponseLSM6DSOXStart`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List responseLSM6DSOXStartDescriptor = $convert.base64Decode(
+    'ChVSZXNwb25zZUxTTTZEU09YU3RhcnQSJwoPYWNjX3NlbnNpdGl2aXR5GAEgASgCUg5hY2NTZW'
+    '5zaXRpdml0eRInCg9neXJfc2Vuc2l0aXZpdHkYAiABKAJSDmd5clNlbnNpdGl2aXR5');
+
+@$core.Deprecated('Use requestLSM6DSOXStopDescriptor instead')
+const RequestLSM6DSOXStop$json = {
+  '1': 'RequestLSM6DSOXStop',
+};
+
+/// Descriptor for `RequestLSM6DSOXStop`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List requestLSM6DSOXStopDescriptor =
+    $convert.base64Decode('ChNSZXF1ZXN0TFNNNkRTT1hTdG9w');
+
+@$core.Deprecated('Use responseLSM6DSOXStopDescriptor instead')
+const ResponseLSM6DSOXStop$json = {
+  '1': 'ResponseLSM6DSOXStop',
+};
+
+/// Descriptor for `ResponseLSM6DSOXStop`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List responseLSM6DSOXStopDescriptor =
+    $convert.base64Decode('ChRSZXNwb25zZUxTTTZEU09YU3RvcA==');
 
 @$core.Deprecated('Use requestDebugStm32DeepSleepDescriptor instead')
 const RequestDebugStm32DeepSleep$json = {

@@ -92,6 +92,15 @@ const Notification$json = {
       '10': 'notificationLsm6dsox'
     },
     {
+      '1': 'notification_pressure',
+      '3': 9,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.NotificationPressure',
+      '9': 0,
+      '10': 'notificationPressure'
+    },
+    {
       '1': 'notification_debug_string',
       '3': 1000,
       '4': 1,
@@ -141,13 +150,14 @@ final $typed_data.Uint8List notificationDescriptor = $convert.base64Decode(
     'F0aW9uX2JhdHRlcnkYByABKAsyIC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25CYXR0ZXJ5SABS'
     'E25vdGlmaWNhdGlvbkJhdHRlcnkSWAoVbm90aWZpY2F0aW9uX2xzbTZkc294GAggASgLMiEuZm'
     '9jc3RpbV9ycGMuTm90aWZpY2F0aW9uTFNNNkRTT1hIAFIUbm90aWZpY2F0aW9uTHNtNmRzb3gS'
-    'YwoZbm90aWZpY2F0aW9uX2RlYnVnX3N0cmluZxjoByABKAsyJC5mb2NzdGltX3JwYy5Ob3RpZm'
-    'ljYXRpb25EZWJ1Z1N0cmluZ0gAUhdub3RpZmljYXRpb25EZWJ1Z1N0cmluZxJjChlub3RpZmlj'
-    'YXRpb25fZGVidWdfYXM1MzExGOkHIAEoCzIkLmZvY3N0aW1fcnBjLk5vdGlmaWNhdGlvbkRlYn'
-    'VnQVM1MzExSABSF25vdGlmaWNhdGlvbkRlYnVnQXM1MzExEmMKGW5vdGlmaWNhdGlvbl9kZWJ1'
-    'Z19lZGdpbmcY6gcgASgLMiQuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW9uRGVidWdFZGdpbmdIAF'
-    'IXbm90aWZpY2F0aW9uRGVidWdFZGdpbmcSHQoJdGltZXN0YW1wGOcHIAEoBFIJdGltZXN0YW1w'
-    'Qg4KDG5vdGlmaWNhdGlvbg==');
+    'WAoVbm90aWZpY2F0aW9uX3ByZXNzdXJlGAkgASgLMiEuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW'
+    '9uUHJlc3N1cmVIAFIUbm90aWZpY2F0aW9uUHJlc3N1cmUSYwoZbm90aWZpY2F0aW9uX2RlYnVn'
+    'X3N0cmluZxjoByABKAsyJC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25EZWJ1Z1N0cmluZ0gAUh'
+    'dub3RpZmljYXRpb25EZWJ1Z1N0cmluZxJjChlub3RpZmljYXRpb25fZGVidWdfYXM1MzExGOkH'
+    'IAEoCzIkLmZvY3N0aW1fcnBjLk5vdGlmaWNhdGlvbkRlYnVnQVM1MzExSABSF25vdGlmaWNhdG'
+    'lvbkRlYnVnQXM1MzExEmMKGW5vdGlmaWNhdGlvbl9kZWJ1Z19lZGdpbmcY6gcgASgLMiQuZm9j'
+    'c3RpbV9ycGMuTm90aWZpY2F0aW9uRGVidWdFZGdpbmdIAFIXbm90aWZpY2F0aW9uRGVidWdFZG'
+    'dpbmcSHQoJdGltZXN0YW1wGOcHIAEoBFIJdGltZXN0YW1wQg4KDG5vdGlmaWNhdGlvbg==');
 
 @$core.Deprecated('Use requestDescriptor instead')
 const Request$json = {
@@ -236,6 +246,24 @@ const Request$json = {
       '10': 'requestWifiIpGet'
     },
     {
+      '1': 'request_lsm6dsox_start',
+      '3': 600,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.RequestLSM6DSOXStart',
+      '9': 0,
+      '10': 'requestLsm6dsoxStart'
+    },
+    {
+      '1': 'request_lsm6dsox_stop',
+      '3': 601,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.RequestLSM6DSOXStop',
+      '9': 0,
+      '10': 'requestLsm6dsoxStop'
+    },
+    {
       '1': 'request_debug_stm32_deep_sleep',
       '3': 1000,
       '4': 1,
@@ -276,11 +304,14 @@ final $typed_data.Uint8List requestDescriptor = $convert.base64Decode(
     'aV9wYXJhbWV0ZXJzX3NldBj7AyABKAsyJS5mb2NzdGltX3JwYy5SZXF1ZXN0V2lmaVBhcmFtZX'
     'RlcnNTZXRIAFIYcmVxdWVzdFdpZmlQYXJhbWV0ZXJzU2V0Ek8KE3JlcXVlc3Rfd2lmaV9pcF9n'
     'ZXQY/AMgASgLMh0uZm9jc3RpbV9ycGMuUmVxdWVzdFdpZmlJUEdldEgAUhByZXF1ZXN0V2lmaU'
-    'lwR2V0Em4KHnJlcXVlc3RfZGVidWdfc3RtMzJfZGVlcF9zbGVlcBjoByABKAsyJy5mb2NzdGlt'
-    'X3JwYy5SZXF1ZXN0RGVidWdTdG0zMkRlZXBTbGVlcEgAUhpyZXF1ZXN0RGVidWdTdG0zMkRlZX'
-    'BTbGVlcBJwCh5yZXF1ZXN0X2RlYnVnX2VudGVyX2Jvb3Rsb2FkZXIY6QcgASgLMiguZm9jc3Rp'
-    'bV9ycGMuUmVxdWVzdERlYnVnRW50ZXJCb290bG9hZGVySABSG3JlcXVlc3REZWJ1Z0VudGVyQm'
-    '9vdGxvYWRlckIICgZwYXJhbXM=');
+    'lwR2V0EloKFnJlcXVlc3RfbHNtNmRzb3hfc3RhcnQY2AQgASgLMiEuZm9jc3RpbV9ycGMuUmVx'
+    'dWVzdExTTTZEU09YU3RhcnRIAFIUcmVxdWVzdExzbTZkc294U3RhcnQSVwoVcmVxdWVzdF9sc2'
+    '02ZHNveF9zdG9wGNkEIAEoCzIgLmZvY3N0aW1fcnBjLlJlcXVlc3RMU002RFNPWFN0b3BIAFIT'
+    'cmVxdWVzdExzbTZkc294U3RvcBJuCh5yZXF1ZXN0X2RlYnVnX3N0bTMyX2RlZXBfc2xlZXAY6A'
+    'cgASgLMicuZm9jc3RpbV9ycGMuUmVxdWVzdERlYnVnU3RtMzJEZWVwU2xlZXBIAFIacmVxdWVz'
+    'dERlYnVnU3RtMzJEZWVwU2xlZXAScAoecmVxdWVzdF9kZWJ1Z19lbnRlcl9ib290bG9hZGVyGO'
+    'kHIAEoCzIoLmZvY3N0aW1fcnBjLlJlcXVlc3REZWJ1Z0VudGVyQm9vdGxvYWRlckgAUhtyZXF1'
+    'ZXN0RGVidWdFbnRlckJvb3Rsb2FkZXJCCAoGcGFyYW1z');
 
 @$core.Deprecated('Use responseDescriptor instead')
 const Response$json = {
@@ -369,6 +400,24 @@ const Response$json = {
       '10': 'responseWifiIpGet'
     },
     {
+      '1': 'response_lsm6dsox_start',
+      '3': 600,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.ResponseLSM6DSOXStart',
+      '9': 0,
+      '10': 'responseLsm6dsoxStart'
+    },
+    {
+      '1': 'response_lsm6dsox_stop',
+      '3': 601,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.ResponseLSM6DSOXStop',
+      '9': 0,
+      '10': 'responseLsm6dsoxStop'
+    },
+    {
       '1': 'response_debug_stm32_deep_sleep',
       '3': 1000,
       '4': 1,
@@ -408,10 +457,13 @@ final $typed_data.Uint8List responseDescriptor = $convert.base64Decode(
     'dGFtcEdldBJqChxyZXNwb25zZV93aWZpX3BhcmFtZXRlcnNfc2V0GPsDIAEoCzImLmZvY3N0aW'
     '1fcnBjLlJlc3BvbnNlV2lmaVBhcmFtZXRlcnNTZXRIAFIZcmVzcG9uc2VXaWZpUGFyYW1ldGVy'
     'c1NldBJSChRyZXNwb25zZV93aWZpX2lwX2dldBj8AyABKAsyHi5mb2NzdGltX3JwYy5SZXNwb2'
-    '5zZVdpZmlJUEdldEgAUhFyZXNwb25zZVdpZmlJcEdldBJxCh9yZXNwb25zZV9kZWJ1Z19zdG0z'
-    'Ml9kZWVwX3NsZWVwGOgHIAEoCzIoLmZvY3N0aW1fcnBjLlJlc3BvbnNlRGVidWdTdG0zMkRlZX'
-    'BTbGVlcEgAUhtyZXNwb25zZURlYnVnU3RtMzJEZWVwU2xlZXASKAoFZXJyb3IYAyABKAsyEi5m'
-    'b2NzdGltX3JwYy5FcnJvclIFZXJyb3JCCAoGcmVzdWx0');
+    '5zZVdpZmlJUEdldEgAUhFyZXNwb25zZVdpZmlJcEdldBJdChdyZXNwb25zZV9sc202ZHNveF9z'
+    'dGFydBjYBCABKAsyIi5mb2NzdGltX3JwYy5SZXNwb25zZUxTTTZEU09YU3RhcnRIAFIVcmVzcG'
+    '9uc2VMc202ZHNveFN0YXJ0EloKFnJlc3BvbnNlX2xzbTZkc294X3N0b3AY2QQgASgLMiEuZm9j'
+    'c3RpbV9ycGMuUmVzcG9uc2VMU002RFNPWFN0b3BIAFIUcmVzcG9uc2VMc202ZHNveFN0b3AScQ'
+    'ofcmVzcG9uc2VfZGVidWdfc3RtMzJfZGVlcF9zbGVlcBjoByABKAsyKC5mb2NzdGltX3JwYy5S'
+    'ZXNwb25zZURlYnVnU3RtMzJEZWVwU2xlZXBIAFIbcmVzcG9uc2VEZWJ1Z1N0bTMyRGVlcFNsZW'
+    'VwEigKBWVycm9yGAMgASgLMhIuZm9jc3RpbV9ycGMuRXJyb3JSBWVycm9yQggKBnJlc3VsdA==');
 
 @$core.Deprecated('Use errorDescriptor instead')
 const Error$json = {

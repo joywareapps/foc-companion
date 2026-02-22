@@ -37,6 +37,10 @@ const AxisType$json = {
     {'1': 'AXIS_CALIBRATION_4_B', '2': 42},
     {'1': 'AXIS_CALIBRATION_4_C', '2': 43},
     {'1': 'AXIS_CALIBRATION_4_D', '2': 44},
+    {'1': 'AXIS_ELECTRODE_1_POWER', '2': 50},
+    {'1': 'AXIS_ELECTRODE_2_POWER', '2': 51},
+    {'1': 'AXIS_ELECTRODE_3_POWER', '2': 52},
+    {'1': 'AXIS_ELECTRODE_4_POWER', '2': 53},
   ],
 };
 
@@ -51,7 +55,9 @@ final $typed_data.Uint8List axisTypeDescriptor = $convert.base64Decode(
     'GQoVQVhJU19DQUxJQlJBVElPTl8zX1VQEB8SGwoXQVhJU19DQUxJQlJBVElPTl8zX0xFRlQQIB'
     'IdChlBWElTX0NBTElCUkFUSU9OXzRfQ0VOVEVSECgSGAoUQVhJU19DQUxJQlJBVElPTl80X0EQ'
     'KRIYChRBWElTX0NBTElCUkFUSU9OXzRfQhAqEhgKFEFYSVNfQ0FMSUJSQVRJT05fNF9DECsSGA'
-    'oUQVhJU19DQUxJQlJBVElPTl80X0QQLA==');
+    'oUQVhJU19DQUxJQlJBVElPTl80X0QQLBIaChZBWElTX0VMRUNUUk9ERV8xX1BPV0VSEDISGgoW'
+    'QVhJU19FTEVDVFJPREVfMl9QT1dFUhAzEhoKFkFYSVNfRUxFQ1RST0RFXzNfUE9XRVIQNBIaCh'
+    'ZBWElTX0VMRUNUUk9ERV80X1BPV0VSEDU=');
 
 @$core.Deprecated('Use boardIdentifierDescriptor instead')
 const BoardIdentifier$json = {
@@ -75,13 +81,15 @@ const OutputMode$json = {
     {'1': 'OUTPUT_UNKNOWN', '2': 0},
     {'1': 'OUTPUT_THREEPHASE', '2': 2},
     {'1': 'OUTPUT_FOURPHASE', '2': 3},
+    {'1': 'OUTPUT_FOURPHASE_INDIVIDUAL_ELECTRODES', '2': 4},
   ],
 };
 
 /// Descriptor for `OutputMode`. Decode as a `google.protobuf.EnumDescriptorProto`.
 final $typed_data.Uint8List outputModeDescriptor = $convert.base64Decode(
     'CgpPdXRwdXRNb2RlEhIKDk9VVFBVVF9VTktOT1dOEAASFQoRT1VUUFVUX1RIUkVFUEhBU0UQAh'
-    'IUChBPVVRQVVRfRk9VUlBIQVNFEAM=');
+    'IUChBPVVRQVVRfRk9VUlBIQVNFEAMSKgomT1VUUFVUX0ZPVVJQSEFTRV9JTkRJVklEVUFMX0VM'
+    'RUNUUk9ERVMQBA==');
 
 @$core.Deprecated('Use streamingModeDescriptor instead')
 const StreamingMode$json = {

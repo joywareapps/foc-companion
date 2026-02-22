@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:restim_flutter/models/settings_models.dart';
 import 'package:restim_flutter/providers/settings_provider.dart';
 
 class DeviceSettingsScreen extends StatefulWidget {
@@ -46,32 +47,69 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         ),
 
         const Divider(height: 40),
-        const Text("Calibration", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-
-        _buildSlider(
-          label: "Center",
-          value: d.calibration3Center,
-          min: -2,
-          max: 2,
-          onChanged: (v) => setState(() => d.calibration3Center = v),
-        ),
-
-        _buildSlider(
-          label: "Up",
-          value: d.calibration3Up,
-          min: -2,
-          max: 2,
-          onChanged: (v) => setState(() => d.calibration3Up = v),
-        ),
-
-        _buildSlider(
-          label: "Left",
-          value: d.calibration3Left,
-          min: -2,
-          max: 2,
-          onChanged: (v) => setState(() => d.calibration3Left = v),
-        ),
+        if (d.deviceMode == DeviceMode.threePhase) ...[
+          const Text("3-Phase Calibration", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          _buildSlider(
+            label: "Center",
+            value: d.calibration3Center,
+            min: -2,
+            max: 2,
+            onChanged: (v) => setState(() => d.calibration3Center = v),
+          ),
+          _buildSlider(
+            label: "Up",
+            value: d.calibration3Up,
+            min: -2,
+            max: 2,
+            onChanged: (v) => setState(() => d.calibration3Up = v),
+          ),
+          _buildSlider(
+            label: "Left",
+            value: d.calibration3Left,
+            min: -2,
+            max: 2,
+            onChanged: (v) => setState(() => d.calibration3Left = v),
+          ),
+        ] else ...[
+          const Text("4-Phase Calibration", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          _buildSlider(
+            label: "Center",
+            value: d.calibration4Center,
+            min: -2,
+            max: 2,
+            onChanged: (v) => setState(() => d.calibration4Center = v),
+          ),
+          _buildSlider(
+            label: "Electrode A",
+            value: d.calibration4A,
+            min: -2,
+            max: 2,
+            onChanged: (v) => setState(() => d.calibration4A = v),
+          ),
+          _buildSlider(
+            label: "Electrode B",
+            value: d.calibration4B,
+            min: -2,
+            max: 2,
+            onChanged: (v) => setState(() => d.calibration4B = v),
+          ),
+          _buildSlider(
+            label: "Electrode C",
+            value: d.calibration4C,
+            min: -2,
+            max: 2,
+            onChanged: (v) => setState(() => d.calibration4C = v),
+          ),
+          _buildSlider(
+            label: "Electrode D",
+            value: d.calibration4D,
+            min: -2,
+            max: 2,
+            onChanged: (v) => setState(() => d.calibration4D = v),
+          ),
+        ],
 
         const SizedBox(height: 30),
         FilledButton(

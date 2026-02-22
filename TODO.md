@@ -1,285 +1,94 @@
-# 💡 Agent Task: "FOC Companion" MVP Implementation
+# 💡 FOC Companion - Flutter Implementation Status
 
 ## **Objective**
-
-Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android application. The MVP will connect to a FOC-Stim device over TCP, generate commands for a predefined pattern, and send them to the device.
+Develop the "FOC Companion" Android application using Flutter. The app connects to a FOC-Stim device over TCP, manages signal parameters, and executes patterns.
 
 ---
 
-## 🔥 PRIORITY TASKS (See `todo/` folder for detailed prompts)
-
-### Task 01: Fix Firmware Version Reporting ⚠️ BREAKING
-- **Priority:** ~~HIGH~~ COMPLETED ✅
-- **Status:** 🟢 Complete - Protobuf regenerated, app updated and tested with latest firmware
-- **Prompt:** ~~`todo/01-firmware-version-fix.md`~~ (removed - task complete)
-- **Summary:** FOC-Stim firmware changed from `stm32_firmware_version` (string) to `stm32_firmware_version_2` (FirmwareVersion message). Protobuf files regenerated from FOC-stim repo, app updated, and tested working with latest firmware.
-
-### Task 02: 4-Phase Support Implementation
-- **Priority:** ~~MEDIUM~~ COMPLETED ✅
-- **Status:** 🟢 Complete - 4-phase mode support implemented and working
-- **Prompt:** ~~`todo/02-4phase-support.md`~~ (removed - task complete)
-- **Summary:** Investigated desktop app's 4-phase implementation, implemented mobile support with UX for mode switching. Mode can only change when device is not playing.
+## 🔥 PRIORITY TASKS
 
 ### Task 03: Pattern System Overhaul 🎨
-- **Priority:** MEDIUM
-- **Status:** 🟡 Planning
+- **Priority:** HIGH
+- **Status:** 🟡 In Progress
 - **Prompt:** `todo/03-pattern-system-overhaul.md`
 - **Summary:** 
-  - Hide media sync tabs (focus on patterns first)
   - Port patterns from restim-desktop (17+ available)
   - Create "Driver Cockpit" UI for real-time pattern control
   - Implement modulation system for pulse parameters
-  - Speed multipliers: 1/4, 1/3, 1/2, 2/3, 3/4, 1, 4/3, 3/2, 2, 3, 4
-  - Modulation functions: sin, triangle, saw (variable center), square (variable duty)
+  - Speed multipliers and modulation functions (sin, triangle, saw, square)
 
 ### Task 04: Security Audit & Open Source Preparation 🔒
 - **Priority:** HIGH
-- **Status:** 🟡 Pre-release Required
-- **Prompt:** `todo/04-security-audit-opensource.md`
-- **Summary:** 
-  - Comprehensive security audit before open sourcing
-  - Git history scan for accidentally committed secrets
-  - Remove hardcoded credentials, internal IPs (192.168.178.30 found in docs)
-  - Add LICENSE file, SECURITY.md, .env.example
-  - Update .gitignore for comprehensive coverage
-  - Dependency vulnerability scan
-  - Documentation sanitization
+- **Status:** 🟢 Complete
+- **Summary:** Repository sanitized, LICENSE/SECURITY.md added, documentation updated.
 
 ### Task 05: Android App Distribution Research 📱
 - **Priority:** MEDIUM
-- **Status:** 🟡 Research
-- **Prompt:** `todo/05-distribution-research.md`
-- **Summary:**
-  - Research alternatives to Play Store (F-Droid, Amazon, Samsung, etc.)
-  - **Focus:** Quick beta distribution to testers
-  - **Bonus:** GitHub Actions automation, local build + upload
-  - **Link-based testing (no email required):** Firebase signup links, GitHub releases, S3
-  - Platforms analyzed: Firebase App Distribution (RECOMMENDED), GitHub Releases, TestFairy, App Center, F-Droid, S3
-  - Implementation plan for multi-tier distribution (Beta → Public Beta → Production)
+- **Status:** 🟢 Complete (Research Phase)
+- **Summary:** Firebase App Distribution recommended for beta testing.
 
 ---
 
-## **📋 Phase 1: Project Setup & Core Dependencies**
+## **📋 Phase 1: Core Implementation (Flutter)**
 
 - [x] **Project Initialization:**
-    - [x] Set up a new React Native project using the latest version, following the "New Architecture" guidelines.
-    - [x] Configure the project for Android development.
+    - [x] Set up Flutter project in `restim-flutter/`.
+    - [x] Configure Android build settings.
 - [x] **Protobuf Integration:**
-    - [x] Establish a build process to compile `.proto` files from the `FOC-Stim` repository into TypeScript modules.
-    - [x] Add the generated modules to the project.
-- [x] **Core Logic Porting:**
-    - [x] Port the necessary Python `stim_math` functions for waveform generation to a TypeScript module.
-    - [x] Port the "circle" pattern logic from the desktop application's `patterns` module.
-
-## **📋 Phase 2: Communication & Command Loop**
-
-- [x] **TCP Communication Layer:**
-    - [x] Implement a TCP socket service using a library like `react-native-tcp-socket`.
-    - [x] Implement the HDLC framing/deframing logic in TypeScript to wrap/unwrap Protobuf messages.
-    - [x] **Test TCP connection on real device** - ✅ VERIFIED WORKING (2025-12-25)
+    - [x] Compilation of `.proto` files to Dart (`restim-flutter/lib/generated/`).
+    - [x] Integration with communication layer.
+- [x] **Communication Layer:**
+    - [x] TCP Socket service implementation.
+    - [x] HDLC framing/deframing logic in Dart.
+    - [x] **Test TCP connection on real device** - ✅ VERIFIED WORKING
 - [x] **Protocol API:**
-    - [x] Create a `FocStimApiService` that uses the TCP service and generated Protobuf modules to send commands and handle responses.
-    - [x] Implement `startSignal()` and `stopSignal()` methods for signal control.
-    - [x] Add notification handler for real-time device status updates.
+    - [x] `FocStimApiService` for Protobuf-based requests/notifications.
+    - [x] Signal start/stop control.
 - [x] **State Management:**
-    - [x] Integrate a state management library (Zustand) to manage application state, including connection status, device IP, and errors.
-    - [x] Add device status tracking (temperature, battery, pulse frequency).
-- [x] **High-Frequency Command Loop:**
-    - [x] Remove `react-native-worklets` dependency (incompatible with Expo SDK 54).
-    - [x] Implement command loop using `setInterval` (60Hz @ ~16ms).
-    - [x] Add signal parameter initialization (carrier frequency, pulse parameters).
-    - [x] Implement threephase algorithm (position + amplitude updates).
-    - [x] **Verify circle pattern execution on real device** - ✅ WORKING (2025-12-25)
-
-## **📋 Phase 3: User Interface**
-
-- [x] **Settings Screen:**
-    - [x] Create a simple UI screen for users to input and save the IP address of the FOC-Stim device.
-- [x] **Main Control Screen:**
-    - [x] Add a "Connect/Disconnect" button that uses the `FocStimApiService` and updates the application state.
-    - [x] Display the current connection status (e.g., "Disconnected", "Connecting...", "Connected").
-    - [x] Add a "Start/Stop Pattern" button to control the command loop.
-    - [x] Display device status metrics (temperature, battery voltage/charge, pulse frequency, power source).
-    - [x] Optimize UI layout with ScrollView for compact display and full accessibility.
-
-## **📋 Phase 4: Device Settings Implementation**
-
-### **4.1 Discovery & Documentation** ✅ COMPLETED
-
-- [x] **Desktop App Settings Analysis:**
-    - [x] Analyze Device Selection settings structure (Setup → Device Selection)
-    - [x] Analyze Preferences dialog structure (Setup → Preferences)
-    - [x] Identify FOC-Stim specific settings (carrier frequency min/max, waveform amplitude)
-    - [x] Identify Funscript/T-Code settings (pulse parameters, volume settings)
-    - [x] Identify vibration-related settings to EXCLUDE
-    - [x] Document valid ranges and default values from `stim_math/limits.py`
-    - [x] Create comprehensive specification document: `documents/functional_spec/device-settings-spec.md`
-
-### **4.2 Settings Infrastructure** ✅ COMPLETED
-
-- [x] **Settings Service:**
-    - [x] Create TypeScript interfaces for settings structures:
-        - [x] `DeviceSettings` interface (device type, waveform type, min/max freq, amplitude)
-        - [x] `PulseSettings` interface (carrier freq, pulse freq, pulse width, rise time, interval random)
-        - [x] `FocStimSettings` interface (WiFi IP, SSID, password, communication mode)
-        - [x] `AppSettings` interface (combines all settings)
-    - [x] Implement AsyncStorage persistence layer:
-        - [x] `SettingsService.ts` with load/save methods
-        - [x] Storage keys: `@foccompanion/device_settings`, `@foccompanion/pulse_settings`, etc.
-        - [x] Default values matching desktop app (min_freq: 500Hz, max_freq: 1500Hz, amplitude: 0.120A)
-    - [x] Create settings validation utilities:
-        - [x] Min/max frequency validation (500-2000 Hz range, min < max)
-        - [x] Waveform amplitude validation (0.01-0.15 A range)
-        - [x] Pulse parameter validation (frequency: 1-300Hz, width: 3-100 cycles, rise: 2-100 cycles)
-        - [x] Duty cycle calculation and warning logic
-
-- [x] **State Management Integration:**
-    - [x] Extend `deviceStore.ts` with settings state:
-        - [x] Add `deviceSettings`, `pulseSettings`, `focstimSettings` state
-        - [x] Add `loadSettings()` action (load from AsyncStorage on app start)
-        - [x] Add `saveDeviceSettings()`, `savePulseSettings()` actions
-        - [x] Add `resetToDefaults()` action
-    - [x] Initialize settings on app start in store creation
-
-### **4.3 Device Settings UI** ✅ COMPLETED
-
-- [x] **Device Settings Screen:**
-    - [x] Create new screen: `src/app/(tabs)/device-settings.tsx`
-    - [x] Add tab bar icon and navigation
-    - [x] Implement UI sections:
-        - [x] **Safety Limits Section:**
-            - [x] Min Carrier Frequency slider (500-2000 Hz, default: 500 Hz, step: 10 Hz)
-            - [x] Max Carrier Frequency slider (500-2000 Hz, default: 1500 Hz, step: 10 Hz)
-            - [x] Validation: display error if min >= max
-            - [x] Waveform Amplitude slider (10-150 mA, default: 120 mA, step: 1 mA)
-            - [x] Display current values with units (Hz, mA)
-        - [x] **Device Configuration Section:**
-            - [x] Display current device type (FOC-Stim V3 / 3-Phase)
-            - [x] Removed waveform type selector (vibration-only, not applicable to FOC-Stim)
-            - [x] Added info note explaining FOC-Stim electromagnetic field operation
-        - [x] **Actions:**
-            - [x] "Reset to Defaults" button with confirmation dialog
-            - [x] "Save Settings" button (disabled when no changes or validation errors)
-            - [x] Real-time validation with error messages
-    - [x] Add ScrollView for accessibility
-    - [x] Implement haptic feedback for slider adjustments
-
-### **4.4 Pulse Settings UI** ✅ COMPLETED
-
-- [x] **Pulse Settings Screen:**
-    - [x] Create `src/app/(tabs)/pulse-settings.tsx` tab screen
-    - [x] Add "Pulse" tab with bolt icon in navigation
-    - [x] Implement UI controls:
-        - [x] **Carrier Settings:**
-            - [x] Carrier Frequency slider (editable, respects device min-max from Device Settings)
-            - [x] Dynamic range display based on device safety limits
-        - [x] **Pulse Parameters:**
-            - [x] Pulse Frequency slider (1-100 Hz, default: 50 Hz, step: 1 Hz)
-            - [x] Pulse Width slider (3-15 cycles, default: 5 cycles, step: 1)
-            - [x] Pulse Rise Time slider (2-5 cycles, default: 3 cycles, step: 1)
-            - [x] Pulse Interval Random slider (0-100%, default: 10%, step: 1%)
-        - [x] **Duty Cycle Display:**
-            - [x] Real-time calculation: `(pulseFreq * pulseWidth) / carrierFreq`
-            - [x] Display percentage with color (green normal, red > 100%)
-            - [x] Warning box with icon when > 100%
-            - [x] Helpful message: "Duty cycle exceeds 100%! Reduce pulse width or frequency"
-    - [x] Help text for each parameter explaining functionality
-    - [x] Save/Reset buttons with validation
-    - [x] Color-coded sliders for visual distinction
-    - [x] ScrollView for accessibility
-    - [x] **CommandLoop Integration:**
-        - [x] Added AXIS_PULSE_INTERVAL_RANDOM_PERCENT to initialization
-        - [x] All 5 pulse parameters now sent to device before signal start
-
-### **4.5 FOC-Stim Preferences UI** (Priority 2)
-
-- [ ] **Enhance Existing Settings Screen:**
-    - [ ] Refactor `src/app/(tabs)/settings.tsx` to organize settings
-    - [ ] Add sections:
-        - [ ] **WiFi Configuration:**
-            - [ ] IP Address input (existing)
-            - [ ] SSID input (future feature - placeholder)
-            - [ ] Password input (future feature - placeholder)
-            - [ ] Communication mode toggle: Serial/WiFi (WiFi default for mobile)
-        - [ ] **Network Tab:**
-            - [ ] Placeholder message: "Serial/USB support coming soon"
-        - [ ] **Debugging (Developer Mode):**
-            - [ ] Toggle for Teleplot visualization (optional)
-            - [ ] Toggle for notification logging (optional)
-
-### **4.6 CommandLoop Integration** ✅ COMPLETED
-
-- [x] **Update CommandLoop to Use Settings:**
-    - [x] Inject settings dependency into `CommandLoop` class (via `useDeviceStore.getState()`)
-    - [x] Replace hardcoded values in `setupSignalParameters()`:
-        - [x] Use `pulseSettings.carrierFrequency` instead of hardcoded 700 Hz
-        - [x] Use `pulseSettings.pulseFrequency` instead of hardcoded 50 Hz
-        - [x] Use `pulseSettings.pulseWidth` instead of hardcoded 5 cycles
-        - [x] Use `pulseSettings.pulseRiseTime` instead of hardcoded 10 cycles
-    - [x] Replace hardcoded amplitude in `tick()`:
-        - [x] Use `deviceSettings.waveformAmplitude` instead of hardcoded 0.01 A (now defaults to 0.120 A / 120 mA)
-    - [x] Add settings validation before starting pattern
-    - [x] Handle settings changes (apply on next pattern start - settings are read fresh on each start())
-
-- [ ] **Settings Hot Reload (Future Enhancement):**
-    - [ ] Detect when settings change while pattern is running
-    - [ ] Option 1: Warn user to restart pattern for changes to take effect
-    - [ ] Option 2: Apply amplitude changes immediately, require restart for frequency changes
-
-### **4.7 Testing & Validation** (Priority 1)
-
-- [ ] **Unit Tests:**
-    - [ ] Test SettingsService load/save operations
-    - [ ] Test validation functions (frequency ranges, amplitude limits, duty cycle)
-    - [ ] Test default value initialization
-    - [ ] Test settings state management in deviceStore
-
-- [ ] **Integration Tests:**
-    - [ ] Test settings persistence across app restarts
-    - [ ] Test CommandLoop uses configured settings (not hardcoded values)
-    - [ ] Test settings validation in UI (error messages, disabled save button)
-    - [ ] Test reset to defaults functionality
-
-- [ ] **Real Device Testing:**
-    - [ ] Test with various min/max frequency settings (500-1500Hz, 700-1200Hz, etc.)
-    - [ ] Test with various amplitude settings (10mA, 50mA, 120mA)
-    - [ ] Test with various pulse parameter combinations
-    - [ ] Verify duty cycle warning appears correctly
-    - [ ] Verify pattern behavior changes with different settings
-    - [ ] Test safety: ensure device respects configured limits
-
-### **4.8 Documentation Updates**
-
-- [ ] **Update User Documentation:**
-    - [ ] Add settings guide to README.md
-    - [ ] Document default values and safe ranges
-    - [ ] Add troubleshooting for settings issues
-
-- [ ] **Update DONE.md:**
-    - [ ] Document completed settings implementation
-    - [ ] List all implemented settings and their defaults
-    - [ ] Document testing results with real device
+    - [x] `Provider` based state management for connection and settings.
+- [x] **Command Loop:**
+    - [x] High-frequency loop for pattern execution (60Hz).
+    - [x] Dynamic signal parameter updates.
+- [x] **Device Settings UI:**
+    - [x] Safety limits (min/max frequency, amplitude).
+    - [x] Pulse parameters (carrier/pulse freq, width, rise time, randomness).
+    - [x] Persistence using `shared_preferences`.
 
 ---
 
-## **📋 Phase 5: Serial/USB Communication (Lower Priority)**
+## **📋 Phase 2: Pattern System (Task 03)**
 
-- [ ] **Serial Library Integration:**
-    - [ ] Add `react-native-serial-transport` or `@fugood/react-native-usb-serialport` dependency.
-    - [ ] Research library compatibility with Expo managed workflow and New Architecture.
-- [ ] **USB Permissions Configuration:**
-    - [ ] Add `android.permission.USB_PERMISSION` via Expo Config Plugin.
-    - [ ] Add `android.hardware.usb.host` feature declaration.
-    - [ ] Implement runtime permission handling for USB access.
-- [ ] **Serial Transport Abstraction:**
-    - [ ] Create `SerialTransport` class mirroring TCP interface.
-    - [ ] Reuse existing HDLC framing/deframing logic.
-    - [ ] Share Protobuf encoding/decoding with TCP implementation.
-- [ ] **Unified API Service:**
-    - [ ] Extend `FocStimApiService` to support both TCP and Serial transports.
-    - [ ] Add transport selection in UI (TCP vs USB).
-    - [ ] Implement device detection for USB-connected FOC-Stim devices.
-- [ ] **Testing & Validation:**
-    - [ ] Test Serial communication with real FOC-Stim device via USB.
-    - [ ] Verify protocol compatibility across both transports.
-    - [ ] Validate permission handling and error scenarios.
+- [ ] **Pattern Porting:**
+    - [ ] Port core patterns from desktop (Circle, Orbit, Spiral, etc.).
+    - [ ] Implement interpolation for smooth transitions.
+- [ ] **Driver Cockpit UI:**
+    - [ ] Real-time control interface for running patterns.
+    - [ ] Speed/Velocity adjustment.
+- [ ] **Modulation System:**
+    - [ ] LFO-based modulation for pulse parameters.
+    - [ ] Waveform selection (sin, triangle, saw, square).
+
+---
+
+## **📋 Planned / Parked Features**
+
+### Media Synchronization
+- **Status:** 🟡 Parked
+- **Goal:** Synchronize with HereSphere and other players.
+- **Docs:** `documents/features-parked/MEDIA_SYNC_USAGE.md`
+
+### Serial / USB Communication
+- **Status:** 🟡 Planned
+- **Goal:** Direct USB connection to FOC-Stim devices.
+- **Reference:** `documents/features-future.md`
+
+### Hardware Calibration UI
+- **Status:** 🟡 Planned
+- **Goal:** Visual interface for output calibration.
+
+---
+
+## **📋 Archive (Legacy Implementation)**
+Legacy React Native implementation and research has been moved to `documents/archive/`.
+- `documents/archive/mobile_migration_plan.md`
+- `documents/archive/WORKLETS_MIGRATION.md`

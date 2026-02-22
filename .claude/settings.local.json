@@ -21,7 +21,16 @@
       "Bash(npm run android:*)",
       "Bash(npm run typecheck:*)",
       "Bash(git restore:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(./generate_protos.sh:*)",
+      "Bash(grep protoc:*)",
+      "Bash(tail:*)",
+      "Bash(export:*)",
+      "Bash(cd /home/gorano/code/restim-mobile/restim-flutter && flutter analyze 2>&1)"
+    ],
+    "additionalDirectories": [
+      "/home/gorano/code/restim-desktop",
+      "/home/gorano/code/FOC-stim/"
     ]
   }
 }

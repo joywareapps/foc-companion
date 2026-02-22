@@ -8,6 +8,10 @@ import 'package:restim_flutter/generated/protobuf/messages.pb.dart';
 import 'package:restim_flutter/generated/protobuf/notifications.pb.dart';
 import 'package:restim_flutter/generated/protobuf/constants.pbenum.dart';
 
+const int _kVersionMajor = 1;
+const int _kVersionMinorMin = 1;
+const String _kVersionBranch = 'main';
+
 class FocStimApiService {
   Socket? _socket;
   final Hdlc _hdlc = Hdlc();
@@ -95,11 +99,31 @@ class FocStimApiService {
     });
   }
   
+  Future<ResponseFirmwareVersion> requestFirmwareVersion() async {
+    var req = Request()..requestFirmwareVersion = RequestFirmwareVersion();
+    final response = await sendRequest(req);
+    return response.responseFirmwareVersion;
+  }
+
+  void validateFirmwareVersion(ResponseFirmwareVersion resp) {
+    final v = resp.stm32FirmwareVersion2;
+    if (v.branch != _kVersionBranch) {
+      throw Exception(
+          'Incompatible firmware branch: "${v.branch}" (expected "$_kVersionBranch")');
+    }
+    if (v.major != _kVersionMajor || v.minor < _kVersionMinorMin) {
+      throw Exception(
+          'Incompatible firmware version: ${v.major}.${v.minor}.${v.revision} '
+          '(needs >= $_kVersionMajor.$_kVersionMinorMin.0)');
+    }
+  }
+
   Future<void> startSignal({OutputMode mode = OutputMode.OUTPUT_THREEPHASE}) async {
     var req = Request()
       ..requestSignalStart = (RequestSignalStart()..mode = mode);
     await sendRequest(req);
   }
+
 
   Future<void> stopSignal() async {
     var req = Request()..requestSignalStop = RequestSignalStop();

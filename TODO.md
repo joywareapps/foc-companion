@@ -9,10 +9,10 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
 ## 🔥 PRIORITY TASKS (See `todo/` folder for detailed prompts)
 
 ### Task 01: Fix Firmware Version Reporting ⚠️ BREAKING
-- **Priority:** HIGH
-- **Status:** 🔴 Blocked - Breaking change in FOC-Stim firmware API
-- **Prompt:** `todo/01-firmware-version-fix.md`
-- **Summary:** FOC-Stim firmware changed from `stm32_firmware_version` (string) to `stm32_firmware_version_2` (FirmwareVersion message). Mobile app cannot connect to devices with new firmware until protobuf and version parsing are updated.
+- **Priority:** ~~HIGH~~ COMPLETED ✅
+- **Status:** 🟢 Complete - Protobuf regenerated, app updated and tested with latest firmware
+- **Prompt:** ~~`todo/01-firmware-version-fix.md`~~ (removed - task complete)
+- **Summary:** FOC-Stim firmware changed from `stm32_firmware_version` (string) to `stm32_firmware_version_2` (FirmwareVersion message). Protobuf files regenerated from FOC-stim repo, app updated, and tested working with latest firmware.
 
 ### Task 02: 4-Phase Support Implementation
 - **Priority:** MEDIUM

@@ -32,6 +32,19 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
   - Speed multipliers: 1/4, 1/3, 1/2, 2/3, 3/4, 1, 4/3, 3/2, 2, 3, 4
   - Modulation functions: sin, triangle, saw (variable center), square (variable duty)
 
+### Task 04: Security Audit & Open Source Preparation 🔒
+- **Priority:** HIGH
+- **Status:** 🟡 Pre-release Required
+- **Prompt:** `todo/04-security-audit-opensource.md`
+- **Summary:** 
+  - Comprehensive security audit before open sourcing
+  - Git history scan for accidentally committed secrets
+  - Remove hardcoded credentials, internal IPs (192.168.178.30 found in docs)
+  - Add LICENSE file, SECURITY.md, .env.example
+  - Update .gitignore for comprehensive coverage
+  - Dependency vulnerability scan
+  - Documentation sanitization
+
 ---
 
 ## **📋 Phase 1: Project Setup & Core Dependencies**

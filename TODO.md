@@ -45,6 +45,17 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
   - Dependency vulnerability scan
   - Documentation sanitization
 
+### Task 05: Android App Distribution Research 📱
+- **Priority:** MEDIUM
+- **Status:** 🟡 Research
+- **Prompt:** `todo/05-distribution-research.md`
+- **Summary:**
+  - Research alternatives to Play Store (F-Droid, Amazon, Samsung, etc.)
+  - **Focus:** Quick beta distribution to testers
+  - **Bonus:** GitHub Actions automation, local build + upload
+  - Platforms analyzed: Firebase App Distribution (RECOMMENDED), GitHub Releases, TestFairy, App Center, F-Droid, S3
+  - Implementation plan for multi-tier distribution (Beta → Public Beta → Production)
+
 ---
 
 ## **📋 Phase 1: Project Setup & Core Dependencies**

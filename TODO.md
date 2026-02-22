@@ -36,6 +36,16 @@ Develop the "FOC Companion" Android application using Flutter. The app connects 
   - Review FOC-stim proto files for randomization support
   - Update app UI if feature deprecated, or fix implementation if broken
 
+### Task 07: Calibration Implementation 🎛️
+- **Priority:** HIGH
+- **Status:** 🟡 Not Started
+- **Summary:**
+  - Implement calibration feature based on desktop version (`~/code/restim-desktop/`)
+  - Add calibration button next to play button on control screen
+  - Create calibration screen with different options for 3-phase and 4-phase modes
+  - Auto-select appropriate calibration screen based on connected device mode
+  - Reference desktop implementation for calibration logic and UI
+
 ---
 
 ## **📋 Phase 1: Core Implementation (Flutter)**

@@ -6,6 +6,59 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
 
 ---
 
+## 🔥 PRIORITY TASKS (See `todo/` folder for detailed prompts)
+
+### Task 01: Fix Firmware Version Reporting ⚠️ BREAKING
+- **Priority:** HIGH
+- **Status:** 🔴 Blocked - Breaking change in FOC-Stim firmware API
+- **Prompt:** `todo/01-firmware-version-fix.md`
+- **Summary:** FOC-Stim firmware changed from `stm32_firmware_version` (string) to `stm32_firmware_version_2` (FirmwareVersion message). Mobile app cannot connect to devices with new firmware until protobuf and version parsing are updated.
+
+### Task 02: 4-Phase Support Implementation
+- **Priority:** MEDIUM
+- **Status:** 🟡 Planning
+- **Prompt:** `todo/02-4phase-support.md`
+- **Summary:** Investigate desktop app's 4-phase implementation, plan mobile support, design UX for mode switching. Constraint: mode can only change when not playing.
+
+### Task 03: Pattern System Overhaul 🎨
+- **Priority:** MEDIUM
+- **Status:** 🟡 Planning
+- **Prompt:** `todo/03-pattern-system-overhaul.md`
+- **Summary:** 
+  - Hide media sync tabs (focus on patterns first)
+  - Port patterns from restim-desktop (17+ available)
+  - Create "Driver Cockpit" UI for real-time pattern control
+  - Implement modulation system for pulse parameters
+  - Speed multipliers: 1/4, 1/3, 1/2, 2/3, 3/4, 1, 4/3, 3/2, 2, 3, 4
+  - Modulation functions: sin, triangle, saw (variable center), square (variable duty)
+
+### Task 04: Security Audit & Open Source Preparation 🔒
+- **Priority:** HIGH
+- **Status:** 🟡 Pre-release Required
+- **Prompt:** `todo/04-security-audit-opensource.md`
+- **Summary:** 
+  - Comprehensive security audit before open sourcing
+  - Git history scan for accidentally committed secrets
+  - Remove hardcoded credentials, internal IPs (192.168.178.30 found in docs)
+  - Add LICENSE file, SECURITY.md, .env.example
+  - Update .gitignore for comprehensive coverage
+  - Dependency vulnerability scan
+  - Documentation sanitization
+
+### Task 05: Android App Distribution Research 📱
+- **Priority:** MEDIUM
+- **Status:** 🟡 Research
+- **Prompt:** `todo/05-distribution-research.md`
+- **Summary:**
+  - Research alternatives to Play Store (F-Droid, Amazon, Samsung, etc.)
+  - **Focus:** Quick beta distribution to testers
+  - **Bonus:** GitHub Actions automation, local build + upload
+  - **Link-based testing (no email required):** Firebase signup links, GitHub releases, S3
+  - Platforms analyzed: Firebase App Distribution (RECOMMENDED), GitHub Releases, TestFairy, App Center, F-Droid, S3
+  - Implementation plan for multi-tier distribution (Beta → Public Beta → Production)
+
+---
+
 ## **📋 Phase 1: Project Setup & Core Dependencies**
 
 - [x] **Project Initialization:**

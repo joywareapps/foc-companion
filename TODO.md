@@ -20,6 +20,18 @@ Develop a Minimum Viable Product (MVP) for the "FOC Companion" Android applicati
 - **Prompt:** `todo/02-4phase-support.md`
 - **Summary:** Investigate desktop app's 4-phase implementation, plan mobile support, design UX for mode switching. Constraint: mode can only change when not playing.
 
+### Task 03: Pattern System Overhaul 🎨
+- **Priority:** MEDIUM
+- **Status:** 🟡 Planning
+- **Prompt:** `todo/03-pattern-system-overhaul.md`
+- **Summary:** 
+  - Hide media sync tabs (focus on patterns first)
+  - Port patterns from restim-desktop (17+ available)
+  - Create "Driver Cockpit" UI for real-time pattern control
+  - Implement modulation system for pulse parameters
+  - Speed multipliers: 1/4, 1/3, 1/2, 2/3, 3/4, 1, 4/3, 3/2, 2, 3, 4
+  - Modulation functions: sin, triangle, saw (variable center), square (variable duty)
+
 ---
 
 ## **📋 Phase 1: Project Setup & Core Dependencies**

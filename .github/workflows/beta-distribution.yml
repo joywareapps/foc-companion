@@ -26,6 +26,14 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Install Protoc
+        run: sudo apt-get install -y protobuf-compiler
+
+      - name: Install Dart Protoc Plugin
+        run: |
+          dart pub global activate protoc_plugin
+          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
       - name: Get Dependencies
         run: |
           cd foc-companion
@@ -33,9 +41,8 @@ jobs:
 
       - name: Generate Protobuf
         run: |
-          cd foc-companion
-          chmod +x ../generate_protos.sh
-          ../generate_protos.sh
+          chmod +x ./generate_protos.sh
+          ./generate_protos.sh
 
       - name: Build APK
         run: |

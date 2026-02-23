@@ -345,13 +345,13 @@ jobs:
         
       - name: Build APK
         run: |
-          cd restim-flutter
+          cd foc-companion
           flutter build apk --release
           
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: restim-flutter/build/app/outputs/flutter-apk/app-release.apk
+          files: foc-companion/build/app/outputs/flutter-apk/app-release.apk
           body: |
             ## Beta Release
             Download and install APK directly on your device.
@@ -362,7 +362,7 @@ jobs:
 **Local CLI Example:**
 ```bash
 # Build APK
-cd restim-flutter
+cd foc-companion
 flutter build apk --release
 
 # Create GitHub release with gh CLI
@@ -542,7 +542,7 @@ gh release create v1.0.0-beta ./app.apk --title "Public Beta v1.0.0"
 
 **Share Direct Download Link:**
 ```
-https://github.com/joywareapps/restim-mobile/releases/download/v1.0.0-beta/app.apk
+https://github.com/joywareapps/foc-companion/releases/download/v1.0.0-beta/app.apk
 ```
 
 **Pros:**
@@ -729,7 +729,7 @@ jobs:
         
       - name: Build APK
         run: |
-          cd restim-flutter
+          cd foc-companion
           flutter build apk --release
           
       - name: Distribute to Firebase
@@ -738,7 +738,7 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
           groups: beta-testers  # Group with signup link enabled
-          file: restim-flutter/build/app/outputs/flutter-apk/app-release.apk
+          file: foc-companion/build/app/outputs/flutter-apk/app-release.apk
           releaseNotes: |
             Beta build from ${{ github.sha }}
             Changes: ${{ github.event.head_commit.message }}
@@ -778,7 +778,7 @@ Questions? Ask in #app-support
 **Local Build + Upload:**
 ```bash
 # Build locally
-cd restim-flutter
+cd foc-companion
 flutter build apk --release
 
 # Upload via Firebase CLI
@@ -819,13 +819,13 @@ jobs:
         
       - name: Build APK
         run: |
-          cd restim-flutter
+          cd foc-companion
           flutter build apk --release
           
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: restim-flutter/build/app/outputs/flutter-apk/app-release.apk
+          files: foc-companion/build/app/outputs/flutter-apk/app-release.apk
           body: |
             ## Public Beta Release
             
@@ -852,7 +852,7 @@ jobs:
 **Local Build + Upload:**
 ```bash
 # Build locally
-cd restim-flutter
+cd foc-companion
 flutter build apk --release
 
 # Create release with gh CLI

@@ -12,7 +12,7 @@
 - *Status:* This version has been superseded by the Flutter implementation.
 
 ## 🏁 Phase 2: Flutter Implementation (Current)
-- [x] **Project Scaffold:** Flutter project initialized in `restim-flutter/`.
+- [x] **Project Scaffold:** Flutter project initialized in `foc-companion/`.
 - [x] **Protobuf Integration:** Automated Dart code generation for FOC-Stim protocol.
 - [x] **TCP Communication:** Stable socket connection with HDLC framing.
 - [x] **State Management:** Provider-based state for settings and device status.

@@ -9,13 +9,13 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/joywareapps/restim-mobile.git
-   cd restim-mobile
+   git clone https://github.com/joywareapps/foc-companion.git
+   cd foc-companion
    ```
 
 2. **Navigate to the Flutter project:**
    ```bash
-   cd restim-flutter
+   cd foc-companion
    ```
 
 3. **Install dependencies:**

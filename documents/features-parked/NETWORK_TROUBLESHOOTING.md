@@ -69,7 +69,7 @@ Based on the desktop implementation (restim-desktop), HereSphere uses:
 Enable detailed logging by watching Flutter output:
 
 ```bash
-cd restim-flutter
+cd foc-companion
 flutter run
 ```
 

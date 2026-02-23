@@ -3,7 +3,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROTO_SRC="$SCRIPT_DIR/../FOC-stim/proto/focstim"
-OUTPUT_DIR="$SCRIPT_DIR/restim-flutter/lib/generated/protobuf"
+OUTPUT_DIR="$SCRIPT_DIR/foc-companion/lib/generated/protobuf"
 
 mkdir -p "$OUTPUT_DIR"
 

@@ -17,7 +17,7 @@ FOC-Stim is an open-hardware device designed for high-performance electromagneti
 
 ## Project Structure
 
-- `restim-flutter/`: The primary mobile application built with Flutter.
+- `foc-companion/`: The primary mobile application built with Flutter.
 - `documents/`: Comprehensive functional specifications and protocol documentation.
 - `todo/`: Detailed task lists and research for ongoing development.
 

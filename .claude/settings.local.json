@@ -26,7 +26,10 @@
       "Bash(grep protoc:*)",
       "Bash(tail:*)",
       "Bash(export:*)",
-      "Bash(cd /home/gorano/code/restim-mobile/restim-flutter && flutter analyze 2>&1)"
+      "Bash(cd /home/gorano/code/restim-mobile/restim-flutter && flutter analyze 2>&1)",
+      "Bash(flutter analyze:*)",
+      "Bash(dart analyze:*)",
+      "Bash(head:*)"
     ],
     "additionalDirectories": [
       "/home/gorano/code/restim-desktop",

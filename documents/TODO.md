@@ -2,7 +2,7 @@
 
 ## Feature Comparison Status
 
-| Feature | Expo (`src`) | Flutter (`restim-flutter`) | Status |
+| Feature | Expo (`src`) | Flutter (`foc-companion`) | Status |
 | :--- | :--- | :--- | :--- |
 | **HereSphere Settings** | Configurable IP, Port, Toggle. | Implemented in `MediaSyncScreen`. | ✅ **Done** |
 | **HereSphere Service** | TCP connection, Keep-alive, Status parsing. | Implemented in `HereSphereService` class. | ✅ **Done** |

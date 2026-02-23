@@ -2,11 +2,11 @@
 echo Generating Dart Protobuf files...
 
 :: Ensure output directory exists
-if not exist "restim-flutter\lib\generated\protobuf" mkdir "restim-flutter\lib\generated\protobuf"
+if not exist "foc-companion\lib\generated\protobuf" mkdir "foc-companion\lib\generated\protobuf"
 
 :: Define paths
 set PROTO_SRC=proto\focstim
-set OUTPUT_DIR=restim-flutter\lib\generated\protobuf
+set OUTPUT_DIR=foc-companion\lib\generated\protobuf
 
 :: Run protoc
 :: Note: Assumes protoc-gen-dart is in PATH or configured. 

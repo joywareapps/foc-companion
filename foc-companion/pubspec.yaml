@@ -1,0 +1,44 @@
+name: foc_companion
+description: "FOC Companion App"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # Communication
+  protobuf: ^6.0.0
+  usb_serial: ^0.5.0
+  libserialport: ^0.3.0 # For Desktop
+  web_socket_channel: ^2.4.0
+  
+  # Storage
+  shared_preferences: ^2.2.2
+  file_picker: ^8.1.7
+  path_provider: ^2.1.2
+  
+  # UI
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  
+  fonts:
+    - family: SpaceMono
+      fonts:
+        - asset: assets/fonts/SpaceMono-Regular.ttf

@@ -51,10 +51,10 @@ Develop the "FOC Companion" Android application using Flutter. The app connects 
 ## **📋 Phase 1: Core Implementation (Flutter)**
 
 - [x] **Project Initialization:**
-    - [x] Set up Flutter project in `restim-flutter/`.
+    - [x] Set up Flutter project in `foc-companion/`.
     - [x] Configure Android build settings.
 - [x] **Protobuf Integration:**
-    - [x] Compilation of `.proto` files to Dart (`restim-flutter/lib/generated/`).
+    - [x] Compilation of `.proto` files to Dart (`foc-companion/lib/generated/`).
     - [x] Integration with communication layer.
 - [x] **Communication Layer:**
     - [x] TCP Socket service implementation.

@@ -52,7 +52,7 @@ jobs:
       - name: Build APK
         run: |
           cd foc-companion
-          flutter build apk --release
+          flutter build apk --release --build-number=${{ github.run_number }}
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

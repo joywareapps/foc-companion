@@ -30,6 +30,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Disable automatic Firebase Analytics collection -->
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
+        <!-- Disable automatic Ad ID collection -->
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+        <!-- Disable automatic screen reporting -->
+        <meta-data android:name="google_analytics_automatic_screen_reporting_enabled" android:value="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

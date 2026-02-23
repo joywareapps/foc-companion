@@ -52,6 +52,12 @@ jobs:
           cd foc-companion
           flutter build apk --release
 
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: foc-companion-release-apk
+          path: foc-companion/build/app/outputs/flutter-apk/app-release.apk
+
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:

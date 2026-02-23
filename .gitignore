@@ -13,11 +13,9 @@ source-repos/
 *.key
 credentials.json
 secrets.json
+google-services.json
 
-# Flutter
-**/android/
-**/ios/
-**/windows/
+# Flutter / Native Artifacts
 **/build/
 **/.dart_tool/
 **/.packages

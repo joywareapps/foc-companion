@@ -8,7 +8,7 @@ set -e
 
 # Configuration
 PROJECT_DIR="foc-companion"
-APP_ID_DEFAULT="" # Fill this in if you want to hardcode it locally
+APP_ID_DEFAULT="1:803111218509:android:1e0a70a53276d669a6db04"
 GROUPS="beta-testers"
 
 echo "🚀 Starting Beta Distribution for FOC Companion..."

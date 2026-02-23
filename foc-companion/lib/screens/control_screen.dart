@@ -20,25 +20,25 @@ class ControlScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _ConnectionCard(device: device, isConnected: isConnected),
-              if (isConnected) ...[
+              if (!isConnected) ...[
+                _ConnectionCard(device: device),
                 const SizedBox(height: 16),
+                const _CalibrationCard(),
+              ],
+              if (isConnected) ...[
                 if (!is4Phase) ...[
                   _PatternCard(device: device),
                   const SizedBox(height: 16),
                   _SpeedCard(device: device),
                   const SizedBox(height: 16),
                   _ModulationCard(device: device),
-                  const SizedBox(height: 16),
                 ] else ...[
                   _FourPhasePatternCard(device: device),
                   const SizedBox(height: 16),
                   _FourPhaseSpeedCard(device: device),
                   const SizedBox(height: 16),
                   _FourPhaseModulationCard(device: device),
-                  const SizedBox(height: 16),
                 ],
-                _StartStopButton(device: device, is4Phase: is4Phase),
               ],
             ],
           ),
@@ -49,18 +49,22 @@ class ControlScreen extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────
-// Connection Card
+// Calibration Card (shown when disconnected)
 // ─────────────────────────────────────────────────────────
 
-class _ConnectionCard extends StatelessWidget {
-  final DeviceProvider device;
-  final bool isConnected;
-
-  const _ConnectionCard({required this.device, required this.isConnected});
+class _CalibrationCard extends StatefulWidget {
+  const _CalibrationCard();
 
   @override
+  State<_CalibrationCard> createState() => _CalibrationCardState();
+}
+
+class _CalibrationCardState extends State<_CalibrationCard> {
+  @override
   Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    final settings = Provider.of<SettingsProvider>(context);
+    final d = settings.device;
+    final is4Phase = d.deviceMode == DeviceMode.fourPhase;
 
     return Card(
       child: Padding(
@@ -68,52 +72,138 @@ class _ConnectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (isConnected) ...[
-              Text(
-                device.connectionStatus,
-                style: Theme.of(context).textTheme.titleMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                "Temp: ${device.temperature}  ·  Bat: ${device.batteryVoltage}${device.batterySoc != null ? ' (${(device.batterySoc! > 1.0 ? device.batterySoc! : device.batterySoc! * 100).toStringAsFixed(0)}%)' : ''}",
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
+            Text(
+              is4Phase ? '4-Phase Calibration' : '3-Phase Calibration',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            if (is4Phase) ...[
+              _buildSlider('Center', d.calibration4Center, (v) => d.calibration4Center = v),
+              _buildSlider('Electrode A', d.calibration4A, (v) => d.calibration4A = v),
+              _buildSlider('Electrode B', d.calibration4B, (v) => d.calibration4B = v),
+              _buildSlider('Electrode C', d.calibration4C, (v) => d.calibration4C = v),
+              _buildSlider('Electrode D', d.calibration4D, (v) => d.calibration4D = v),
             ] else ...[
-              Text(
-                device.connectionStatus,
-                style: Theme.of(context).textTheme.titleLarge,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              SegmentedButton<DeviceMode>(
-                segments: const [
-                  ButtonSegment(
-                    value: DeviceMode.threePhase,
-                    label: Text("3-Phase"),
-                    icon: Icon(Icons.looks_3_outlined),
-                  ),
-                  ButtonSegment(
-                    value: DeviceMode.fourPhase,
-                    label: Text("4-Phase"),
-                    icon: Icon(Icons.looks_4_outlined),
-                  ),
-                ],
-                selected: {device.deviceMode},
-                onSelectionChanged: (Set<DeviceMode> sel) {
-                  device.setDeviceMode(sel.first);
-                },
-              ),
+              _buildSlider('Center', d.calibration3Center, (v) => d.calibration3Center = v),
+              _buildSlider('Up', d.calibration3Up, (v) => d.calibration3Up = v),
+              _buildSlider('Left', d.calibration3Left, (v) => d.calibration3Left = v),
             ],
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      settings.resetCalibration();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Reset to defaults')),
+                      );
+                    },
+                    child: const Text('Reset'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final ok = await settings.reloadCalibration();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(ok ? 'Calibration loaded' : 'Nothing saved yet'),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text('Load'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () async {
+                      await settings.saveSettings();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Calibration Saved')),
+                        );
+                      }
+                    },
+                    child: const Text('Save'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlider(String label, double value, void Function(double) onSet) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label),
+            Text(value.toStringAsFixed(2)),
+          ],
+        ),
+        Slider(
+          value: value.clamp(-2.0, 2.0),
+          min: -2,
+          max: 2,
+          onChanged: (v) => setState(() => onSet(v)),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Connection Card
+// ─────────────────────────────────────────────────────────
+
+class _ConnectionCard extends StatelessWidget {
+  final DeviceProvider device;
+
+  const _ConnectionCard({required this.device});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SegmentedButton<DeviceMode>(
+              segments: const [
+                ButtonSegment(
+                  value: DeviceMode.threePhase,
+                  label: Text("3-Phase"),
+                  icon: Icon(Icons.looks_3_outlined),
+                ),
+                ButtonSegment(
+                  value: DeviceMode.fourPhase,
+                  label: Text("4-Phase"),
+                  icon: Icon(Icons.looks_4_outlined),
+                ),
+              ],
+              selected: {device.deviceMode},
+              onSelectionChanged: (Set<DeviceMode> sel) {
+                device.setDeviceMode(sel.first);
+              },
+            ),
             const SizedBox(height: 12),
             FilledButton(
-              onPressed: isConnected ? device.disconnect : device.connect,
+              onPressed: device.connect,
               style: FilledButton.styleFrom(
-                backgroundColor: isConnected ? Colors.red : null,
                 minimumSize: const Size.fromHeight(44),
               ),
-              child: Text(isConnected ? 'Disconnect' : 'Connect'),
+              child: const Text('Connect'),
             ),
           ],
         ),
@@ -727,37 +817,3 @@ class _FourPhaseModulationCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Start / Stop Button
-// ─────────────────────────────────────────────────────────
-
-class _StartStopButton extends StatelessWidget {
-  final DeviceProvider device;
-  final bool is4Phase;
-
-  const _StartStopButton({required this.device, required this.is4Phase});
-
-  @override
-  Widget build(BuildContext context) {
-    final String patternName;
-    if (is4Phase) {
-      final patterns4 = FourphasePatternRegistry.all;
-      final idx4 = device.cockpit4Phase.patternIndex.clamp(0, patterns4.length - 1);
-      patternName = patterns4[idx4].name;
-    } else {
-      final patterns = ThreephasePatternRegistry.all;
-      final idx = device.cockpit.patternIndex.clamp(0, patterns.length - 1);
-      patternName = patterns[idx].name;
-    }
-
-    return FilledButton.icon(
-      onPressed: device.toggleLoop,
-      icon: Icon(device.isLoopRunning ? Icons.stop : Icons.play_arrow),
-      label: Text(device.isLoopRunning ? "Stop" : "Start $patternName"),
-      style: FilledButton.styleFrom(
-        backgroundColor: device.isLoopRunning ? Colors.red : Colors.green,
-        minimumSize: const Size.fromHeight(50),
-      ),
-    );
-  }
-}

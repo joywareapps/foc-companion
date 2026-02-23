@@ -8,6 +8,20 @@ import 'package:foc_companion/generated/protobuf/constants.pbenum.dart';
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
 import 'package:foc_companion/generated/protobuf/messages.pb.dart';
 
+// Tick requests use a shorter timeout than setup requests so congestion is
+// detected quickly. 2 s gives a couple of WiFi retransmit attempts before
+// we declare the link dead.
+const _kTickTimeout = Duration(seconds: 2);
+const _kTickInterval = Duration(milliseconds: 33); // 30 Hz
+
+// How many consecutive skipped ticks (each 33 ms) before we flag the
+// connection as slow. 3 ticks ≈ 100 ms behind — clearly not keeping 30 Hz.
+const _kSlowThreshold = 3;
+
+// ─────────────────────────────────────────────────────────
+// 4-Phase command loop
+// ─────────────────────────────────────────────────────────
+
 class FourPhaseCommandLoop {
   final FocStimApiService _api;
   final SettingsProvider _settings;
@@ -18,10 +32,23 @@ class FourPhaseCommandLoop {
   /// Playback speed multiplier (applied to dt fed into the pattern).
   double velocity = 1.0;
 
+  /// Volume (0–1). Sent to device as: volume² × maxAmp (matching desktop
+  /// fourphase_algorithm: AXIS_WAVEFORM_AMPLITUDE_AMPS = volume² × maxAmp).
+  double volume = 1.0;
+
+  /// Called with `true` when ticks are being skipped (connection slow),
+  /// `false` when throughput recovers.
+  void Function(bool)? onSlowConnection;
+
+  /// Called when a tick request times out. Loop is already stopped.
+  void Function(String)? onTimeout;
+
   final Modulator _pulseFreqMod = Modulator(PulseModulationConfig());
 
   Timer? _timer;
   bool _isRunning = false;
+  bool _tickInFlight = false; // true while awaiting current tick's responses
+  int _slowCount = 0;         // consecutive skipped ticks
   double _startTime = 0;
 
   FourPhaseCommandLoop(this._api, this._settings);
@@ -34,6 +61,10 @@ class FourPhaseCommandLoop {
     if (_isRunning) return;
     print("FourPhaseCommandLoop: Starting...");
 
+    // Reset stale state from any previous session.
+    _tickInFlight = false;
+    _slowCount = 0;
+
     pattern.reset();
     _pulseFreqMod.reset();
 
@@ -44,7 +75,7 @@ class FourPhaseCommandLoop {
       print("FourPhaseCommandLoop: Signal started.");
       _isRunning = true;
       _startTime = DateTime.now().millisecondsSinceEpoch / 1000.0;
-      _timer = Timer.periodic(const Duration(milliseconds: 16), _tick);
+      _timer = Timer.periodic(_kTickInterval, _tick);
     } catch (e) {
       print("FourPhaseCommandLoop: Error starting: $e");
       _isRunning = false;
@@ -55,64 +86,88 @@ class FourPhaseCommandLoop {
   Future<void> stop() async {
     print("FourPhaseCommandLoop: Stopping...");
     _timer?.cancel();
+    _timer = null;
     _isRunning = false;
-    await _api.stopSignal();
+    try {
+      await _api.stopSignal();
+    } catch (e) {
+      print("FourPhaseCommandLoop: Error stopping signal: $e");
+    }
     print("FourPhaseCommandLoop: Stopped.");
   }
 
-  void _tick(Timer timer) async {
-    if (!_api.isConnected) return;
+  void _tick(Timer _) async {
+    if (!_api.isConnected || !_isRunning) return;
 
-    const double dt = 0.016;
-    double now = DateTime.now().millisecondsSinceEpoch / 1000.0;
+    // ── Backpressure: skip if previous tick not yet acknowledged ──
+    if (_tickInFlight) {
+      _slowCount++;
+      if (_slowCount == _kSlowThreshold) onSlowConnection?.call(true);
+      return;
+    }
+    _tickInFlight = true;
 
-    // Velocity scales the dt fed into the pattern
-    var pos = pattern.update(dt * velocity);
+    const double dt = 0.033;
+    final double now = DateTime.now().millisecondsSinceEpoch / 1000.0;
 
-    double elapsed = now - _startTime;
-    double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
-    // 4-phase uses squared volume for perceptual linearity
-    double currentAmp = _settings.device.waveformAmplitude * ramp * ramp;
+    final pos = pattern.update(dt * velocity);
 
-    // Pulse-frequency modulation (same as 3-phase)
+    final double elapsed = now - _startTime;
+    final double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
+    final double currentAmp =
+        volume * volume * _settings.device.waveformAmplitude * ramp;
+
     final freqOffset = _pulseFreqMod.update(dt, velocity);
-    final modFreq = (_settings.pulse.pulseFrequency + freqOffset).clamp(1.0, 300.0);
+    final modFreq =
+        (_settings.pulse.pulseFrequency + freqOffset).clamp(1.0, 300.0);
+
+    // Collect all request futures; send them all before awaiting.
+    final futs = <Future<Response>>[];
+    void send(AxisType axis, double value) {
+      futs.add(_api.sendRequest(
+        Request()
+          ..requestAxisMoveTo = (RequestAxisMoveTo()
+            ..axis = axis
+            ..value = value
+            ..interval = 50),
+        timeout: _kTickTimeout,
+      ));
+    }
+
+    send(AxisType.AXIS_ELECTRODE_1_POWER, pos.a);
+    send(AxisType.AXIS_ELECTRODE_2_POWER, pos.b);
+    send(AxisType.AXIS_ELECTRODE_3_POWER, pos.c);
+    send(AxisType.AXIS_ELECTRODE_4_POWER, pos.d);
+    send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmp);
+    // Live pulse settings — sent every tick so changes apply immediately
+    send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _settings.pulse.carrierFrequency);
+    send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
+    send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, _settings.pulse.pulseWidth);
+    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _settings.pulse.pulseRiseTime);
+    send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
+        _settings.pulse.pulseIntervalRandom / 100.0);
+    // Live calibration
+    send(AxisType.AXIS_CALIBRATION_4_CENTER, _settings.device.calibration4Center);
+    send(AxisType.AXIS_CALIBRATION_4_A, _settings.device.calibration4A);
+    send(AxisType.AXIS_CALIBRATION_4_B, _settings.device.calibration4B);
+    send(AxisType.AXIS_CALIBRATION_4_C, _settings.device.calibration4C);
+    send(AxisType.AXIS_CALIBRATION_4_D, _settings.device.calibration4D);
 
     try {
-      _api.sendRequest(Request()
-        ..requestAxisMoveTo = (RequestAxisMoveTo()
-          ..axis = AxisType.AXIS_ELECTRODE_1_POWER
-          ..value = pos.a
-          ..interval = 50));
-      _api.sendRequest(Request()
-        ..requestAxisMoveTo = (RequestAxisMoveTo()
-          ..axis = AxisType.AXIS_ELECTRODE_2_POWER
-          ..value = pos.b
-          ..interval = 50));
-      _api.sendRequest(Request()
-        ..requestAxisMoveTo = (RequestAxisMoveTo()
-          ..axis = AxisType.AXIS_ELECTRODE_3_POWER
-          ..value = pos.c
-          ..interval = 50));
-      _api.sendRequest(Request()
-        ..requestAxisMoveTo = (RequestAxisMoveTo()
-          ..axis = AxisType.AXIS_ELECTRODE_4_POWER
-          ..value = pos.d
-          ..interval = 50));
-      _api.sendRequest(Request()
-        ..requestAxisMoveTo = (RequestAxisMoveTo()
-          ..axis = AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS
-          ..value = currentAmp
-          ..interval = 50));
-      if (_pulseFreqMod.config.enabled) {
-        _api.sendRequest(Request()
-          ..requestAxisMoveTo = (RequestAxisMoveTo()
-            ..axis = AxisType.AXIS_PULSE_FREQUENCY_HZ
-            ..value = modFreq
-            ..interval = 50));
-      }
+      // eagerError: false — wait for all futures so their exceptions are
+      // consumed rather than becoming unhandled async errors.
+      await Future.wait(futs, eagerError: false);
+      if (_slowCount >= _kSlowThreshold) onSlowConnection?.call(false);
+      _slowCount = 0;
+    } on TimeoutException {
+      _timer?.cancel();
+      _timer = null;
+      _isRunning = false;
+      onTimeout?.call("Request timed out — connection lost");
     } catch (e) {
       print("4-phase loop error: $e");
+    } finally {
+      _tickInFlight = false;
     }
   }
 
@@ -129,23 +184,17 @@ class FourPhaseCommandLoop {
     var p = _settings.pulse;
     var d = _settings.device;
 
-    // Initialize electrode power axes to 0
     await send(AxisType.AXIS_ELECTRODE_1_POWER, 0);
     await send(AxisType.AXIS_ELECTRODE_2_POWER, 0);
     await send(AxisType.AXIS_ELECTRODE_3_POWER, 0);
     await send(AxisType.AXIS_ELECTRODE_4_POWER, 0);
-
-    // Reset amplitude to 0
     await send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, 0);
-
-    // Pulse settings
     await send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, p.carrierFrequency);
     await send(AxisType.AXIS_PULSE_FREQUENCY_HZ, p.pulseFrequency);
     await send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, p.pulseWidth);
     await send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, p.pulseRiseTime);
-    await send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT, p.pulseIntervalRandom / 100.0);
-
-    // 4-phase calibration
+    await send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
+        p.pulseIntervalRandom / 100.0);
     await send(AxisType.AXIS_CALIBRATION_4_CENTER, d.calibration4Center);
     await send(AxisType.AXIS_CALIBRATION_4_A, d.calibration4A);
     await send(AxisType.AXIS_CALIBRATION_4_B, d.calibration4B);
@@ -153,6 +202,10 @@ class FourPhaseCommandLoop {
     await send(AxisType.AXIS_CALIBRATION_4_D, d.calibration4D);
   }
 }
+
+// ─────────────────────────────────────────────────────────
+// 3-Phase command loop
+// ─────────────────────────────────────────────────────────
 
 class CommandLoop {
   final FocStimApiService _api;
@@ -164,10 +217,23 @@ class CommandLoop {
   /// Playback speed multiplier (applied to dt fed into the pattern).
   double velocity = 1.0;
 
+  /// Volume (0–1). Sent to device as: volume × maxAmp (matching desktop
+  /// threephase_algorithm: AXIS_WAVEFORM_AMPLITUDE_AMPS = volume × maxAmp).
+  double volume = 1.0;
+
+  /// Called with `true` when ticks are being skipped (connection slow),
+  /// `false` when throughput recovers.
+  void Function(bool)? onSlowConnection;
+
+  /// Called when a tick request times out. Loop is already stopped.
+  void Function(String)? onTimeout;
+
   final Modulator _pulseFreqMod = Modulator(PulseModulationConfig());
 
   Timer? _timer;
   bool _isRunning = false;
+  bool _tickInFlight = false; // true while awaiting current tick's responses
+  int _slowCount = 0;         // consecutive skipped ticks
   double _startTime = 0;
 
   CommandLoop(this._api, this._settings);
@@ -180,6 +246,10 @@ class CommandLoop {
     if (_isRunning) return;
     print("CommandLoop: Starting...");
 
+    // Reset stale state from any previous session.
+    _tickInFlight = false;
+    _slowCount = 0;
+
     pattern.reset();
     _pulseFreqMod.reset();
 
@@ -191,9 +261,7 @@ class CommandLoop {
 
       _isRunning = true;
       _startTime = DateTime.now().millisecondsSinceEpoch / 1000.0;
-
-      // 60 Hz loop
-      _timer = Timer.periodic(const Duration(milliseconds: 16), _tick);
+      _timer = Timer.periodic(_kTickInterval, _tick);
     } catch (e) {
       print("CommandLoop: Error starting: $e");
       _isRunning = false;
@@ -204,57 +272,81 @@ class CommandLoop {
   Future<void> stop() async {
     print("CommandLoop: Stopping...");
     _timer?.cancel();
+    _timer = null;
     _isRunning = false;
-    await _api.stopSignal();
+    try {
+      await _api.stopSignal();
+    } catch (e) {
+      print("CommandLoop: Error stopping signal: $e");
+    }
     print("CommandLoop: Stopped.");
   }
 
-  void _tick(Timer timer) async {
-    if (!_api.isConnected) return;
+  void _tick(Timer _) async {
+    if (!_api.isConnected || !_isRunning) return;
 
-    const double dt = 0.016;
-    double now = DateTime.now().millisecondsSinceEpoch / 1000.0;
+    // ── Backpressure: skip if previous tick not yet acknowledged ──
+    if (_tickInFlight) {
+      _slowCount++;
+      if (_slowCount == _kSlowThreshold) onSlowConnection?.call(true);
+      return;
+    }
+    _tickInFlight = true;
 
-    // Velocity scales the dt fed into the pattern
-    var pos = pattern.update(dt * velocity);
+    const double dt = 0.033;
+    final double now = DateTime.now().millisecondsSinceEpoch / 1000.0;
 
-    // Ramp
-    double elapsed = now - _startTime;
-    double targetAmp = _settings.device.waveformAmplitude;
-    double currentAmp = targetAmp * (elapsed / 5.0).clamp(0.0, 1.0);
+    final pos = pattern.update(dt * velocity);
 
-    // Pulse-frequency modulation
+    final double elapsed = now - _startTime;
+    final double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
+    final double currentAmp =
+        volume * _settings.device.waveformAmplitude * ramp;
+
     final freqOffset = _pulseFreqMod.update(dt, velocity);
-    final modFreq = (_settings.pulse.pulseFrequency + freqOffset).clamp(1.0, 300.0);
+    final modFreq =
+        (_settings.pulse.pulseFrequency + freqOffset).clamp(1.0, 300.0);
+
+    final futs = <Future<Response>>[];
+    void send(AxisType axis, double value) {
+      futs.add(_api.sendRequest(
+        Request()
+          ..requestAxisMoveTo = (RequestAxisMoveTo()
+            ..axis = axis
+            ..value = value
+            ..interval = 50),
+        timeout: _kTickTimeout,
+      ));
+    }
+
+    send(AxisType.AXIS_POSITION_ALPHA, pos.x);
+    send(AxisType.AXIS_POSITION_BETA, pos.y);
+    send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmp);
+    // Live pulse settings — sent every tick so changes apply immediately
+    send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _settings.pulse.carrierFrequency);
+    send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
+    send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, _settings.pulse.pulseWidth);
+    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _settings.pulse.pulseRiseTime);
+    send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
+        _settings.pulse.pulseIntervalRandom / 100.0);
+    // Live calibration
+    send(AxisType.AXIS_CALIBRATION_3_CENTER, _settings.device.calibration3Center);
+    send(AxisType.AXIS_CALIBRATION_3_UP, _settings.device.calibration3Up);
+    send(AxisType.AXIS_CALIBRATION_3_LEFT, _settings.device.calibration3Left);
 
     try {
-      _api.sendRequest(Request()
-        ..requestAxisMoveTo = (RequestAxisMoveTo()
-          ..axis = AxisType.AXIS_POSITION_ALPHA
-          ..value = pos.x
-          ..interval = 50));
-
-      _api.sendRequest(Request()
-        ..requestAxisMoveTo = (RequestAxisMoveTo()
-          ..axis = AxisType.AXIS_POSITION_BETA
-          ..value = pos.y
-          ..interval = 50));
-
-      _api.sendRequest(Request()
-        ..requestAxisMoveTo = (RequestAxisMoveTo()
-          ..axis = AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS
-          ..value = currentAmp
-          ..interval = 50));
-
-      if (_pulseFreqMod.config.enabled) {
-        _api.sendRequest(Request()
-          ..requestAxisMoveTo = (RequestAxisMoveTo()
-            ..axis = AxisType.AXIS_PULSE_FREQUENCY_HZ
-            ..value = modFreq
-            ..interval = 50));
-      }
+      await Future.wait(futs, eagerError: false);
+      if (_slowCount >= _kSlowThreshold) onSlowConnection?.call(false);
+      _slowCount = 0;
+    } on TimeoutException {
+      _timer?.cancel();
+      _timer = null;
+      _isRunning = false;
+      onTimeout?.call("Request timed out — connection lost");
     } catch (e) {
       print("Loop error: $e");
+    } finally {
+      _tickInFlight = false;
     }
   }
 
@@ -272,21 +364,15 @@ class CommandLoop {
     var p = _settings.pulse;
     var d = _settings.device;
 
-    // Initialize position axes to 0
     await send(AxisType.AXIS_POSITION_ALPHA, 0);
     await send(AxisType.AXIS_POSITION_BETA, 0);
-
-    // Reset amplitude to 0
     await send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, 0);
-
-    // Pulse settings
     await send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, p.carrierFrequency);
     await send(AxisType.AXIS_PULSE_FREQUENCY_HZ, p.pulseFrequency);
     await send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, p.pulseWidth);
     await send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, p.pulseRiseTime);
-    await send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT, p.pulseIntervalRandom / 100.0);
-
-    // Calibration settings
+    await send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
+        p.pulseIntervalRandom / 100.0);
     await send(AxisType.AXIS_CALIBRATION_3_CENTER, d.calibration3Center);
     await send(AxisType.AXIS_CALIBRATION_3_UP, d.calibration3Up);
     await send(AxisType.AXIS_CALIBRATION_3_LEFT, d.calibration3Left);

@@ -19,36 +19,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        const Text("Safety Limits", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        
-        _buildSlider(
-          label: "Min Carrier Frequency (Hz)",
-          value: d.minFrequency,
-          min: 100,
-          max: 2000,
-          onChanged: (v) => setState(() => d.minFrequency = v),
-        ),
-
-        _buildSlider(
-          label: "Max Carrier Frequency (Hz)",
-          value: d.maxFrequency,
-          min: 100,
-          max: 2000,
-          onChanged: (v) => setState(() => d.maxFrequency = v),
-        ),
-
-        _buildSlider(
-          label: "Amplitude (mA)",
-          value: d.waveformAmplitude * 1000,
-          min: 10,
-          max: 150,
-          onChanged: (v) => setState(() => d.waveformAmplitude = v / 1000),
-        ),
-
-        const Divider(height: 40),
         if (d.deviceMode == DeviceMode.threePhase) ...[
-          const Text("3-Phase Calibration", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text("3-Phase Calibration",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           _buildSlider(
             label: "Center",
@@ -72,7 +45,8 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             onChanged: (v) => setState(() => d.calibration3Left = v),
           ),
         ] else ...[
-          const Text("4-Phase Calibration", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text("4-Phase Calibration",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           _buildSlider(
             label: "Center",
@@ -112,14 +86,50 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         ],
 
         const SizedBox(height: 30),
-        FilledButton(
-          onPressed: () async {
-            await settings.saveSettings();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Settings Saved")),
-            );
-          },
-          child: const Text("Save Device Settings"),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  settings.resetCalibration();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Reset to defaults")),
+                  );
+                },
+                child: const Text("Reset"),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () async {
+                  final ok = await settings.reloadCalibration();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(ok ? "Calibration loaded" : "Nothing saved yet"),
+                      ),
+                    );
+                  }
+                },
+                child: const Text("Load"),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilledButton(
+                onPressed: () async {
+                  await settings.saveSettings();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Calibration Saved")),
+                    );
+                  }
+                },
+                child: const Text("Save"),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -139,7 +149,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label),
-            Text(value.toStringAsFixed(label.contains("Hz") || label.contains("mA") ? 0 : 2)),
+            Text(value.toStringAsFixed(2)),
           ],
         ),
         Slider(

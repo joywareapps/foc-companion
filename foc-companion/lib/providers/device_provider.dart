@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/focstim_api_service.dart';
@@ -5,6 +6,10 @@ import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/command_loop.dart';
 import 'package:foc_companion/core/patterns.dart';
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
+
+// If no notification arrives within this window the device is considered
+// unresponsive and is disconnected automatically.
+const _kNotificationWatchdogTimeout = Duration(seconds: 30);
 
 class DeviceProvider with ChangeNotifier {
   final FocStimApiService api = FocStimApiService();
@@ -19,11 +24,22 @@ class DeviceProvider with ChangeNotifier {
   double? batterySoc;
   bool isLoopRunning = false;
 
+  /// True while tick round-trips are taking longer than 16 ms (can't keep 60 Hz).
+  bool isSlowConnection = false;
+
+  /// Master volume (0–1). Not persisted — resets to 0.1 on app restart/connect.
+  double volume = 0.1;
+
+  Timer? _notificationWatchdog;
+
   DeviceProvider(this.settings) {
     api.onNotification = _handleNotification;
     api.onDisconnect = () {
+      _notificationWatchdog?.cancel();
+      _notificationWatchdog = null;
       connectionStatus = "Disconnected";
       isLoopRunning = false;
+      isSlowConnection = false;
       _threePhaseLoop?.stop();
       _fourPhaseLoop?.stop();
       notifyListeners();
@@ -36,10 +52,48 @@ class DeviceProvider with ChangeNotifier {
     _threePhaseLoop = CommandLoop(api, settings);
     _fourPhaseLoop = FourPhaseCommandLoop(api, settings);
 
+    _threePhaseLoop!.onSlowConnection = _handleSlowConnection;
+    _threePhaseLoop!.onTimeout = _handleLoopTimeout;
+    _fourPhaseLoop!.onSlowConnection = _handleSlowConnection;
+    _fourPhaseLoop!.onTimeout = _handleLoopTimeout;
+
     // Apply persisted cockpit settings to the loops
     _applyCockpitToLoop();
     _applyCockpit4PhaseToLoop();
   }
+
+  // ── Slow-connection / timeout callbacks from loops ──────────────────────
+
+  void _handleSlowConnection(bool slow) {
+    if (isSlowConnection == slow) return;
+    isSlowConnection = slow;
+    notifyListeners();
+  }
+
+  void _handleLoopTimeout(String error) {
+    isLoopRunning = false;
+    isSlowConnection = false;
+    connectionStatus = "Timeout: $error";
+    // Best-effort stop signal — may fail if link is already broken.
+    api.stopSignal().catchError((e) => print("stopSignal after timeout: $e"));
+    notifyListeners();
+  }
+
+  // ── Notification watchdog ────────────────────────────────────────────────
+
+  void _resetNotificationWatchdog() {
+    _notificationWatchdog?.cancel();
+    if (api.isConnected) {
+      _notificationWatchdog = Timer(_kNotificationWatchdogTimeout, () {
+        connectionStatus = "Error: Device stopped responding";
+        isLoopRunning = false;
+        isSlowConnection = false;
+        api.disconnect(); // triggers onDisconnect → notifyListeners
+      });
+    }
+  }
+
+  // ── Cockpit helpers ──────────────────────────────────────────────────────
 
   void _applyCockpitToLoop() {
     final c = settings.cockpit;
@@ -64,7 +118,7 @@ class DeviceProvider with ChangeNotifier {
   CockpitSettings get cockpit => settings.cockpit;
   CockpitSettings get cockpit4Phase => settings.cockpit4Phase;
 
-  // ── 3-phase cockpit ──
+  // ── 3-phase cockpit ──────────────────────────────────────────────────────
 
   void selectPattern(int index) {
     final idx = index.clamp(0, ThreephasePatternRegistry.all.length - 1);
@@ -88,7 +142,7 @@ class DeviceProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ── 4-phase cockpit ──
+  // ── 4-phase cockpit ──────────────────────────────────────────────────────
 
   void select4PhasePattern(int index) {
     final idx = index.clamp(0, FourphasePatternRegistry.all.length - 1);
@@ -112,7 +166,21 @@ class DeviceProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Volume ───────────────────────────────────────────────────────────────
+
+  void setVolume(double v) {
+    volume = v.clamp(0.0, 1.0);
+    _threePhaseLoop?.volume = volume;
+    _fourPhaseLoop?.volume = volume;
+    notifyListeners();
+  }
+
+  // ── Connection ───────────────────────────────────────────────────────────
+
   Future<void> connect() async {
+    volume = 0.1;
+    _threePhaseLoop?.volume = volume;
+    _fourPhaseLoop?.volume = volume;
     try {
       connectionStatus = "Connecting to ${settings.focStim.wifiIp}:${settings.focStim.wifiPort}...";
       print("Attempting connection to ${settings.focStim.wifiIp}:${settings.focStim.wifiPort}");
@@ -127,6 +195,7 @@ class DeviceProvider with ChangeNotifier {
       final v = resp.stm32FirmwareVersion2;
       firmwareVersion = 'v${v.major}.${v.minor}.${v.revision} (${v.branch})';
       connectionStatus = "Connected ($firmwareVersion)";
+      _resetNotificationWatchdog();
     } catch (e) {
       connectionStatus = "Error: $e";
       api.disconnect();
@@ -143,6 +212,8 @@ class DeviceProvider with ChangeNotifier {
   }
 
   Future<void> disconnect() async {
+    _notificationWatchdog?.cancel();
+    _notificationWatchdog = null;
     await _threePhaseLoop?.stop();
     await _fourPhaseLoop?.stop();
     api.disconnect();
@@ -158,6 +229,7 @@ class DeviceProvider with ChangeNotifier {
         await _threePhaseLoop?.stop();
       }
       isLoopRunning = false;
+      isSlowConnection = false;
     } else {
       if (deviceMode == DeviceMode.fourPhase) {
         await _fourPhaseLoop?.start();
@@ -171,6 +243,7 @@ class DeviceProvider with ChangeNotifier {
 
   void _handleNotification(Notification n) {
     print("Received notification: ${n.whichNotification()}");
+    _resetNotificationWatchdog();
 
     if (n.hasNotificationSystemStats()) {
       final stats = n.notificationSystemStats;

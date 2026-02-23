@@ -25,6 +25,9 @@ class FocStimApiService {
 
   bool get isConnected => _socket != null;
 
+  /// Number of requests currently awaiting a response.
+  int get pendingCount => _pendingRequests.length;
+
   Future<void> connectTcp(String ip, int port) async {
     try {
       _socket = await Socket.connect(ip, port, timeout: const Duration(seconds: 5));
@@ -79,7 +82,14 @@ class FocStimApiService {
     }
   }
 
-  Future<Response> sendRequest(Request request) async {
+  /// Send a request and wait for the response.
+  ///
+  /// [timeout] defaults to 5 s for setup/control requests.
+  /// Pass a shorter value (e.g. 2 s) for high-frequency tick requests.
+  Future<Response> sendRequest(
+    Request request, {
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
     if (_socket == null) throw Exception("Not connected");
 
     request.id = _requestIdCounter++;
@@ -92,13 +102,12 @@ class FocStimApiService {
 
     _socket!.add(framed);
 
-    // Timeout
-    return completer.future.timeout(const Duration(seconds: 5), onTimeout: () {
+    return completer.future.timeout(timeout, onTimeout: () {
       _pendingRequests.remove(request.id);
       throw TimeoutException("Request ${request.id} timed out");
     });
   }
-  
+
   Future<ResponseFirmwareVersion> requestFirmwareVersion() async {
     var req = Request()..requestFirmwareVersion = RequestFirmwareVersion();
     final response = await sendRequest(req);
@@ -123,7 +132,6 @@ class FocStimApiService {
       ..requestSignalStart = (RequestSignalStart()..mode = mode);
     await sendRequest(req);
   }
-
 
   Future<void> stopSignal() async {
     var req = Request()..requestSignalStop = RequestSignalStop();

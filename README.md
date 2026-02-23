@@ -10,10 +10,10 @@ FOC-Stim is an open-hardware device designed for high-performance electromagneti
 
 - **Real-time Device Control:** Connect to your FOC-Stim device and manage stimulation parameters on the fly.
 - **Pattern Support:** Port of 17+ patterns from the desktop application with a "Driver Cockpit" UI for real-time control.
-- **Media Synchronization:** Synchronize with popular video players like **HereSphere** using TCP sockets.
-- **Automatic Funscript Loading:** Load `.funscript` files from local storage or network shares (WebDAV).
 - **Multi-Phase Support:** Full support for both 3-phase and 4-phase output modes.
 - **Device Status Monitoring:** Real-time feedback on temperature, battery, and pulse frequency.
+- **Media Synchronization (Parked):** Synchronize with popular video players like **HereSphere** using TCP sockets. This feature is currently hidden to focus on stand-alone device control.
+- **Automatic Funscript Loading (Parked):** Load `.funscript` files from local storage or network shares (WebDAV).
 
 ## Project Structure
 
@@ -27,7 +27,7 @@ To get started with the application, please see the [QUICK_START.md](QUICK_START
 
 For detailed network setup and troubleshooting, refer to [NETWORK_TROUBLESHOOTING.md](documents/features-parked/NETWORK_TROUBLESHOOTING.md).
 
-For information on media synchronization with HereSphere, see [MEDIA_SYNC_USAGE.md](documents/features-parked/MEDIA_SYNC_USAGE.md).
+For information on the currently parked media synchronization features, see [MEDIA_SYNC_USAGE.md](documents/features-parked/MEDIA_SYNC_USAGE.md).
 
 ## Security
 

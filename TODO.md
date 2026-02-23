@@ -30,6 +30,33 @@ See [DONE.md](DONE.md) for a detailed history of completed phases and implemente
   - Configure persistent notification for active stimulation.
   - Implement WakeLocks and WiFi locks to prevent connection drops.
 
+### Task 07: Firmware Version Compatibility Check 🔧
+- **Priority:** MEDIUM
+- **Status:** 🟡 Not Started
+- **Summary:**
+  - Implement firmware version validation on app startup/connection.
+  - **Requirement:** Validate firmware version is at least 1.1.x but less than 2.0.0.
+  - **Implementation:**
+    - Parse firmware version string from device response (e.g., "1.1.5", "1.2.0").
+    - Compare against minimum (1.1.0) and maximum (2.0.0 exclusive).
+    - Show clear error message if incompatible:
+      - Too old (< 1.1.0): "Firmware too old. Please update to at least version 1.1.0"
+      - Too new (≥ 2.0.0): "Firmware too new. App requires version < 2.0.0"
+    - Block pattern execution if version check fails.
+  - **Location:** Add to `focstim_api_service.dart` connection logic.
+  - **Testing:** Test with mock versions (1.0.9, 1.1.0, 1.1.5, 1.9.9, 2.0.0).
+
+### Task 08: Command Loop Optimization ⚡ ✅
+- **Priority:** MEDIUM
+- **Status:** ✅ Completed (2026-02-23)
+- **Summary:**
+  - Implemented all optimizations from restim-desktop:
+    1. ✅ Delta updates - only send changed axis values
+    2. ✅ Periodic full sync every 1 second
+    3. ✅ TCP_NODELAY enabled for lower latency
+    4. ✅ Loop rate reduced to 30 Hz (from 60 Hz)
+  - **Result:** Bandwidth reduced from ~330 req/s to ~70 req/s
+
 ---
 
 ## 📋 PLANNED / PARKED FEATURES

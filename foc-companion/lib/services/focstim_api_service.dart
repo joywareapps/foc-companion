@@ -31,6 +31,7 @@ class FocStimApiService {
   Future<void> connectTcp(String ip, int port) async {
     try {
       _socket = await Socket.connect(ip, port, timeout: const Duration(seconds: 5));
+      _socket!.setOption(SocketOption.tcpNoDelay, true);
       _socket!.listen(
         _onData,
         onError: (e) {

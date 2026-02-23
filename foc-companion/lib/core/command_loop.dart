@@ -50,6 +50,8 @@ class FourPhaseCommandLoop {
   bool _tickInFlight = false; // true while awaiting current tick's responses
   int _slowCount = 0;         // consecutive skipped ticks
   double _startTime = 0;
+  final Map<int, double> _lastSent = {}; // last transmitted value per axis key
+  double _lastSyncWallTime = 0.0;        // wall time of last forced full sync
 
   FourPhaseCommandLoop(this._api, this._settings);
 
@@ -64,6 +66,8 @@ class FourPhaseCommandLoop {
     // Reset stale state from any previous session.
     _tickInFlight = false;
     _slowCount = 0;
+    _lastSent.clear();
+    _lastSyncWallTime = 0.0; // ensures first tick sends all axes
 
     pattern.reset();
     _pulseFreqMod.reset();
@@ -110,6 +114,9 @@ class FourPhaseCommandLoop {
     const double dt = 0.033;
     final double now = DateTime.now().millisecondsSinceEpoch / 1000.0;
 
+    // Force a full re-sync every ~1 s to recover from any dropped packets.
+    final bool forceSync = (now - _lastSyncWallTime) >= 1.0;
+
     final pos = pattern.update(dt * velocity);
 
     final double elapsed = now - _startTime;
@@ -121,9 +128,12 @@ class FourPhaseCommandLoop {
     final modFreq =
         (_settings.pulse.pulseFrequency + freqOffset).clamp(1.0, 300.0);
 
-    // Collect all request futures; send them all before awaiting.
+    // Collect futures for changed axes only (or all axes on full sync).
     final futs = <Future<Response>>[];
     void send(AxisType axis, double value) {
+      final key = axis.value;
+      if (!forceSync && _lastSent[key] == value) return; // unchanged — skip
+      _lastSent[key] = value;
       futs.add(_api.sendRequest(
         Request()
           ..requestAxisMoveTo = (RequestAxisMoveTo()
@@ -134,19 +144,19 @@ class FourPhaseCommandLoop {
       ));
     }
 
+    // Position axes always change (continuous motion).
     send(AxisType.AXIS_ELECTRODE_1_POWER, pos.a);
     send(AxisType.AXIS_ELECTRODE_2_POWER, pos.b);
     send(AxisType.AXIS_ELECTRODE_3_POWER, pos.c);
     send(AxisType.AXIS_ELECTRODE_4_POWER, pos.d);
+    // Settings — delta-sent; only transmitted when value changes or on full sync.
     send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmp);
-    // Live pulse settings — sent every tick so changes apply immediately
     send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _settings.pulse.carrierFrequency);
     send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
     send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, _settings.pulse.pulseWidth);
     send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _settings.pulse.pulseRiseTime);
     send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         _settings.pulse.pulseIntervalRandom / 100.0);
-    // Live calibration
     send(AxisType.AXIS_CALIBRATION_4_CENTER, _settings.device.calibration4Center);
     send(AxisType.AXIS_CALIBRATION_4_A, _settings.device.calibration4A);
     send(AxisType.AXIS_CALIBRATION_4_B, _settings.device.calibration4B);
@@ -157,6 +167,7 @@ class FourPhaseCommandLoop {
       // eagerError: false — wait for all futures so their exceptions are
       // consumed rather than becoming unhandled async errors.
       await Future.wait(futs, eagerError: false);
+      if (forceSync) _lastSyncWallTime = now;
       if (_slowCount >= _kSlowThreshold) onSlowConnection?.call(false);
       _slowCount = 0;
     } on TimeoutException {
@@ -235,6 +246,8 @@ class CommandLoop {
   bool _tickInFlight = false; // true while awaiting current tick's responses
   int _slowCount = 0;         // consecutive skipped ticks
   double _startTime = 0;
+  final Map<int, double> _lastSent = {}; // last transmitted value per axis key
+  double _lastSyncWallTime = 0.0;        // wall time of last forced full sync
 
   CommandLoop(this._api, this._settings);
 
@@ -249,6 +262,8 @@ class CommandLoop {
     // Reset stale state from any previous session.
     _tickInFlight = false;
     _slowCount = 0;
+    _lastSent.clear();
+    _lastSyncWallTime = 0.0; // ensures first tick sends all axes
 
     pattern.reset();
     _pulseFreqMod.reset();
@@ -296,6 +311,9 @@ class CommandLoop {
     const double dt = 0.033;
     final double now = DateTime.now().millisecondsSinceEpoch / 1000.0;
 
+    // Force a full re-sync every ~1 s to recover from any dropped packets.
+    final bool forceSync = (now - _lastSyncWallTime) >= 1.0;
+
     final pos = pattern.update(dt * velocity);
 
     final double elapsed = now - _startTime;
@@ -307,8 +325,12 @@ class CommandLoop {
     final modFreq =
         (_settings.pulse.pulseFrequency + freqOffset).clamp(1.0, 300.0);
 
+    // Collect futures for changed axes only (or all axes on full sync).
     final futs = <Future<Response>>[];
     void send(AxisType axis, double value) {
+      final key = axis.value;
+      if (!forceSync && _lastSent[key] == value) return; // unchanged — skip
+      _lastSent[key] = value;
       futs.add(_api.sendRequest(
         Request()
           ..requestAxisMoveTo = (RequestAxisMoveTo()
@@ -319,23 +341,24 @@ class CommandLoop {
       ));
     }
 
+    // Position axes always change (continuous motion).
     send(AxisType.AXIS_POSITION_ALPHA, pos.x);
     send(AxisType.AXIS_POSITION_BETA, pos.y);
+    // Settings — delta-sent; only transmitted when value changes or on full sync.
     send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmp);
-    // Live pulse settings — sent every tick so changes apply immediately
     send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _settings.pulse.carrierFrequency);
     send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
     send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, _settings.pulse.pulseWidth);
     send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _settings.pulse.pulseRiseTime);
     send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         _settings.pulse.pulseIntervalRandom / 100.0);
-    // Live calibration
     send(AxisType.AXIS_CALIBRATION_3_CENTER, _settings.device.calibration3Center);
     send(AxisType.AXIS_CALIBRATION_3_UP, _settings.device.calibration3Up);
     send(AxisType.AXIS_CALIBRATION_3_LEFT, _settings.device.calibration3Left);
 
     try {
       await Future.wait(futs, eagerError: false);
+      if (forceSync) _lastSyncWallTime = now;
       if (_slowCount >= _kSlowThreshold) onSlowConnection?.call(false);
       _slowCount = 0;
     } on TimeoutException {

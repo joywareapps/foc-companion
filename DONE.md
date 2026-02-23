@@ -55,12 +55,17 @@
 - [x] **Reset / Load / Save buttons:** All settings screens (calibration, pulse, connection+limits) now show a three-button row. Reset restores factory defaults; Load reloads the last saved values from storage (shows "Nothing saved yet" if absent); Save persists current values. Granular per-category methods added to `SettingsProvider` so Reset/Load only touch the relevant fields (e.g. resetting calibration does not affect safety limits and vice versa).
 - [x] **Calibration and pulse settings always editable:** Removed `isPlaying` locking from calibration and pulse UIs — sliders and buttons are always enabled since all values are already sent on every tick. Safety limits (Settings tab) remain locked while playing; connection settings remain locked while connected.
 
-## 🏁 Phase 8 (2026-02-23): Communication Resilience
-- [x] **Tick backpressure:** Each 16 ms timer tick now awaits acknowledgement of the previous tick's full request batch (`Future.wait` with `eagerError: false`) before sending new requests. If the previous batch is still in flight when the next timer fires, the tick is skipped — preventing unbounded queue growth during WiFi glitches.
-- [x] **Slow-connection warning:** After 3 consecutive skipped ticks (~48 ms behind), a yellow warning triangle (`⚠`) appears in the AppBar next to the connection status. It clears automatically when throughput recovers.
+## 🏁 Phase 8 (2026-02-23): Communication Resilience & Optimization
+- [x] **Loop rate reduced to 30 Hz:** Timer interval changed from 16 ms to 33 ms to match real-world WiFi throughput.
+- [x] **Tick backpressure:** Each tick now awaits acknowledgement of the previous tick's full request batch (`Future.wait` with `eagerError: false`) before sending new requests. If the previous batch is still in flight when the next timer fires, the tick is skipped — preventing unbounded queue growth during WiFi glitches.
+- [x] **Slow-connection warning:** After 3 consecutive skipped ticks (~100 ms behind), a yellow warning triangle (`⚠`) appears in the AppBar next to the connection status. It clears automatically when throughput recovers.
 - [x] **Tick timeout (2 s):** Tick-batch requests use a 2-second timeout (vs. 5 s for setup/control requests). On timeout the loop stops itself, `isLoopRunning` is set to false, and `connectionStatus` shows the error. The device is not immediately disconnected — WiFi may recover.
 - [x] **Notification watchdog:** If no notification (battery/temperature) is received for 30 seconds while connected, the device is automatically disconnected with an error message. This catches silent TCP drops where the socket stays open but the device is unreachable.
 - [x] **Safe stop on broken link:** `stop()` in both loops wraps `stopSignal()` in try/catch; `_handleLoopTimeout` fires a best-effort `stopSignal()` and ignores errors, since the link may already be dead.
+- [x] **Delta updates:** Each tick only transmits axes whose value changed since the last send. Position axes (always moving) are sent every tick; stable settings (carrier freq, pulse width, rise time, randomization, calibration) are sent only when the user changes them. Amplitude is sent during the 5 s ramp and whenever volume changes; pulse frequency is sent every tick only when LFO modulation is active.
+- [x] **Periodic full sync:** All axes are force-re-sent once per second regardless of delta state, ensuring the device stays consistent after any dropped packet.
+- [x] **TCP_NODELAY:** Nagle's algorithm disabled on the socket after connect, eliminating the 40 ms buffering delay for small packets.
+- [x] **Net bandwidth:** Steady-state requests reduced from ~330 req/s (all axes, 60 Hz) to ~70 req/s (position-only delta + 1 s full sync at 30 Hz).
 
 ## 🏁 Phase 7: Automation & Distribution
 - [x] **CI/CD:** GitHub Actions workflow for automated APK building and distribution.

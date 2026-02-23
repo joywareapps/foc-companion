@@ -10,6 +10,8 @@ jobs:
   distribute:
     name: Build and Distribute APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -68,3 +70,18 @@ jobs:
           releaseNotes: |
             Beta build from ${{ github.sha }}
             Message: ${{ github.event.head_commit.message }}
+
+      - name: Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev-latest
+          name: "Latest Development Build"
+          body: |
+            This release is automatically updated with the latest build from the `master` branch.
+            
+            **Last Updated:** ${{ github.event.head_commit.timestamp }}
+            **Commit:** ${{ github.sha }}
+          files: foc-companion/build/app/outputs/flutter-apk/app-release.apk
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

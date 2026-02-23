@@ -27,6 +27,16 @@ Develop the "FOC Companion" Android application using Flutter. The app connects 
 - **Status:** 🟢 Complete (Research Phase)
 - **Summary:** Firebase App Distribution recommended for beta testing.
 
+### Task 06: Background Execution 🔄
+- **Priority:** MEDIUM
+- **Status:** 🟡 Planning
+- **Prompt:** `todo/06-background-execution.md`
+- **Summary:** 
+  - Implement Android Foreground Service to keep 60Hz loop alive when app is minimized
+  - Configure persistent notification for active stimulation
+  - Implement WakeLocks and WiFi locks to prevent connection drops
+  - Refactor CommandLoop to run in a separate Isolate if necessary
+
 ### Task 06: Randomization Parameter Check ⚠️
 - **Priority:** MEDIUM
 - **Status:** 🟡 Needs Investigation

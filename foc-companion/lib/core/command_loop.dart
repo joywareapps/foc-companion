@@ -11,16 +11,32 @@ import 'package:foc_companion/generated/protobuf/messages.pb.dart';
 class FourPhaseCommandLoop {
   final FocStimApiService _api;
   final SettingsProvider _settings;
-  final CyclePattern4Phase _pattern = CyclePattern4Phase();
+
+  /// Active pattern — swappable while running.
+  FourphasePattern pattern = FourphasePatternRegistry.all[0];
+
+  /// Playback speed multiplier (applied to dt fed into the pattern).
+  double velocity = 1.0;
+
+  final Modulator _pulseFreqMod = Modulator(PulseModulationConfig());
+
   Timer? _timer;
   bool _isRunning = false;
   double _startTime = 0;
 
   FourPhaseCommandLoop(this._api, this._settings);
 
+  void setPulseModConfig(PulseModulationConfig config) {
+    _pulseFreqMod.config = config;
+  }
+
   Future<void> start() async {
     if (_isRunning) return;
     print("FourPhaseCommandLoop: Starting...");
+
+    pattern.reset();
+    _pulseFreqMod.reset();
+
     try {
       await _setupParams();
       print("FourPhaseCommandLoop: Params setup complete. Starting signal...");
@@ -47,13 +63,20 @@ class FourPhaseCommandLoop {
   void _tick(Timer timer) async {
     if (!_api.isConnected) return;
 
+    const double dt = 0.016;
     double now = DateTime.now().millisecondsSinceEpoch / 1000.0;
-    var pos = _pattern.update(0.016);
+
+    // Velocity scales the dt fed into the pattern
+    var pos = pattern.update(dt * velocity);
 
     double elapsed = now - _startTime;
     double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
     // 4-phase uses squared volume for perceptual linearity
     double currentAmp = _settings.device.waveformAmplitude * ramp * ramp;
+
+    // Pulse-frequency modulation (same as 3-phase)
+    final freqOffset = _pulseFreqMod.update(dt, velocity);
+    final modFreq = (_settings.pulse.pulseFrequency + freqOffset).clamp(1.0, 300.0);
 
     try {
       _api.sendRequest(Request()
@@ -81,6 +104,13 @@ class FourPhaseCommandLoop {
           ..axis = AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS
           ..value = currentAmp
           ..interval = 50));
+      if (_pulseFreqMod.config.enabled) {
+        _api.sendRequest(Request()
+          ..requestAxisMoveTo = (RequestAxisMoveTo()
+            ..axis = AxisType.AXIS_PULSE_FREQUENCY_HZ
+            ..value = modFreq
+            ..interval = 50));
+      }
     } catch (e) {
       print("4-phase loop error: $e");
     }

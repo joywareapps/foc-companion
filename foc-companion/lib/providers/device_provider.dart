@@ -35,8 +35,9 @@ class DeviceProvider with ChangeNotifier {
     _threePhaseLoop = CommandLoop(api, settings);
     _fourPhaseLoop = FourPhaseCommandLoop(api, settings);
 
-    // Apply persisted cockpit settings to the loop
+    // Apply persisted cockpit settings to the loops
     _applyCockpitToLoop();
+    _applyCockpit4PhaseToLoop();
   }
 
   void _applyCockpitToLoop() {
@@ -47,11 +48,22 @@ class DeviceProvider with ChangeNotifier {
     _threePhaseLoop?.setPulseModConfig(c.pulseFreqMod);
   }
 
+  void _applyCockpit4PhaseToLoop() {
+    final c = settings.cockpit4Phase;
+    final idx = c.patternIndex.clamp(0, FourphasePatternRegistry.all.length - 1);
+    _fourPhaseLoop?.pattern = FourphasePatternRegistry.all[idx];
+    _fourPhaseLoop?.velocity = c.velocity;
+    _fourPhaseLoop?.setPulseModConfig(c.pulseFreqMod);
+  }
+
   void updateSettings(SettingsProvider newSettings) {
     settings = newSettings;
   }
 
   CockpitSettings get cockpit => settings.cockpit;
+  CockpitSettings get cockpit4Phase => settings.cockpit4Phase;
+
+  // ── 3-phase cockpit ──
 
   void selectPattern(int index) {
     final idx = index.clamp(0, ThreephasePatternRegistry.all.length - 1);
@@ -71,6 +83,30 @@ class DeviceProvider with ChangeNotifier {
   void updatePulseModConfig(PulseModulationConfig config) {
     settings.cockpit.pulseFreqMod = config;
     _threePhaseLoop?.setPulseModConfig(config);
+    settings.saveSettings();
+    notifyListeners();
+  }
+
+  // ── 4-phase cockpit ──
+
+  void select4PhasePattern(int index) {
+    final idx = index.clamp(0, FourphasePatternRegistry.all.length - 1);
+    settings.cockpit4Phase.patternIndex = idx;
+    _fourPhaseLoop?.pattern = FourphasePatternRegistry.all[idx];
+    settings.saveSettings();
+    notifyListeners();
+  }
+
+  void set4PhaseVelocity(double v) {
+    settings.cockpit4Phase.velocity = v.clamp(0.1, 4.0);
+    _fourPhaseLoop?.velocity = settings.cockpit4Phase.velocity;
+    settings.saveSettings();
+    notifyListeners();
+  }
+
+  void update4PhasePulseModConfig(PulseModulationConfig config) {
+    settings.cockpit4Phase.pulseFreqMod = config;
+    _fourPhaseLoop?.setPulseModConfig(config);
     settings.saveSettings();
     notifyListeners();
   }

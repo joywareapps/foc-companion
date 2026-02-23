@@ -23,23 +23,23 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          channel: 'stable'
           cache: true
 
       - name: Get Dependencies
         run: |
-          cd restim-flutter
+          cd foc-companion
           flutter pub get
 
       - name: Generate Protobuf
         run: |
-          cd restim-flutter
+          cd foc-companion
           chmod +x ../generate_protos.sh
           ../generate_protos.sh
 
       - name: Build APK
         run: |
-          cd restim-flutter
+          cd foc-companion
           flutter build apk --release
 
       - name: Upload to Firebase App Distribution
@@ -48,7 +48,7 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
           groups: beta-testers
-          file: restim-flutter/build/app/outputs/flutter-apk/app-release.apk
+          file: foc-companion/build/app/outputs/flutter-apk/app-release.apk
           releaseNotes: |
             Beta build from ${{ github.sha }}
             Message: ${{ github.event.head_commit.message }}

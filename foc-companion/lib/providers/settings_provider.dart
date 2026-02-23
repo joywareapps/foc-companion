@@ -9,6 +9,7 @@ class SettingsProvider with ChangeNotifier {
   FocStimSettings focStim = FocStimSettings();
   MediaSyncSettings mediaSync = MediaSyncSettings();
   CockpitSettings cockpit = CockpitSettings();
+  CockpitSettings cockpit4Phase = CockpitSettings();
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -28,6 +29,9 @@ class SettingsProvider with ChangeNotifier {
     final cockpitJson = prefs.getString('cockpit_settings');
     if (cockpitJson != null) cockpit = CockpitSettings.fromJson(jsonDecode(cockpitJson));
 
+    final cockpit4Json = prefs.getString('cockpit4_settings');
+    if (cockpit4Json != null) cockpit4Phase = CockpitSettings.fromJson(jsonDecode(cockpit4Json));
+
     notifyListeners();
   }
 
@@ -38,6 +42,7 @@ class SettingsProvider with ChangeNotifier {
     await prefs.setString('focstim_settings', jsonEncode(focStim.toJson()));
     await prefs.setString('media_settings', jsonEncode(mediaSync.toJson()));
     await prefs.setString('cockpit_settings', jsonEncode(cockpit.toJson()));
+    await prefs.setString('cockpit4_settings', jsonEncode(cockpit4Phase.toJson()));
     notifyListeners();
   }
 }

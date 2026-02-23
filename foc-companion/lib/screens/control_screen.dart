@@ -100,10 +100,9 @@ class _ConnectionCard extends StatelessWidget {
                     icon: Icon(Icons.looks_4_outlined),
                   ),
                 ],
-                selected: {settings.device.deviceMode},
+                selected: {device.deviceMode},
                 onSelectionChanged: (Set<DeviceMode> sel) {
-                  settings.device.deviceMode = sel.first;
-                  settings.saveSettings();
+                  device.setDeviceMode(sel.first);
                 },
               ),
             ],

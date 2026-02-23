@@ -135,6 +135,12 @@ class DeviceProvider with ChangeNotifier {
 
   DeviceMode get deviceMode => settings.device.deviceMode;
 
+  void setDeviceMode(DeviceMode mode) {
+    settings.device.deviceMode = mode;
+    settings.saveSettings();
+    notifyListeners();
+  }
+
   Future<void> disconnect() async {
     await _threePhaseLoop?.stop();
     await _fourPhaseLoop?.stop();

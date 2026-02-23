@@ -16,6 +16,7 @@ class DeviceProvider with ChangeNotifier {
   String firmwareVersion = '';
   String temperature = "--";
   String batteryVoltage = "--";
+  double? batterySoc;
   bool isLoopRunning = false;
 
   DeviceProvider(this.settings) {
@@ -181,6 +182,7 @@ class DeviceProvider with ChangeNotifier {
     }
     if (n.hasNotificationBattery()) {
       batteryVoltage = "${n.notificationBattery.batteryVoltage.toStringAsFixed(2)}V";
+      batterySoc = n.notificationBattery.batterySoc;
     }
     notifyListeners();
   }

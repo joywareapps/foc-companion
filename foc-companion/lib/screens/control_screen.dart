@@ -76,7 +76,7 @@ class _ConnectionCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                "Temp: ${device.temperature}  ·  Bat: ${device.batteryVoltage}",
+                "Temp: ${device.temperature}  ·  Bat: ${device.batteryVoltage}${device.batterySoc != null ? ' (${(device.batterySoc! > 1.0 ? device.batterySoc! : device.batterySoc! * 100).toStringAsFixed(0)}%)' : ''}",
                 style: Theme.of(context).textTheme.bodySmall,
                 textAlign: TextAlign.center,
               ),

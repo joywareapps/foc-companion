@@ -5,7 +5,6 @@ source-repos/
 # Environment variables
 .env
 .env.*
-!.env.example
 
 # Secrets
 *.secret

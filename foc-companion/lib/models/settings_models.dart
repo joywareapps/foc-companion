@@ -6,36 +6,54 @@ enum DeviceMode { threePhase, fourPhase }
 // ──────────────────────────────────────────────
 
 class PulseModulationConfig {
-  bool enabled;
+  /// Active axes: 'off' | 'freq' | 'width' | 'both'
+  String mode;
   String function; // 'sine' | 'triangle' | 'saw' | 'square'
   double speedMultiplier;
-  double depthHz;
-  double center;    // saw peak position (0–1)
-  double dutyCycle; // square duty cycle (0.1–0.9)
+  double minHz;      // lower bound of frequency oscillation
+  double maxHz;      // upper bound of frequency oscillation
+  double minWidth;      // lower bound of width oscillation (cycles)
+  double maxWidth;      // upper bound of width oscillation (cycles)
+  int phaseShiftDeg;    // width phase offset relative to freq: 0 | 90 | 180 | 270
+  double center;        // saw peak position (0–1)
+  double dutyCycle;     // square duty cycle (0.1–0.9)
 
   PulseModulationConfig({
-    this.enabled = false,
+    this.mode = 'off',
     this.function = 'sine',
     this.speedMultiplier = 1.0,
-    this.depthHz = 30.0,
+    this.minHz = 20.0,
+    this.maxHz = 80.0,
+    this.minWidth = 3.0,
+    this.maxWidth = 15.0,
+    this.phaseShiftDeg = 180,
     this.center = 0.5,
     this.dutyCycle = 0.5,
   });
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
+        'mode': mode,
         'function': function,
         'speedMultiplier': speedMultiplier,
-        'depthHz': depthHz,
+        'minHz': minHz,
+        'maxHz': maxHz,
+        'minWidth': minWidth,
+        'maxWidth': maxWidth,
+        'phaseShiftDeg': phaseShiftDeg,
         'center': center,
         'dutyCycle': dutyCycle,
       };
 
   PulseModulationConfig.fromJson(Map<String, dynamic> json)
-      : enabled = json['enabled'] ?? false,
+      // Migrate old boolean 'enabled' field: true → 'freq', false → 'off'
+      : mode = json['mode'] ?? (json['enabled'] == true ? 'freq' : 'off'),
         function = json['function'] ?? 'sine',
         speedMultiplier = (json['speedMultiplier'] ?? 1.0).toDouble(),
-        depthHz = (json['depthHz'] ?? 30.0).toDouble(),
+        minHz = (json['minHz'] ?? 20.0).toDouble(),
+        maxHz = (json['maxHz'] ?? 80.0).toDouble(),
+        minWidth = (json['minWidth'] ?? 3.0).toDouble(),
+        maxWidth = (json['maxWidth'] ?? 15.0).toDouble(),
+        phaseShiftDeg = (json['phaseShiftDeg'] ?? 180) as int,
         center = (json['center'] ?? 0.5).toDouble(),
         dutyCycle = (json['dutyCycle'] ?? 0.5).toDouble();
 }

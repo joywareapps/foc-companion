@@ -69,7 +69,7 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
         FilledButton(
           onPressed: () async {
             await settings.saveSettings();
-            ScaffoldMessenger.of(context).showSnackBar(
+            ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
               const SnackBar(content: Text("Settings Saved")),
             );
           },

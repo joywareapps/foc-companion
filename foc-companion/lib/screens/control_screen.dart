@@ -95,7 +95,7 @@ class _CalibrationCardState extends State<_CalibrationCard> {
                   child: OutlinedButton(
                     onPressed: () {
                       settings.resetCalibration();
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                         const SnackBar(content: Text('Reset to defaults')),
                       );
                     },
@@ -108,7 +108,7 @@ class _CalibrationCardState extends State<_CalibrationCard> {
                     onPressed: () async {
                       final ok = await settings.reloadCalibration();
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                           SnackBar(
                             content: Text(ok ? 'Calibration loaded' : 'Nothing saved yet'),
                           ),
@@ -124,7 +124,7 @@ class _CalibrationCardState extends State<_CalibrationCard> {
                     onPressed: () async {
                       await settings.saveSettings();
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                           const SnackBar(content: Text('Calibration Saved')),
                         );
                       }
@@ -339,7 +339,7 @@ class _SpeedCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────
-// Pulse Freq Modulation Card
+// Pulse Modulation Card
 // ─────────────────────────────────────────────────────────
 
 class _ModulationCard extends StatelessWidget {
@@ -349,6 +349,8 @@ class _ModulationCard extends StatelessWidget {
 
   static const _functions = ['sine', 'triangle', 'saw', 'square'];
   static const _funcLabels = ['Sin', 'Tri', 'Saw', 'Sqr'];
+  static const _modes = ['off', 'freq', 'width', 'both'];
+  static const _modeLabels = ['Off', 'Freq', 'Width', 'F+W'];
 
   void _update(DeviceProvider device, PulseModulationConfig updated) {
     device.updatePulseModConfig(updated);
@@ -356,33 +358,107 @@ class _ModulationCard extends StatelessWidget {
 
   PulseModulationConfig _copy(PulseModulationConfig src) {
     return PulseModulationConfig()
-      ..enabled = src.enabled
+      ..mode = src.mode
       ..function = src.function
       ..speedMultiplier = src.speedMultiplier
-      ..depthHz = src.depthHz
+      ..minHz = src.minHz
+      ..maxHz = src.maxHz
+      ..minWidth = src.minWidth
+      ..maxWidth = src.maxWidth
+      ..phaseShiftDeg = src.phaseShiftDeg
       ..center = src.center
       ..dutyCycle = src.dutyCycle;
+  }
+
+  Widget _rangeRow(
+    BuildContext context, {
+    required String label,
+    required double minVal,
+    required double maxVal,
+    required double sliderMin,
+    required double sliderMax,
+    required String unit,
+    required double kGap,
+    required void Function(double, double) onChanged,
+  }) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Text('${minVal.round()}', style: Theme.of(context).textTheme.bodySmall),
+            Expanded(
+              child: Center(
+                child: Text(label, style: Theme.of(context).textTheme.labelSmall),
+              ),
+            ),
+            Text('${maxVal.round()} $unit',
+                style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+        RangeSlider(
+          values: RangeValues(minVal, maxVal),
+          min: sliderMin,
+          max: sliderMax,
+          divisions: (sliderMax - sliderMin).round(),
+          labels: RangeLabels(
+            '${minVal.round()} $unit',
+            '${maxVal.round()} $unit',
+          ),
+          onChanged: (RangeValues values) {
+            double newMin = values.start;
+            double newMax = values.end;
+            if (newMax - newMin < kGap) {
+              final dMin = (newMin - minVal).abs();
+              final dMax = (newMax - maxVal).abs();
+              if (dMin >= dMax) {
+                newMax = (newMin + kGap).clamp(sliderMin + kGap, sliderMax);
+                newMin = newMax - kGap;
+              } else {
+                newMin = (newMax - kGap).clamp(sliderMin, sliderMax - kGap);
+                newMax = newMin + kGap;
+              }
+            }
+            onChanged(newMin, newMax);
+          },
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final cfg = device.cockpit.pulseFreqMod;
+    final activeMode = cfg.mode;
 
     return Card(
       child: ExpansionTile(
         title: Row(
           children: [
-            Text(
-              "Pulse Freq Modulation",
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const Spacer(),
-            Switch(
-              value: cfg.enabled,
-              onChanged: (v) {
-                final updated = _copy(cfg)..enabled = v;
-                _update(device, updated);
-              },
+            Text("Pulse Modulation",
+                style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SegmentedButton<String>(
+                showSelectedIcon: false,
+                style: SegmentedButton.styleFrom(
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  textStyle: const TextStyle(fontSize: 11),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                segments: List.generate(
+                  _modes.length,
+                  (i) => ButtonSegment(
+                    value: _modes[i],
+                    label: Text(_modeLabels[i]),
+                  ),
+                ),
+                selected: {activeMode},
+                onSelectionChanged: (sel) {
+                  final updated = _copy(cfg)..mode = sel.first;
+                  _update(device, updated);
+                },
+              ),
             ),
           ],
         ),
@@ -392,53 +468,7 @@ class _ModulationCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Function selector
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(_functions.length, (i) {
-                    final isActive = cfg.function == _functions[i];
-                    return OutlinedButton(
-                      onPressed: () {
-                        final updated = _copy(cfg)..function = _functions[i];
-                        _update(device, updated);
-                      },
-                      style: isActive
-                          ? OutlinedButton.styleFrom(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primaryContainer,
-                            )
-                          : null,
-                      child: Text(_funcLabels[i]),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 8),
-
-                // Depth slider
-                Row(
-                  children: [
-                    const SizedBox(width: 52, child: Text("Depth:")),
-                    Expanded(
-                      child: Slider(
-                        value: cfg.depthHz.clamp(0.0, 50.0),
-                        min: 0,
-                        max: 50,
-                        divisions: 50,
-                        onChanged: (v) {
-                          final updated = _copy(cfg)..depthHz = v;
-                          _update(device, updated);
-                        },
-                      ),
-                    ),
-                    SizedBox(
-                      width: 52,
-                      child: Text("${cfg.depthHz.toStringAsFixed(0)} Hz",
-                          textAlign: TextAlign.end),
-                    ),
-                  ],
-                ),
-
-                // Speed slider
+                // Speed slider (top)
                 Row(
                   children: [
                     const SizedBox(width: 52, child: Text("Speed:")),
@@ -462,8 +492,100 @@ class _ModulationCard extends StatelessWidget {
                   ],
                 ),
 
+                // Function selector
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(_functions.length, (i) {
+                    final isActive = cfg.function == _functions[i];
+                    return OutlinedButton(
+                      onPressed: () {
+                        final updated = _copy(cfg)..function = _functions[i];
+                        _update(device, updated);
+                      },
+                      style: isActive
+                          ? OutlinedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primaryContainer,
+                            )
+                          : null,
+                      child: Text(_funcLabels[i]),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 8),
+
+                // Frequency range — shown for 'freq' and 'both'
+                if (activeMode == 'freq' || activeMode == 'both')
+                  _rangeRow(
+                    context,
+                    label: 'Frequency',
+                    minVal: cfg.minHz,
+                    maxVal: cfg.maxHz,
+                    sliderMin: 1,
+                    sliderMax: 100,
+                    unit: 'Hz',
+                    kGap: 10,
+                    onChanged: (min, max) => _update(
+                      device,
+                      _copy(cfg)
+                        ..minHz = min
+                        ..maxHz = max,
+                    ),
+                  ),
+
+                // Phase shift — shown only when both freq and width are active
+                if (activeMode == 'both')
+                  Row(
+                    children: [
+                      const SizedBox(width: 52, child: Text("Phase:")),
+                      ...const [(90, '1/4'), (180, '1/2'), (270, '3/4'), (0, '1/1')]
+                          .map((e) {
+                        final isActive = cfg.phaseShiftDeg == e.$1;
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: OutlinedButton(
+                              onPressed: () => _update(
+                                device,
+                                _copy(cfg)..phaseShiftDeg = e.$1,
+                              ),
+                              style: isActive
+                                  ? OutlinedButton.styleFrom(
+                                      backgroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer,
+                                    )
+                                  : null,
+                              child: Text(e.$2,
+                                  style: const TextStyle(fontSize: 12)),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+
+                // Width range — shown for 'width' and 'both'
+                if (activeMode == 'width' || activeMode == 'both')
+                  _rangeRow(
+                    context,
+                    label: 'Width (cyc)',
+                    minVal: cfg.minWidth,
+                    maxVal: cfg.maxWidth,
+                    sliderMin: 3,
+                    sliderMax: 15,
+                    unit: 'cyc',
+                    kGap: 2,
+                    onChanged: (min, max) => _update(
+                      device,
+                      _copy(cfg)
+                        ..minWidth = min
+                        ..maxWidth = max,
+                    ),
+                  ),
+
                 // Saw center (only shown for saw)
-                if (cfg.function == 'saw') ...[
+                if (cfg.function == 'saw')
                   Row(
                     children: [
                       const SizedBox(width: 52, child: Text("Center:")),
@@ -486,10 +608,9 @@ class _ModulationCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                ],
 
                 // Duty cycle (only shown for square)
-                if (cfg.function == 'square') ...[
+                if (cfg.function == 'square')
                   Row(
                     children: [
                       const SizedBox(width: 52, child: Text("Duty:")),
@@ -512,7 +633,6 @@ class _ModulationCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                ],
               ],
             ),
           ),
@@ -643,7 +763,7 @@ class _FourPhaseSpeedCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────
-// 4-Phase Pulse Freq Modulation Card
+// 4-Phase Pulse Modulation Card
 // ─────────────────────────────────────────────────────────
 
 class _FourPhaseModulationCard extends StatelessWidget {
@@ -653,6 +773,8 @@ class _FourPhaseModulationCard extends StatelessWidget {
 
   static const _functions = ['sine', 'triangle', 'saw', 'square'];
   static const _funcLabels = ['Sin', 'Tri', 'Saw', 'Sqr'];
+  static const _modes = ['off', 'freq', 'width', 'both'];
+  static const _modeLabels = ['Off', 'Freq', 'Width', 'F+W'];
 
   void _update(DeviceProvider device, PulseModulationConfig updated) {
     device.update4PhasePulseModConfig(updated);
@@ -660,33 +782,107 @@ class _FourPhaseModulationCard extends StatelessWidget {
 
   PulseModulationConfig _copy(PulseModulationConfig src) {
     return PulseModulationConfig()
-      ..enabled = src.enabled
+      ..mode = src.mode
       ..function = src.function
       ..speedMultiplier = src.speedMultiplier
-      ..depthHz = src.depthHz
+      ..minHz = src.minHz
+      ..maxHz = src.maxHz
+      ..minWidth = src.minWidth
+      ..maxWidth = src.maxWidth
+      ..phaseShiftDeg = src.phaseShiftDeg
       ..center = src.center
       ..dutyCycle = src.dutyCycle;
+  }
+
+  Widget _rangeRow(
+    BuildContext context, {
+    required String label,
+    required double minVal,
+    required double maxVal,
+    required double sliderMin,
+    required double sliderMax,
+    required String unit,
+    required double kGap,
+    required void Function(double, double) onChanged,
+  }) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Text('${minVal.round()}', style: Theme.of(context).textTheme.bodySmall),
+            Expanded(
+              child: Center(
+                child: Text(label, style: Theme.of(context).textTheme.labelSmall),
+              ),
+            ),
+            Text('${maxVal.round()} $unit',
+                style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+        RangeSlider(
+          values: RangeValues(minVal, maxVal),
+          min: sliderMin,
+          max: sliderMax,
+          divisions: (sliderMax - sliderMin).round(),
+          labels: RangeLabels(
+            '${minVal.round()} $unit',
+            '${maxVal.round()} $unit',
+          ),
+          onChanged: (RangeValues values) {
+            double newMin = values.start;
+            double newMax = values.end;
+            if (newMax - newMin < kGap) {
+              final dMin = (newMin - minVal).abs();
+              final dMax = (newMax - maxVal).abs();
+              if (dMin >= dMax) {
+                newMax = (newMin + kGap).clamp(sliderMin + kGap, sliderMax);
+                newMin = newMax - kGap;
+              } else {
+                newMin = (newMax - kGap).clamp(sliderMin, sliderMax - kGap);
+                newMax = newMin + kGap;
+              }
+            }
+            onChanged(newMin, newMax);
+          },
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final cfg = device.cockpit4Phase.pulseFreqMod;
+    final activeMode = cfg.mode;
 
     return Card(
       child: ExpansionTile(
         title: Row(
           children: [
-            Text(
-              "Pulse Freq Modulation",
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const Spacer(),
-            Switch(
-              value: cfg.enabled,
-              onChanged: (v) {
-                final updated = _copy(cfg)..enabled = v;
-                _update(device, updated);
-              },
+            Text("Pulse Modulation",
+                style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SegmentedButton<String>(
+                showSelectedIcon: false,
+                style: SegmentedButton.styleFrom(
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  textStyle: const TextStyle(fontSize: 11),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                segments: List.generate(
+                  _modes.length,
+                  (i) => ButtonSegment(
+                    value: _modes[i],
+                    label: Text(_modeLabels[i]),
+                  ),
+                ),
+                selected: {activeMode},
+                onSelectionChanged: (sel) {
+                  final updated = _copy(cfg)..mode = sel.first;
+                  _update(device, updated);
+                },
+              ),
             ),
           ],
         ),
@@ -696,48 +892,7 @@ class _FourPhaseModulationCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(_functions.length, (i) {
-                    final isActive = cfg.function == _functions[i];
-                    return OutlinedButton(
-                      onPressed: () {
-                        final updated = _copy(cfg)..function = _functions[i];
-                        _update(device, updated);
-                      },
-                      style: isActive
-                          ? OutlinedButton.styleFrom(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primaryContainer,
-                            )
-                          : null,
-                      child: Text(_funcLabels[i]),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const SizedBox(width: 52, child: Text("Depth:")),
-                    Expanded(
-                      child: Slider(
-                        value: cfg.depthHz.clamp(0.0, 50.0),
-                        min: 0,
-                        max: 50,
-                        divisions: 50,
-                        onChanged: (v) {
-                          final updated = _copy(cfg)..depthHz = v;
-                          _update(device, updated);
-                        },
-                      ),
-                    ),
-                    SizedBox(
-                      width: 52,
-                      child: Text("${cfg.depthHz.toStringAsFixed(0)} Hz",
-                          textAlign: TextAlign.end),
-                    ),
-                  ],
-                ),
+                // Speed slider (top)
                 Row(
                   children: [
                     const SizedBox(width: 52, child: Text("Speed:")),
@@ -760,7 +915,101 @@ class _FourPhaseModulationCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (cfg.function == 'saw') ...[
+
+                // Function selector
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(_functions.length, (i) {
+                    final isActive = cfg.function == _functions[i];
+                    return OutlinedButton(
+                      onPressed: () {
+                        final updated = _copy(cfg)..function = _functions[i];
+                        _update(device, updated);
+                      },
+                      style: isActive
+                          ? OutlinedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primaryContainer,
+                            )
+                          : null,
+                      child: Text(_funcLabels[i]),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 8),
+
+                // Frequency range — shown for 'freq' and 'both'
+                if (activeMode == 'freq' || activeMode == 'both')
+                  _rangeRow(
+                    context,
+                    label: 'Frequency',
+                    minVal: cfg.minHz,
+                    maxVal: cfg.maxHz,
+                    sliderMin: 1,
+                    sliderMax: 100,
+                    unit: 'Hz',
+                    kGap: 10,
+                    onChanged: (min, max) => _update(
+                      device,
+                      _copy(cfg)
+                        ..minHz = min
+                        ..maxHz = max,
+                    ),
+                  ),
+
+                // Phase shift — shown only when both freq and width are active
+                if (activeMode == 'both')
+                  Row(
+                    children: [
+                      const SizedBox(width: 52, child: Text("Phase:")),
+                      ...const [(90, '1/4'), (180, '1/2'), (270, '3/4'), (0, '1/1')]
+                          .map((e) {
+                        final isActive = cfg.phaseShiftDeg == e.$1;
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: OutlinedButton(
+                              onPressed: () => _update(
+                                device,
+                                _copy(cfg)..phaseShiftDeg = e.$1,
+                              ),
+                              style: isActive
+                                  ? OutlinedButton.styleFrom(
+                                      backgroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer,
+                                    )
+                                  : null,
+                              child: Text(e.$2,
+                                  style: const TextStyle(fontSize: 12)),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+
+                // Width range — shown for 'width' and 'both'
+                if (activeMode == 'width' || activeMode == 'both')
+                  _rangeRow(
+                    context,
+                    label: 'Width (cyc)',
+                    minVal: cfg.minWidth,
+                    maxVal: cfg.maxWidth,
+                    sliderMin: 3,
+                    sliderMax: 15,
+                    unit: 'cyc',
+                    kGap: 2,
+                    onChanged: (min, max) => _update(
+                      device,
+                      _copy(cfg)
+                        ..minWidth = min
+                        ..maxWidth = max,
+                    ),
+                  ),
+
+                // Saw center (only shown for saw)
+                if (cfg.function == 'saw')
                   Row(
                     children: [
                       const SizedBox(width: 52, child: Text("Center:")),
@@ -783,8 +1032,9 @@ class _FourPhaseModulationCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                ],
-                if (cfg.function == 'square') ...[
+
+                // Duty cycle (only shown for square)
+                if (cfg.function == 'square')
                   Row(
                     children: [
                       const SizedBox(width: 52, child: Text("Duty:")),
@@ -807,7 +1057,6 @@ class _FourPhaseModulationCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                ],
               ],
             ),
           ),

@@ -15,6 +15,20 @@ FOC-Stim is an open-hardware device designed for high-performance electromagneti
 - **Media Synchronization (Parked):** Synchronize with popular video players like **HereSphere** using TCP sockets. This feature is currently hidden to focus on stand-alone device control.
 - **Automatic Funscript Loading (Parked):** Load `.funscript` files from local storage or network shares (WebDAV).
 
+## Screenshots
+
+| 01 - Not connected (3Phase) | 02 - Not connected (4Phase) | 03 - Pulse Settings | 04 - Device Settings |
+|:---:|:---:|:---:|:---:|
+| ![01](screenshots/flutter_01.png) | ![02](screenshots/flutter_02.png) | ![03](screenshots/flutter_03.png) | ![04](screenshots/flutter_04.png) |
+
+| 05 - Connected | 06 - Calibration | 07 - Playing Pattern | 08 - Pulse Modulation (Freq) |
+|:---:|:---:|:---:|:---:|
+| ![05](screenshots/flutter_05.png) | ![06](screenshots/flutter_06.png) | ![07](screenshots/flutter_07.png) | ![08](screenshots/flutter_08.png) |
+
+| 09 - Pulse Modulation (Width) | 10 - Pulse Modulation (Both) | 11 - Pulse Modulation |
+|:---:|:---:|:---:|
+| ![09](screenshots/flutter_09.png) | ![10](screenshots/flutter_10.png) | ![11](screenshots/flutter_11.png) |
+
 ## Project Structure
 
 - `foc-companion/`: The primary mobile application built with Flutter.

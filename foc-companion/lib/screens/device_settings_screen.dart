@@ -92,7 +92,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
               child: OutlinedButton(
                 onPressed: () {
                   settings.resetCalibration();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                     const SnackBar(content: Text("Reset to defaults")),
                   );
                 },
@@ -105,7 +105,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 onPressed: () async {
                   final ok = await settings.reloadCalibration();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                       SnackBar(
                         content: Text(ok ? "Calibration loaded" : "Nothing saved yet"),
                       ),
@@ -121,7 +121,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 onPressed: () async {
                   await settings.saveSettings();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                       const SnackBar(content: Text("Calibration Saved")),
                     );
                   }

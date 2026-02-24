@@ -124,9 +124,24 @@ class FourPhaseCommandLoop {
     final double currentAmp =
         volume * volume * _settings.device.waveformAmplitude * ramp;
 
-    final freqOffset = _pulseFreqMod.update(dt, velocity);
-    final modFreq =
-        (_settings.pulse.pulseFrequency + freqOffset).clamp(1.0, 300.0);
+    final norm = _pulseFreqMod.update(dt, velocity); // [-1,1] when active, 0 when off
+    final modCfg = _pulseFreqMod.config;
+    final freqModActive = modCfg.mode == 'freq' || modCfg.mode == 'both';
+    final widthModActive = modCfg.mode == 'width' || modCfg.mode == 'both';
+    final modFreq = freqModActive
+        ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
+            .clamp(1.0, 300.0)
+        : _settings.pulse.pulseFrequency;
+    // Width uses a phase-shifted sample of the same oscillator.
+    final modWidth = widthModActive
+        ? (modCfg.minWidth +
+                (modCfg.maxWidth - modCfg.minWidth) *
+                    (_pulseFreqMod.valueAtPhaseDeg(
+                              modCfg.phaseShiftDeg.toDouble()) +
+                          1) /
+                    2)
+            .clamp(3.0, 15.0)
+        : _settings.pulse.pulseWidth;
 
     // Collect futures for changed axes only (or all axes on full sync).
     final futs = <Future<Response>>[];
@@ -153,7 +168,7 @@ class FourPhaseCommandLoop {
     send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmp);
     send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _settings.pulse.carrierFrequency);
     send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
-    send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, _settings.pulse.pulseWidth);
+    send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, modWidth);
     send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _settings.pulse.pulseRiseTime);
     send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         _settings.pulse.pulseIntervalRandom / 100.0);
@@ -321,9 +336,24 @@ class CommandLoop {
     final double currentAmp =
         volume * _settings.device.waveformAmplitude * ramp;
 
-    final freqOffset = _pulseFreqMod.update(dt, velocity);
-    final modFreq =
-        (_settings.pulse.pulseFrequency + freqOffset).clamp(1.0, 300.0);
+    final norm = _pulseFreqMod.update(dt, velocity); // [-1,1] when active, 0 when off
+    final modCfg = _pulseFreqMod.config;
+    final freqModActive = modCfg.mode == 'freq' || modCfg.mode == 'both';
+    final widthModActive = modCfg.mode == 'width' || modCfg.mode == 'both';
+    final modFreq = freqModActive
+        ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
+            .clamp(1.0, 300.0)
+        : _settings.pulse.pulseFrequency;
+    // Width uses a phase-shifted sample of the same oscillator.
+    final modWidth = widthModActive
+        ? (modCfg.minWidth +
+                (modCfg.maxWidth - modCfg.minWidth) *
+                    (_pulseFreqMod.valueAtPhaseDeg(
+                              modCfg.phaseShiftDeg.toDouble()) +
+                          1) /
+                    2)
+            .clamp(3.0, 15.0)
+        : _settings.pulse.pulseWidth;
 
     // Collect futures for changed axes only (or all axes on full sync).
     final futs = <Future<Response>>[];
@@ -348,7 +378,7 @@ class CommandLoop {
     send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmp);
     send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _settings.pulse.carrierFrequency);
     send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
-    send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, _settings.pulse.pulseWidth);
+    send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, modWidth);
     send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _settings.pulse.pulseRiseTime);
     send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         _settings.pulse.pulseIntervalRandom / 100.0);

@@ -131,7 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _ipController.text = settings.focStim.wifiIp;
                         _portController.text =
                             settings.focStim.wifiPort.toString();
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                           const SnackBar(content: Text("Reset to defaults")),
                         );
                       },
@@ -149,7 +149,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           _ipController.text = settings.focStim.wifiIp;
                           _portController.text =
                               settings.focStim.wifiPort.toString();
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                             SnackBar(
                               content: Text(ok ? "Settings loaded" : "Nothing saved yet"),
                             ),
@@ -170,7 +170,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             int.tryParse(_portController.text) ?? 55533;
                         await settings.saveSettings();
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                             const SnackBar(content: Text("Settings Saved")),
                           );
                         }

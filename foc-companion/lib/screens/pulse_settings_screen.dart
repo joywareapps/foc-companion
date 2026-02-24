@@ -74,7 +74,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
               child: OutlinedButton(
                 onPressed: () {
                   settings.resetPulse();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                     const SnackBar(content: Text("Reset to defaults")),
                   );
                 },
@@ -87,7 +87,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
                 onPressed: () async {
                   final ok = await settings.reloadPulse();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                       SnackBar(
                         content: Text(ok ? "Pulse settings loaded" : "Nothing saved yet"),
                       ),
@@ -103,7 +103,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
                 onPressed: () async {
                   await settings.saveSettings();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
                       const SnackBar(content: Text("Pulse Settings Saved")),
                     );
                   }

@@ -54,7 +54,6 @@ class SettingsProvider with ChangeNotifier {
       ..calibration3Center = d.calibration3Center
       ..calibration3Up = d.calibration3Up
       ..calibration3Left = d.calibration3Left
-      ..calibration4Center = d.calibration4Center
       ..calibration4A = d.calibration4A
       ..calibration4B = d.calibration4B
       ..calibration4C = d.calibration4C
@@ -71,7 +70,6 @@ class SettingsProvider with ChangeNotifier {
       ..calibration3Center = saved.calibration3Center
       ..calibration3Up = saved.calibration3Up
       ..calibration3Left = saved.calibration3Left
-      ..calibration4Center = saved.calibration4Center
       ..calibration4A = saved.calibration4A
       ..calibration4B = saved.calibration4B
       ..calibration4C = saved.calibration4C

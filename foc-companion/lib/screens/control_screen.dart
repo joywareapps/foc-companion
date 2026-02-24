@@ -4,6 +4,7 @@ import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/patterns.dart';
+import 'package:foc_companion/widgets/gradient_slider_track.dart';
 
 class ControlScreen extends StatelessWidget {
   const ControlScreen({super.key});
@@ -78,15 +79,14 @@ class _CalibrationCardState extends State<_CalibrationCard> {
             ),
             const SizedBox(height: 8),
             if (is4Phase) ...[
-              _buildSlider('Center', d.calibration4Center, (v) => d.calibration4Center = v),
               _buildSlider('Electrode A', d.calibration4A, (v) => d.calibration4A = v, color: Colors.red),
               _buildSlider('Electrode B', d.calibration4B, (v) => d.calibration4B = v, color: Colors.blue),
               _buildSlider('Electrode C', d.calibration4C, (v) => d.calibration4C = v, color: Colors.amber),
               _buildSlider('Electrode D', d.calibration4D, (v) => d.calibration4D = v, color: Colors.green),
             ] else ...[
-              _buildSlider('Center', d.calibration3Center, (v) => d.calibration3Center = v, color: Colors.red),
-              _buildSlider('Up', d.calibration3Up, (v) => d.calibration3Up = v, color: Colors.blue),
-              _buildSlider('Left', d.calibration3Left, (v) => d.calibration3Left = v, color: Colors.amber),
+              _buildSlider('Center', d.calibration3Center, (v) => d.calibration3Center = v),
+              _buildSlider('Up', d.calibration3Up, (v) => d.calibration3Up = v, color: Colors.red),
+              _buildLeftRightSlider(d.calibration3Left, (v) => d.calibration3Left = v),
             ],
             const SizedBox(height: 8),
             Row(
@@ -137,6 +137,40 @@ class _CalibrationCardState extends State<_CalibrationCard> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLeftRightSlider(double value, void Function(double) onSet) {
+    const leftColor = Colors.blue;
+    const rightColor = Colors.amber;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Left',
+                style: TextStyle(color: leftColor, fontWeight: FontWeight.w500)),
+            Text(value.toStringAsFixed(2)),
+            const Text('Right',
+                style: TextStyle(color: rightColor, fontWeight: FontWeight.w500)),
+          ],
+        ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackShape: const GradientSliderTrackShape(
+              startColor: leftColor,
+              endColor: rightColor,
+            ),
+          ),
+          child: Slider(
+            value: value.clamp(-2.0, 2.0),
+            min: -2,
+            max: 2,
+            onChanged: (v) => setState(() => onSet(v)),
+          ),
+        ),
+      ],
     );
   }
 

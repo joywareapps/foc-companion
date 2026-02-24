@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
+import 'package:foc_companion/widgets/gradient_slider_track.dart';
 
 class DeviceSettingsScreen extends StatefulWidget {
   const DeviceSettingsScreen({super.key});
@@ -29,7 +30,6 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             min: -2,
             max: 2,
             onChanged: (v) => setState(() => d.calibration3Center = v),
-            color: Colors.red,
           ),
           _buildSlider(
             label: "Up",
@@ -37,27 +37,16 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             min: -2,
             max: 2,
             onChanged: (v) => setState(() => d.calibration3Up = v),
-            color: Colors.blue,
+            color: Colors.red,
           ),
-          _buildSlider(
-            label: "Left",
+          _buildLeftRightSlider(
             value: d.calibration3Left,
-            min: -2,
-            max: 2,
             onChanged: (v) => setState(() => d.calibration3Left = v),
-            color: Colors.amber,
           ),
         ] else ...[
           const Text("4-Phase Calibration",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          _buildSlider(
-            label: "Center",
-            value: d.calibration4Center,
-            min: -2,
-            max: 2,
-            onChanged: (v) => setState(() => d.calibration4Center = v),
-          ),
           _buildSlider(
             label: "Electrode A",
             value: d.calibration4A,
@@ -137,6 +126,43 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLeftRightSlider({
+    required double value,
+    required Function(double) onChanged,
+  }) {
+    const leftColor = Colors.blue;
+    const rightColor = Colors.amber;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Left',
+                style: TextStyle(color: leftColor, fontWeight: FontWeight.w500)),
+            Text(value.toStringAsFixed(2)),
+            const Text('Right',
+                style: TextStyle(color: rightColor, fontWeight: FontWeight.w500)),
+          ],
+        ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackShape: const GradientSliderTrackShape(
+              startColor: leftColor,
+              endColor: rightColor,
+            ),
+          ),
+          child: Slider(
+            value: value.clamp(-2.0, 2.0),
+            min: -2,
+            max: 2,
+            onChanged: onChanged,
+          ),
         ),
       ],
     );

@@ -172,7 +172,6 @@ class FourPhaseCommandLoop {
     send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _settings.pulse.pulseRiseTime);
     send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         _settings.pulse.pulseIntervalRandom / 100.0);
-    send(AxisType.AXIS_CALIBRATION_4_CENTER, _settings.device.calibration4Center);
     send(AxisType.AXIS_CALIBRATION_4_A, _settings.device.calibration4A);
     send(AxisType.AXIS_CALIBRATION_4_B, _settings.device.calibration4B);
     send(AxisType.AXIS_CALIBRATION_4_C, _settings.device.calibration4C);
@@ -221,7 +220,6 @@ class FourPhaseCommandLoop {
     await send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, p.pulseRiseTime);
     await send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         p.pulseIntervalRandom / 100.0);
-    await send(AxisType.AXIS_CALIBRATION_4_CENTER, d.calibration4Center);
     await send(AxisType.AXIS_CALIBRATION_4_A, d.calibration4A);
     await send(AxisType.AXIS_CALIBRATION_4_B, d.calibration4B);
     await send(AxisType.AXIS_CALIBRATION_4_C, d.calibration4C);

@@ -43,6 +43,15 @@ For detailed network setup and troubleshooting, refer to [NETWORK_TROUBLESHOOTIN
 
 For information on the currently parked media synchronization features, see [MEDIA_SYNC_USAGE.md](documents/features-parked/MEDIA_SYNC_USAGE.md).
 
+## Releases & Beta Testing
+
+You can access the latest builds of FOC Companion through the following channels:
+
+- **Latest Development Build:** Download the most recent APK from the [dev-latest release](https://github.com/joywareapps/foc-companion/releases/tag/dev-latest). This release is automatically updated with each stable development milestone.
+- **Join Beta Testers (Firebase):** Register for our beta program via [Firebase App Distribution](https://appdistribution.firebase.dev/i/389a7e7fdd954a43). 
+
+Participants in the Firebase Beta program will automatically receive a notification email whenever a new version is released, making it the easiest way to stay up-to-date with the latest features and fixes.
+
 ## Security
 
 We take security seriously. Please refer to [SECURITY.md](SECURITY.md) for information on reporting vulnerabilities.

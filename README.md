@@ -6,6 +6,17 @@ FOC Companion is the mobile counterpart to the [restim-desktop](https://github.c
 
 FOC-Stim is an open-hardware device designed for high-performance electromagnetic stimulation. This application connects to the device over TCP (WiFi) or Serial (USB) to manage pulse parameters, patterns, and media synchronization.
 
+## Releases & Beta Testing
+
+You can access the latest builds of FOC Companion through the following channels:
+
+- **Latest Development Build:** Download the most recent APK from the [dev-latest release](https://github.com/joywareapps/foc-companion/releases/tag/dev-latest). This release is automatically updated with each stable development milestone.
+- **Join Beta Testers (Firebase):** Register for our beta program via [Firebase App Distribution](https://appdistribution.firebase.dev/i/389a7e7fdd954a43). 
+
+Participants in the Firebase Beta program will automatically receive a notification email whenever a new version is released, making it the easiest way to stay up-to-date with the latest features and fixes.
+
+For feedback and support, please join the **#beta-testers** channel in our [JoyWare Discord](https://discord.gg/SbUj7R9fP5).
+
 ## Features
 
 - **Real-time Device Control:** Connect to your FOC-Stim device and manage stimulation parameters on the fly.
@@ -42,15 +53,6 @@ To get started with the application, please see the [QUICK_START.md](QUICK_START
 For detailed network setup and troubleshooting, refer to [NETWORK_TROUBLESHOOTING.md](documents/features-parked/NETWORK_TROUBLESHOOTING.md).
 
 For information on the currently parked media synchronization features, see [MEDIA_SYNC_USAGE.md](documents/features-parked/MEDIA_SYNC_USAGE.md).
-
-## Releases & Beta Testing
-
-You can access the latest builds of FOC Companion through the following channels:
-
-- **Latest Development Build:** Download the most recent APK from the [dev-latest release](https://github.com/joywareapps/foc-companion/releases/tag/dev-latest). This release is automatically updated with each stable development milestone.
-- **Join Beta Testers (Firebase):** Register for our beta program via [Firebase App Distribution](https://appdistribution.firebase.dev/i/389a7e7fdd954a43). 
-
-Participants in the Firebase Beta program will automatically receive a notification email whenever a new version is released, making it the easiest way to stay up-to-date with the latest features and fixes.
 
 ## Security
 

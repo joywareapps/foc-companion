@@ -29,6 +29,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             min: -2,
             max: 2,
             onChanged: (v) => setState(() => d.calibration3Center = v),
+            color: Colors.red,
           ),
           _buildSlider(
             label: "Up",
@@ -36,6 +37,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             min: -2,
             max: 2,
             onChanged: (v) => setState(() => d.calibration3Up = v),
+            color: Colors.blue,
           ),
           _buildSlider(
             label: "Left",
@@ -43,6 +45,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             min: -2,
             max: 2,
             onChanged: (v) => setState(() => d.calibration3Left = v),
+            color: Colors.amber,
           ),
         ] else ...[
           const Text("4-Phase Calibration",
@@ -61,6 +64,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             min: -2,
             max: 2,
             onChanged: (v) => setState(() => d.calibration4A = v),
+            color: Colors.red,
           ),
           _buildSlider(
             label: "Electrode B",
@@ -68,6 +72,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             min: -2,
             max: 2,
             onChanged: (v) => setState(() => d.calibration4B = v),
+            color: Colors.blue,
           ),
           _buildSlider(
             label: "Electrode C",
@@ -75,6 +80,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             min: -2,
             max: 2,
             onChanged: (v) => setState(() => d.calibration4C = v),
+            color: Colors.amber,
           ),
           _buildSlider(
             label: "Electrode D",
@@ -82,6 +88,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             min: -2,
             max: 2,
             onChanged: (v) => setState(() => d.calibration4D = v),
+            color: Colors.green,
           ),
         ],
 
@@ -141,23 +148,39 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     required double min,
     required double max,
     required Function(double) onChanged,
+    Color? color,
   }) {
+    final slider = Slider(
+      value: value.clamp(min, max),
+      min: min,
+      max: max,
+      onChanged: onChanged,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label),
+            Text(
+              label,
+              style: color != null
+                  ? TextStyle(color: color, fontWeight: FontWeight.w500)
+                  : null,
+            ),
             Text(value.toStringAsFixed(2)),
           ],
         ),
-        Slider(
-          value: value.clamp(min, max),
-          min: min,
-          max: max,
-          onChanged: onChanged,
-        ),
+        color != null
+            ? SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  activeTrackColor: color,
+                  thumbColor: color,
+                  overlayColor: color.withAlpha(30),
+                ),
+                child: slider,
+              )
+            : slider,
       ],
     );
   }

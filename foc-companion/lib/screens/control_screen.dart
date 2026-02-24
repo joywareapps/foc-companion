@@ -79,14 +79,14 @@ class _CalibrationCardState extends State<_CalibrationCard> {
             const SizedBox(height: 8),
             if (is4Phase) ...[
               _buildSlider('Center', d.calibration4Center, (v) => d.calibration4Center = v),
-              _buildSlider('Electrode A', d.calibration4A, (v) => d.calibration4A = v),
-              _buildSlider('Electrode B', d.calibration4B, (v) => d.calibration4B = v),
-              _buildSlider('Electrode C', d.calibration4C, (v) => d.calibration4C = v),
-              _buildSlider('Electrode D', d.calibration4D, (v) => d.calibration4D = v),
+              _buildSlider('Electrode A', d.calibration4A, (v) => d.calibration4A = v, color: Colors.red),
+              _buildSlider('Electrode B', d.calibration4B, (v) => d.calibration4B = v, color: Colors.blue),
+              _buildSlider('Electrode C', d.calibration4C, (v) => d.calibration4C = v, color: Colors.amber),
+              _buildSlider('Electrode D', d.calibration4D, (v) => d.calibration4D = v, color: Colors.green),
             ] else ...[
-              _buildSlider('Center', d.calibration3Center, (v) => d.calibration3Center = v),
-              _buildSlider('Up', d.calibration3Up, (v) => d.calibration3Up = v),
-              _buildSlider('Left', d.calibration3Left, (v) => d.calibration3Left = v),
+              _buildSlider('Center', d.calibration3Center, (v) => d.calibration3Center = v, color: Colors.red),
+              _buildSlider('Up', d.calibration3Up, (v) => d.calibration3Up = v, color: Colors.blue),
+              _buildSlider('Left', d.calibration3Left, (v) => d.calibration3Left = v, color: Colors.amber),
             ],
             const SizedBox(height: 8),
             Row(
@@ -140,23 +140,39 @@ class _CalibrationCardState extends State<_CalibrationCard> {
     );
   }
 
-  Widget _buildSlider(String label, double value, void Function(double) onSet) {
+  Widget _buildSlider(String label, double value, void Function(double) onSet,
+      {Color? color}) {
+    final slider = Slider(
+      value: value.clamp(-2.0, 2.0),
+      min: -2,
+      max: 2,
+      onChanged: (v) => setState(() => onSet(v)),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label),
+            Text(
+              label,
+              style: color != null
+                  ? TextStyle(color: color, fontWeight: FontWeight.w500)
+                  : null,
+            ),
             Text(value.toStringAsFixed(2)),
           ],
         ),
-        Slider(
-          value: value.clamp(-2.0, 2.0),
-          min: -2,
-          max: 2,
-          onChanged: (v) => setState(() => onSet(v)),
-        ),
+        color != null
+            ? SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  activeTrackColor: color,
+                  thumbColor: color,
+                  overlayColor: color.withAlpha(30),
+                ),
+                child: slider,
+              )
+            : slider,
       ],
     );
   }

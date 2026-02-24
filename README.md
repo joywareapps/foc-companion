@@ -21,11 +21,11 @@ FOC-Stim is an open-hardware device designed for high-performance electromagneti
 |:---:|:---:|:---:|:---:|
 | ![01](screenshots/flutter_01.png) | ![02](screenshots/flutter_02.png) | ![03](screenshots/flutter_03.png) | ![04](screenshots/flutter_04.png) |
 
-| 05 - Connected | 06 - Calibration | 07 - Playing Pattern | 08 - Pulse Modulation (Freq) |
+| 05 - Connected | 06 - Calibration | 07 - Playing Pattern | 08 - Pulse Modulation (Off) |
 |:---:|:---:|:---:|:---:|
 | ![05](screenshots/flutter_05.png) | ![06](screenshots/flutter_06.png) | ![07](screenshots/flutter_07.png) | ![08](screenshots/flutter_08.png) |
 
-| 09 - Pulse Modulation (Width) | 10 - Pulse Modulation (Both) | 11 - Pulse Modulation |
+| 09 - Pulse Modulation (Freq) | 10 - Pulse Modulation (Width) | 11 - Pulse Modulation (Both) |
 |:---:|:---:|:---:|
 | ![09](screenshots/flutter_09.png) | ![10](screenshots/flutter_10.png) | ![11](screenshots/flutter_11.png) |
 

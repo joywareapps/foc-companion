@@ -326,41 +326,35 @@ class _PlayBar extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                                                                        Text(
-                                                                          'App: ${(vol * 100).round()}%',
-                                                                          style: Theme.of(context).textTheme.labelMedium,
-                                                                        ),
-                                                                        Row(
-                                                                          mainAxisSize: MainAxisSize.min,
-                                                                          children: [
-                                                                            IconButton(
-                                                                              visualDensity: VisualDensity.compact,
-                                                                              padding: EdgeInsets.zero,
-                                                                              constraints: const BoxConstraints(),
-                                                                              icon: Icon(
-                                                                                device.isHardwareVolumeLocked
-                                                                                    ? Icons.lock
-                                                                                    : Icons.lock_open,
-                                                                                size: 18,
-                                                                                color: device.isHardwareVolumeLocked
-                                                                                    ? Colors.orange
-                                                                                    : colorScheme.onSurfaceVariant,
-                                                                              ),
-                                                                              tooltip: device.isHardwareVolumeLocked
-                                                                                  ? 'Unlock Hardware Volume'
-                                                                                  : 'Lock Hardware Volume',
-                                                                              onPressed: device.toggleHardwareLock,
-                                                                            ),
-                                                                            const SizedBox(width: 4),
-                                                                            Text(
-                                                                              'Box: ${(boxVol * 100).round()}%',
-                                                                              style: Theme.of(context).textTheme.labelMedium,
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                  
-                                                  Padding(
-                            
+                            Text(
+                              'App: ${(vol * 100).round()}%',
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Tooltip(
+                                  message: device.isHardwareVolumeLocked
+                                      ? 'Hardware volume locked'
+                                      : 'Hardware volume unlocked',
+                                  child: Icon(
+                                    device.isHardwareVolumeLocked
+                                        ? Icons.lock
+                                        : Icons.lock_open,
+                                    size: 18,
+                                    color: device.isHardwareVolumeLocked
+                                        ? Colors.orange
+                                        : colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Box: ${(boxVol * 100).round()}%',
+                                  style: Theme.of(context).textTheme.labelMedium,
+                                ),
+                              ],
+                            ),
+                            Padding(
                               padding: const EdgeInsets.only(right: 8.0),
                               child: Text(
                                 'Total: ${(totalVol * 100).round()}%',

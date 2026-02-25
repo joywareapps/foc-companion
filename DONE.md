@@ -80,6 +80,14 @@
   - Automated APK versioning using GitHub Run Number.
   - Restricted CI builds to version tags (`v*`).
 
+## 🏁 Phase 10 (2026-02-25): Hardware Button Integration & Volume Lock UI
+
+- [x] **NotificationDeviceState proto:** Added `NotificationDeviceState { bool volume_locked = 1; }` message (field 11) to the FOC-Stim protocol. Firmware now sends this instead of the old `LOCK:` debug string when the volume lock state changes.
+- [x] **Volume lock indicator:** Lock/unlock icon displayed next to "Box" volume in the play bar. Orange 🔒 when locked, grey 🔓 when unlocked. Display-only — lock state is controlled exclusively by the physical knob long-press.
+- [x] **Hardware button → play/stop:** Short press of the physical knob button (< 1.8 s) now toggles play/stop in the app. Long press (≥ 1.8 s, which triggers the volume lock on the device) is ignored by the app so play state is not accidentally toggled during lock.
+- [x] **Potmeter notification fix (firmware):** When volume is locked the firmware now reports the locked value in `NotificationPotentiometer` and suppresses knob-movement-triggered notifications, preventing the app from showing a changing volume indicator while locked.
+- [x] **Proto sync:** Updated Dart proto bindings regenerated from firmware sources.
+
 ## 🏁 Phase 7: Automation & Distribution
 - [x] **CI/CD:** GitHub Actions workflow for automated APK building and distribution.
 - [x] **Firebase Distribution:** Integrated Firebase App Distribution for beta testing.

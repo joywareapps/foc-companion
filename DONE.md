@@ -67,6 +67,19 @@
 - [x] **TCP_NODELAY:** Nagle's algorithm disabled on the socket after connect, eliminating the 40 ms buffering delay for small packets.
 - [x] **Net bandwidth:** Steady-state requests reduced from ~330 req/s (all axes, 60 Hz) to ~70 req/s (position-only delta + 1 s full sync at 30 Hz).
 
+## 🏁 Phase 9 (2026-02-24): Diagnostic Logging & Volume UI
+- [x] **Hardware Volume Monitoring:** App now listens to `NotificationPotentiometer` and displays "Box Volume" percentage.
+- [x] **VU-meter Play Bar:** Added a background fill to the persistent play bar that reflects "Total Volume" (App Volume × Box Volume).
+- [x] **Diagnostic Logging:**
+  - Automatically captures up to 1000 notifications upon detection of critical hardware errors (e.g. "Current limit exceeded").
+  - Implemented 5 s inactivity watchdog and timeout handlers to finalize log capture.
+  - Added "Hardware Error" diagnostic dialog showing capture progress and message count.
+- [x] **Log Sharing:** Integrated `share_plus` and `path_provider` to export full diagnostic logs as `.txt` file attachments with a concise text summary.
+- [x] **Privacy & Versioning:** 
+  - Disabled automatic Firebase Analytics and Ad ID collection in `AndroidManifest.xml`.
+  - Automated APK versioning using GitHub Run Number.
+  - Restricted CI builds to version tags (`v*`).
+
 ## 🏁 Phase 7: Automation & Distribution
 - [x] **CI/CD:** GitHub Actions workflow for automated APK building and distribution.
 - [x] **Firebase Distribution:** Integrated Firebase App Distribution for beta testing.

@@ -5,6 +5,10 @@ import 'package:foc_companion/services/focstim_api_service.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/command_loop.dart';
 import 'package:foc_companion/core/patterns.dart';
+import 'package:fixnum/fixnum.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io' as io;
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
 
 // If no notification arrives within this window the device is considered
@@ -24,11 +28,22 @@ class DeviceProvider with ChangeNotifier {
   double? batterySoc;
   bool isLoopRunning = false;
 
+  /// Captured debug notifications/logs
+  final List<String> capturedLogs = [];
+  bool isRecordingLogs = false;
+  bool isShowingErrorDialog = false;
+  String? lastErrorMessage;
+  static const int _kMaxLogRows = 1000;
+  Timer? _logInactivityTimer;
+
   /// True while tick round-trips are taking longer than 16 ms (can't keep 60 Hz).
   bool isSlowConnection = false;
 
   /// Master volume (0–1). Not persisted — resets to 0.1 on app restart/connect.
   double volume = 0.1;
+
+  /// Hardware potentiometer volume (0–1). Updated from device notifications.
+  double boxVolume = 0.0;
 
   Timer? _notificationWatchdog;
 
@@ -71,6 +86,11 @@ class DeviceProvider with ChangeNotifier {
   }
 
   void _handleLoopTimeout(String error) {
+    if (isRecordingLogs) {
+      capturedLogs.add("${DateTime.now().toIso8601String()} [TIMEOUT_ERROR] $error");
+      isRecordingLogs = false;
+      _logInactivityTimer?.cancel();
+    }
     isLoopRunning = false;
     isSlowConnection = false;
     connectionStatus = "Timeout: $error";
@@ -175,6 +195,39 @@ class DeviceProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void clearLogs() {
+    _logInactivityTimer?.cancel();
+    capturedLogs.clear();
+    lastErrorMessage = null;
+    isRecordingLogs = false;
+    isShowingErrorDialog = false;
+    notifyListeners();
+  }
+
+  Future<void> shareLogs() async {
+    if (capturedLogs.isEmpty) return;
+
+    final allText = capturedLogs.join('\n');
+    final topText = capturedLogs.take(2).join('\n');
+    final summary = "FOC Companion Diagnostic Summary:\n$topText\n... (Full log attached)";
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final file = io.File('${tempDir.path}/diagnostic_log.txt');
+      await file.writeAsString(allText);
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'text/plain')],
+        text: summary,
+        subject: 'FOC Companion Diagnostic Log',
+      );
+    } catch (e) {
+      print("Error sharing logs: $e");
+      // Fallback to plain text share if file fails
+      await Share.share(allText, subject: 'FOC Companion Diagnostic Log');
+    }
+  }
+
   // ── Connection ───────────────────────────────────────────────────────────
 
   Future<void> connect() async {
@@ -214,6 +267,8 @@ class DeviceProvider with ChangeNotifier {
   Future<void> disconnect() async {
     _notificationWatchdog?.cancel();
     _notificationWatchdog = null;
+    _logInactivityTimer?.cancel();
+    isRecordingLogs = false;
     await _threePhaseLoop?.stop();
     await _fourPhaseLoop?.stop();
     api.disconnect();
@@ -245,6 +300,25 @@ class DeviceProvider with ChangeNotifier {
     print("Received notification: ${n.whichNotification()}");
     _resetNotificationWatchdog();
 
+    // ── Log Recording Logic ────────────────────────────────────────────────
+    if (isRecordingLogs) {
+      // Reset inactivity timer
+      _logInactivityTimer?.cancel();
+      _logInactivityTimer = Timer(const Duration(seconds: 5), () {
+        if (isRecordingLogs) {
+          isRecordingLogs = false;
+          capturedLogs.add("${DateTime.now().toIso8601String()} [INFO] Recording stopped due to inactivity.");
+          notifyListeners();
+        }
+      });
+
+      if (capturedLogs.length < _kMaxLogRows) {
+        capturedLogs.add("${DateTime.now().toIso8601String()} [${n.whichNotification()}] $n");
+      } else {
+        isRecordingLogs = false; // reached limit
+      }
+    }
+
     if (n.hasNotificationSystemStats()) {
       final stats = n.notificationSystemStats;
       if (stats.hasFocstimv3()) {
@@ -256,6 +330,23 @@ class DeviceProvider with ChangeNotifier {
     if (n.hasNotificationBattery()) {
       batteryVoltage = "${n.notificationBattery.batteryVoltage.toStringAsFixed(2)}V";
       batterySoc = n.notificationBattery.batterySoc;
+    }
+    if (n.hasNotificationPotentiometer()) {
+      boxVolume = n.notificationPotentiometer.value;
+    }
+    if (n.hasNotificationDebugString()) {
+      final msg = n.notificationDebugString.message;
+      print("Device Debug: $msg");
+
+      // Detect critical error to start recording/show dialog
+      if (msg.contains("Current limit exceeded") || msg.contains("Producer too slow")) {
+        if (!isRecordingLogs) {
+          lastErrorMessage = msg;
+          isRecordingLogs = true;
+          capturedLogs.clear();
+          capturedLogs.add("${DateTime.now().toIso8601String()} [INITIAL_ERROR] $msg");
+        }
+      }
     }
     notifyListeners();
   }

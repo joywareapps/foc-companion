@@ -27,6 +27,79 @@ class _HomeScreenState extends State<HomeScreen> {
     SettingsScreen(),
   ];
 
+  void _showDiagnosticDialog(BuildContext context, DeviceProvider device) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Consumer<DeviceProvider>(
+          builder: (context, device, _) {
+            final error = device.lastErrorMessage;
+            final isCapturing = device.isRecordingLogs;
+
+            return AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text("Hardware Error"),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(error ?? "Unknown Error",
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  if (isCapturing) ...[
+                    const Row(
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text("Capturing diagnostic data...",
+                            style: TextStyle(fontSize: 13)),
+                      ],
+                    ),
+                  ] else
+                    const Text(
+                      "Diagnostic data captured. You can share this log with the developers.",
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Messages captured: ${device.capturedLogs.length} / 1000",
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isCapturing
+                      ? null
+                      : () {
+                          device.clearLogs();
+                          Navigator.of(context).pop();
+                        },
+                  child: const Text("Dismiss"),
+                ),
+                FilledButton.icon(
+                  onPressed: isCapturing ? null : () => device.shareLogs(),
+                  icon: const Icon(Icons.share, size: 18),
+                  label: const Text("Share Log"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DeviceProvider>(
@@ -38,6 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!isConnected && _showCalibration) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _showCalibration = false);
+          });
+        }
+
+        // Show diagnostic dialog if error detected
+        if (device.lastErrorMessage != null && !device.isShowingErrorDialog) {
+          device.isShowingErrorDialog = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showDiagnosticDialog(context, device);
           });
         }
 
@@ -215,41 +296,78 @@ class _PlayBar extends StatelessWidget {
     if (device.isLoopRunning) {
       // ── Running: volume slider (0–100%) + stop button ──
       final vol = device.volume;
-      final volPct = (vol * 100).round();
+      final boxVol = device.boxVolume;
+      final totalVol = vol * boxVol;
 
       return Container(
         color: colorScheme.surfaceContainerHighest,
-        padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
-        child: Row(
+        child: Stack(
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+            // VU-meter background fill
+            Positioned.fill(
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: totalVol.clamp(0.0, 1.0),
+                child: Container(
+                  color: colorScheme.primary.withAlpha(40),
+                ),
+              ),
+            ),
+            // Foreground content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
+              child: Row(
                 children: [
-                  Text(
-                    'Volume $volPct%',
-                    style: Theme.of(context).textTheme.labelMedium,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'App: ${(vol * 100).round()}%',
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            Text(
+                              'Box: ${(boxVol * 100).round()}%',
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Text(
+                                'Total: ${(totalVol * 100).round()}%',
+                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.primary,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Slider(
+                          value: vol,
+                          min: 0.0,
+                          max: 1.0,
+                          onChanged: (v) => device.setVolume(v),
+                        ),
+                      ],
+                    ),
                   ),
-                  Slider(
-                    value: vol,
-                    min: 0.0,
-                    max: 1.0,
-                    onChanged: (v) => device.setVolume(v),
+                  IconButton.filled(
+                    icon: const Icon(Icons.stop),
+                    tooltip: 'Stop',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: device.toggleLoop,
                   ),
+                  const SizedBox(width: 4),
                 ],
               ),
             ),
-            IconButton.filled(
-              icon: const Icon(Icons.stop),
-              tooltip: 'Stop',
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: device.toggleLoop,
-            ),
-            const SizedBox(width: 4),
           ],
         ),
       );

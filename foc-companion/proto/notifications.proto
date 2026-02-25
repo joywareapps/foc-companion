@@ -9,6 +9,10 @@ message NotificationPotentiometer {
     float value = 1;
 }
 
+message NotificationButtonPress {
+    bool pressed = 1;
+}
+
 message NotificationCurrents {
     float rms_a = 1;                // body current in amps
     float rms_b = 2;

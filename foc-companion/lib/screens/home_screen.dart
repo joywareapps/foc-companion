@@ -326,15 +326,31 @@ class _PlayBar extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'App: ${(vol * 100).round()}%',
-                              style: Theme.of(context).textTheme.labelMedium,
-                            ),
-                            Text(
-                              'Box: ${(boxVol * 100).round()}%',
-                              style: Theme.of(context).textTheme.labelMedium,
-                            ),
-                            Padding(
+                                                  Text(
+                                                    'App: ${(vol * 100).round()}%',
+                                                    style: Theme.of(context).textTheme.labelMedium,
+                                                  ),
+                                                  Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        device.isHardwareVolumeLocked
+                                                            ? Icons.lock
+                                                            : Icons.lock_open,
+                                                        size: 14,
+                                                        color: device.isHardwareVolumeLocked
+                                                            ? Colors.orange
+                                                            : colorScheme.onSurfaceVariant,
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        'Box: ${(boxVol * 100).round()}%',
+                                                        style: Theme.of(context).textTheme.labelMedium,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Padding(
+                            
                               padding: const EdgeInsets.only(right: 8.0),
                               child: Text(
                                 'Total: ${(totalVol * 100).round()}%',

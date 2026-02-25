@@ -45,6 +45,12 @@ class DeviceProvider with ChangeNotifier {
   /// Hardware potentiometer volume (0–1). Updated from device notifications.
   double boxVolume = 0.0;
 
+  /// True if the physical knob button is currently pressed.
+  bool isPotentiometerPressed = false;
+
+  /// True if the hardware volume is locked (long-press on knob).
+  bool isHardwareVolumeLocked = false;
+
   Timer? _notificationWatchdog;
 
   DeviceProvider(this.settings) {
@@ -334,9 +340,18 @@ class DeviceProvider with ChangeNotifier {
     if (n.hasNotificationPotentiometer()) {
       boxVolume = n.notificationPotentiometer.value;
     }
+    if (n.hasNotificationButtonPress()) {
+      isPotentiometerPressed = n.notificationButtonPress.pressed;
+    }
     if (n.hasNotificationDebugString()) {
       final msg = n.notificationDebugString.message;
       print("Device Debug: $msg");
+
+      if (msg == "LOCK:1") {
+        isHardwareVolumeLocked = true;
+      } else if (msg == "LOCK:0") {
+        isHardwareVolumeLocked = false;
+      }
 
       // Detect critical error to start recording/show dialog
       if (msg.contains("Current limit exceeded") || msg.contains("Producer too slow")) {

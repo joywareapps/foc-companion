@@ -17,6 +17,7 @@ message Notification{
         NotificationBattery notification_battery = 7;
         NotificationLSM6DSOX notification_lsm6dsox = 8;
         NotificationPressure notification_pressure = 9;
+        NotificationButtonPress notification_button_press = 10;
 
         NotificationDebugString notification_debug_string = 1000;
         NotificationDebugAS5311 notification_debug_as5311 = 1001;

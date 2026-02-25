@@ -164,6 +164,61 @@ class NotificationButtonPress extends $pb.GeneratedMessage {
   void clearPressed() => $_clearField(1);
 }
 
+class NotificationDeviceState extends $pb.GeneratedMessage {
+  factory NotificationDeviceState({
+    $core.bool? volumeLocked,
+  }) {
+    final result = create();
+    if (volumeLocked != null) result.volumeLocked = volumeLocked;
+    return result;
+  }
+
+  NotificationDeviceState._();
+
+  factory NotificationDeviceState.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory NotificationDeviceState.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'NotificationDeviceState',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aOB(1, _omitFieldNames ? '' : 'volumeLocked')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationDeviceState clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationDeviceState copyWith(
+          void Function(NotificationDeviceState) updates) =>
+      super.copyWith((message) => updates(message as NotificationDeviceState))
+          as NotificationDeviceState;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static NotificationDeviceState create() => NotificationDeviceState._();
+  @$core.override
+  NotificationDeviceState createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static NotificationDeviceState getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<NotificationDeviceState>(create);
+  static NotificationDeviceState? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.bool get volumeLocked => $_getBF(0);
+  @$pb.TagNumber(1)
+  set volumeLocked($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasVolumeLocked() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearVolumeLocked() => $_clearField(1);
+}
+
 class NotificationCurrents extends $pb.GeneratedMessage {
   factory NotificationCurrents({
     $core.double? rmsA,

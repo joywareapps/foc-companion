@@ -50,6 +50,20 @@ final $typed_data.Uint8List notificationButtonPressDescriptor =
     $convert.base64Decode(
         'ChdOb3RpZmljYXRpb25CdXR0b25QcmVzcxIYCgdwcmVzc2VkGAEgASgIUgdwcmVzc2Vk');
 
+@$core.Deprecated('Use notificationDeviceStateDescriptor instead')
+const NotificationDeviceState$json = {
+  '1': 'NotificationDeviceState',
+  '2': [
+    {'1': 'volume_locked', '3': 1, '4': 1, '5': 8, '10': 'volumeLocked'},
+  ],
+};
+
+/// Descriptor for `NotificationDeviceState`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List notificationDeviceStateDescriptor =
+    $convert.base64Decode(
+        'ChdOb3RpZmljYXRpb25EZXZpY2VTdGF0ZRIjCg12b2x1bWVfbG9ja2VkGAEgASgIUgx2b2x1bW'
+        'VMb2NrZWQ=');
+
 @$core.Deprecated('Use notificationCurrentsDescriptor instead')
 const NotificationCurrents$json = {
   '1': 'NotificationCurrents',

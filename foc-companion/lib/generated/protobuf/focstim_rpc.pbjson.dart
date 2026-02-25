@@ -110,6 +110,15 @@ const Notification$json = {
       '10': 'notificationButtonPress'
     },
     {
+      '1': 'notification_device_state',
+      '3': 11,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.NotificationDeviceState',
+      '9': 0,
+      '10': 'notificationDeviceState'
+    },
+    {
       '1': 'notification_debug_string',
       '3': 1000,
       '4': 1,
@@ -162,13 +171,15 @@ final $typed_data.Uint8List notificationDescriptor = $convert.base64Decode(
     'WAoVbm90aWZpY2F0aW9uX3ByZXNzdXJlGAkgASgLMiEuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW'
     '9uUHJlc3N1cmVIAFIUbm90aWZpY2F0aW9uUHJlc3N1cmUSYgoZbm90aWZpY2F0aW9uX2J1dHRv'
     'bl9wcmVzcxgKIAEoCzIkLmZvY3N0aW1fcnBjLk5vdGlmaWNhdGlvbkJ1dHRvblByZXNzSABSF2'
-    '5vdGlmaWNhdGlvbkJ1dHRvblByZXNzEmMKGW5vdGlmaWNhdGlvbl9kZWJ1Z19zdHJpbmcY6Acg'
-    'ASgLMiQuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW9uRGVidWdTdHJpbmdIAFIXbm90aWZpY2F0aW'
-    '9uRGVidWdTdHJpbmcSYwoZbm90aWZpY2F0aW9uX2RlYnVnX2FzNTMxMRjpByABKAsyJC5mb2Nz'
-    'dGltX3JwYy5Ob3RpZmljYXRpb25EZWJ1Z0FTNTMxMUgAUhdub3RpZmljYXRpb25EZWJ1Z0FzNT'
-    'MxMRJjChlub3RpZmljYXRpb25fZGVidWdfZWRnaW5nGOoHIAEoCzIkLmZvY3N0aW1fcnBjLk5v'
-    'dGlmaWNhdGlvbkRlYnVnRWRnaW5nSABSF25vdGlmaWNhdGlvbkRlYnVnRWRnaW5nEh0KCXRpbW'
-    'VzdGFtcBjnByABKARSCXRpbWVzdGFtcEIOCgxub3RpZmljYXRpb24=');
+    '5vdGlmaWNhdGlvbkJ1dHRvblByZXNzEmIKGW5vdGlmaWNhdGlvbl9kZXZpY2Vfc3RhdGUYCyAB'
+    'KAsyJC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25EZXZpY2VTdGF0ZUgAUhdub3RpZmljYXRpb2'
+    '5EZXZpY2VTdGF0ZRJjChlub3RpZmljYXRpb25fZGVidWdfc3RyaW5nGOgHIAEoCzIkLmZvY3N0'
+    'aW1fcnBjLk5vdGlmaWNhdGlvbkRlYnVnU3RyaW5nSABSF25vdGlmaWNhdGlvbkRlYnVnU3RyaW'
+    '5nEmMKGW5vdGlmaWNhdGlvbl9kZWJ1Z19hczUzMTEY6QcgASgLMiQuZm9jc3RpbV9ycGMuTm90'
+    'aWZpY2F0aW9uRGVidWdBUzUzMTFIAFIXbm90aWZpY2F0aW9uRGVidWdBczUzMTESYwoZbm90aW'
+    'ZpY2F0aW9uX2RlYnVnX2VkZ2luZxjqByABKAsyJC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25E'
+    'ZWJ1Z0VkZ2luZ0gAUhdub3RpZmljYXRpb25EZWJ1Z0VkZ2luZxIdCgl0aW1lc3RhbXAY5wcgAS'
+    'gEUgl0aW1lc3RhbXBCDgoMbm90aWZpY2F0aW9u');
 
 @$core.Deprecated('Use requestDescriptor instead')
 const Request$json = {

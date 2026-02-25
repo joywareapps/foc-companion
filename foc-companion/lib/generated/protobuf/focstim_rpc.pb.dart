@@ -32,6 +32,7 @@ enum Notification_Notification {
   notificationLsm6dsox,
   notificationPressure,
   notificationButtonPress,
+  notificationDeviceState,
   notificationDebugString,
   notificationDebugAs5311,
   notificationDebugEdging,
@@ -50,6 +51,7 @@ class Notification extends $pb.GeneratedMessage {
     $0.NotificationLSM6DSOX? notificationLsm6dsox,
     $0.NotificationPressure? notificationPressure,
     $0.NotificationButtonPress? notificationButtonPress,
+    $0.NotificationDeviceState? notificationDeviceState,
     $fixnum.Int64? timestamp,
     $0.NotificationDebugString? notificationDebugString,
     $0.NotificationDebugAS5311? notificationDebugAs5311,
@@ -75,6 +77,8 @@ class Notification extends $pb.GeneratedMessage {
       result.notificationPressure = notificationPressure;
     if (notificationButtonPress != null)
       result.notificationButtonPress = notificationButtonPress;
+    if (notificationDeviceState != null)
+      result.notificationDeviceState = notificationDeviceState;
     if (timestamp != null) result.timestamp = timestamp;
     if (notificationDebugString != null)
       result.notificationDebugString = notificationDebugString;
@@ -106,6 +110,7 @@ class Notification extends $pb.GeneratedMessage {
     8: Notification_Notification.notificationLsm6dsox,
     9: Notification_Notification.notificationPressure,
     10: Notification_Notification.notificationButtonPress,
+    11: Notification_Notification.notificationDeviceState,
     1000: Notification_Notification.notificationDebugString,
     1001: Notification_Notification.notificationDebugAs5311,
     1002: Notification_Notification.notificationDebugEdging,
@@ -115,7 +120,7 @@ class Notification extends $pb.GeneratedMessage {
       _omitMessageNames ? '' : 'Notification',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..oo(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 1001, 1002])
+    ..oo(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1000, 1001, 1002])
     ..aOM<$0.NotificationBoot>(1, _omitFieldNames ? '' : 'notificationBoot',
         subBuilder: $0.NotificationBoot.create)
     ..aOM<$0.NotificationPotentiometer>(
@@ -145,6 +150,9 @@ class Notification extends $pb.GeneratedMessage {
     ..aOM<$0.NotificationButtonPress>(
         10, _omitFieldNames ? '' : 'notificationButtonPress',
         subBuilder: $0.NotificationButtonPress.create)
+    ..aOM<$0.NotificationDeviceState>(
+        11, _omitFieldNames ? '' : 'notificationDeviceState',
+        subBuilder: $0.NotificationDeviceState.create)
     ..a<$fixnum.Int64>(
         999, _omitFieldNames ? '' : 'timestamp', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -188,6 +196,7 @@ class Notification extends $pb.GeneratedMessage {
   @$pb.TagNumber(8)
   @$pb.TagNumber(9)
   @$pb.TagNumber(10)
+  @$pb.TagNumber(11)
   @$pb.TagNumber(1000)
   @$pb.TagNumber(1001)
   @$pb.TagNumber(1002)
@@ -203,6 +212,7 @@ class Notification extends $pb.GeneratedMessage {
   @$pb.TagNumber(8)
   @$pb.TagNumber(9)
   @$pb.TagNumber(10)
+  @$pb.TagNumber(11)
   @$pb.TagNumber(1000)
   @$pb.TagNumber(1001)
   @$pb.TagNumber(1002)
@@ -327,50 +337,62 @@ class Notification extends $pb.GeneratedMessage {
   @$pb.TagNumber(10)
   $0.NotificationButtonPress ensureNotificationButtonPress() => $_ensure(9);
 
+  @$pb.TagNumber(11)
+  $0.NotificationDeviceState get notificationDeviceState => $_getN(10);
+  @$pb.TagNumber(11)
+  set notificationDeviceState($0.NotificationDeviceState value) =>
+      $_setField(11, value);
+  @$pb.TagNumber(11)
+  $core.bool hasNotificationDeviceState() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearNotificationDeviceState() => $_clearField(11);
+  @$pb.TagNumber(11)
+  $0.NotificationDeviceState ensureNotificationDeviceState() => $_ensure(10);
+
   @$pb.TagNumber(999)
-  $fixnum.Int64 get timestamp => $_getI64(10);
+  $fixnum.Int64 get timestamp => $_getI64(11);
   @$pb.TagNumber(999)
-  set timestamp($fixnum.Int64 value) => $_setInt64(10, value);
+  set timestamp($fixnum.Int64 value) => $_setInt64(11, value);
   @$pb.TagNumber(999)
-  $core.bool hasTimestamp() => $_has(10);
+  $core.bool hasTimestamp() => $_has(11);
   @$pb.TagNumber(999)
   void clearTimestamp() => $_clearField(999);
 
   @$pb.TagNumber(1000)
-  $0.NotificationDebugString get notificationDebugString => $_getN(11);
+  $0.NotificationDebugString get notificationDebugString => $_getN(12);
   @$pb.TagNumber(1000)
   set notificationDebugString($0.NotificationDebugString value) =>
       $_setField(1000, value);
   @$pb.TagNumber(1000)
-  $core.bool hasNotificationDebugString() => $_has(11);
+  $core.bool hasNotificationDebugString() => $_has(12);
   @$pb.TagNumber(1000)
   void clearNotificationDebugString() => $_clearField(1000);
   @$pb.TagNumber(1000)
-  $0.NotificationDebugString ensureNotificationDebugString() => $_ensure(11);
+  $0.NotificationDebugString ensureNotificationDebugString() => $_ensure(12);
 
   @$pb.TagNumber(1001)
-  $0.NotificationDebugAS5311 get notificationDebugAs5311 => $_getN(12);
+  $0.NotificationDebugAS5311 get notificationDebugAs5311 => $_getN(13);
   @$pb.TagNumber(1001)
   set notificationDebugAs5311($0.NotificationDebugAS5311 value) =>
       $_setField(1001, value);
   @$pb.TagNumber(1001)
-  $core.bool hasNotificationDebugAs5311() => $_has(12);
+  $core.bool hasNotificationDebugAs5311() => $_has(13);
   @$pb.TagNumber(1001)
   void clearNotificationDebugAs5311() => $_clearField(1001);
   @$pb.TagNumber(1001)
-  $0.NotificationDebugAS5311 ensureNotificationDebugAs5311() => $_ensure(12);
+  $0.NotificationDebugAS5311 ensureNotificationDebugAs5311() => $_ensure(13);
 
   @$pb.TagNumber(1002)
-  $0.NotificationDebugEdging get notificationDebugEdging => $_getN(13);
+  $0.NotificationDebugEdging get notificationDebugEdging => $_getN(14);
   @$pb.TagNumber(1002)
   set notificationDebugEdging($0.NotificationDebugEdging value) =>
       $_setField(1002, value);
   @$pb.TagNumber(1002)
-  $core.bool hasNotificationDebugEdging() => $_has(13);
+  $core.bool hasNotificationDebugEdging() => $_has(14);
   @$pb.TagNumber(1002)
   void clearNotificationDebugEdging() => $_clearField(1002);
   @$pb.TagNumber(1002)
-  $0.NotificationDebugEdging ensureNotificationDebugEdging() => $_ensure(13);
+  $0.NotificationDebugEdging ensureNotificationDebugEdging() => $_ensure(14);
 }
 
 enum Request_Params {

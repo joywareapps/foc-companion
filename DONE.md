@@ -80,6 +80,10 @@
   - Automated APK versioning using GitHub Run Number.
   - Restricted CI builds to version tags (`v*`).
 
+## 🏁 Phase 11 (2026-02-25): Keep Screen On
+
+- [x] **Keep screen on toggle:** Added a "Keep screen on" switch at the top of the Settings tab. When enabled, prevents the phone from sleeping while the app is open. Setting persists across app restarts and takes effect immediately on toggle.
+
 ## 🏁 Phase 10 (2026-02-25): Hardware Button Integration & Volume Lock UI
 
 - [x] **NotificationDeviceState proto:** Added `NotificationDeviceState { bool volume_locked = 1; }` message (field 11) to the FOC-Stim protocol. Firmware now sends this instead of the old `LOCK:` debug string when the volume lock state changes.

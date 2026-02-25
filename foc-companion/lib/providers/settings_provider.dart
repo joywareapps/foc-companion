@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foc_companion/models/settings_models.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class SettingsProvider with ChangeNotifier {
   DeviceSettings device = DeviceSettings();
@@ -10,6 +11,7 @@ class SettingsProvider with ChangeNotifier {
   MediaSyncSettings mediaSync = MediaSyncSettings();
   CockpitSettings cockpit = CockpitSettings();
   CockpitSettings cockpit4Phase = CockpitSettings();
+  bool keepScreenOn = false;
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -32,6 +34,9 @@ class SettingsProvider with ChangeNotifier {
     final cockpit4Json = prefs.getString('cockpit4_settings');
     if (cockpit4Json != null) cockpit4Phase = CockpitSettings.fromJson(jsonDecode(cockpit4Json));
 
+    keepScreenOn = prefs.getBool('keep_screen_on') ?? false;
+    if (keepScreenOn) WakelockPlus.enable(); else WakelockPlus.disable();
+
     notifyListeners();
   }
 
@@ -43,6 +48,15 @@ class SettingsProvider with ChangeNotifier {
     await prefs.setString('media_settings', jsonEncode(mediaSync.toJson()));
     await prefs.setString('cockpit_settings', jsonEncode(cockpit.toJson()));
     await prefs.setString('cockpit4_settings', jsonEncode(cockpit4Phase.toJson()));
+    await prefs.setBool('keep_screen_on', keepScreenOn);
+    notifyListeners();
+  }
+
+  Future<void> setKeepScreenOn(bool value) async {
+    keepScreenOn = value;
+    if (value) WakelockPlus.enable(); else WakelockPlus.disable();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('keep_screen_on', value);
     notifyListeners();
   }
 

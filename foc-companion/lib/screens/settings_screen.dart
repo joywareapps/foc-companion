@@ -34,6 +34,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
+        // ── Display ─────────────────────────────────
+        SwitchListTile(
+          title: const Text("Keep screen on"),
+          subtitle: const Text("Prevent the screen from sleeping while the app is open"),
+          value: settings.keepScreenOn,
+          onChanged: (v) => settings.setKeepScreenOn(v),
+          contentPadding: EdgeInsets.zero,
+        ),
+        const SizedBox(height: 16),
+
         // ── Connection ──────────────────────────────
         const Text("Connection",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

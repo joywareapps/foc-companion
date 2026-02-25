@@ -37,6 +37,19 @@ final $typed_data.Uint8List notificationPotentiometerDescriptor =
     $convert.base64Decode(
         'ChlOb3RpZmljYXRpb25Qb3RlbnRpb21ldGVyEhQKBXZhbHVlGAEgASgCUgV2YWx1ZQ==');
 
+@$core.Deprecated('Use notificationButtonPressDescriptor instead')
+const NotificationButtonPress$json = {
+  '1': 'NotificationButtonPress',
+  '2': [
+    {'1': 'pressed', '3': 1, '4': 1, '5': 8, '10': 'pressed'},
+  ],
+};
+
+/// Descriptor for `NotificationButtonPress`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List notificationButtonPressDescriptor =
+    $convert.base64Decode(
+        'ChdOb3RpZmljYXRpb25CdXR0b25QcmVzcxIYCgdwcmVzc2VkGAEgASgIUgdwcmVzc2Vk');
+
 @$core.Deprecated('Use notificationCurrentsDescriptor instead')
 const NotificationCurrents$json = {
   '1': 'NotificationCurrents',

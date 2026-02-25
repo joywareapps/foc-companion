@@ -109,6 +109,61 @@ class NotificationPotentiometer extends $pb.GeneratedMessage {
   void clearValue() => $_clearField(1);
 }
 
+class NotificationButtonPress extends $pb.GeneratedMessage {
+  factory NotificationButtonPress({
+    $core.bool? pressed,
+  }) {
+    final result = create();
+    if (pressed != null) result.pressed = pressed;
+    return result;
+  }
+
+  NotificationButtonPress._();
+
+  factory NotificationButtonPress.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory NotificationButtonPress.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'NotificationButtonPress',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aOB(1, _omitFieldNames ? '' : 'pressed')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationButtonPress clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationButtonPress copyWith(
+          void Function(NotificationButtonPress) updates) =>
+      super.copyWith((message) => updates(message as NotificationButtonPress))
+          as NotificationButtonPress;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static NotificationButtonPress create() => NotificationButtonPress._();
+  @$core.override
+  NotificationButtonPress createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static NotificationButtonPress getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<NotificationButtonPress>(create);
+  static NotificationButtonPress? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.bool get pressed => $_getBF(0);
+  @$pb.TagNumber(1)
+  set pressed($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasPressed() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPressed() => $_clearField(1);
+}
+
 class NotificationCurrents extends $pb.GeneratedMessage {
   factory NotificationCurrents({
     $core.double? rmsA,

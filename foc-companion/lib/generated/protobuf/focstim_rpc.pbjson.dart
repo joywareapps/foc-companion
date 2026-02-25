@@ -101,6 +101,15 @@ const Notification$json = {
       '10': 'notificationPressure'
     },
     {
+      '1': 'notification_button_press',
+      '3': 10,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.NotificationButtonPress',
+      '9': 0,
+      '10': 'notificationButtonPress'
+    },
+    {
       '1': 'notification_debug_string',
       '3': 1000,
       '4': 1,
@@ -151,13 +160,15 @@ final $typed_data.Uint8List notificationDescriptor = $convert.base64Decode(
     'E25vdGlmaWNhdGlvbkJhdHRlcnkSWAoVbm90aWZpY2F0aW9uX2xzbTZkc294GAggASgLMiEuZm'
     '9jc3RpbV9ycGMuTm90aWZpY2F0aW9uTFNNNkRTT1hIAFIUbm90aWZpY2F0aW9uTHNtNmRzb3gS'
     'WAoVbm90aWZpY2F0aW9uX3ByZXNzdXJlGAkgASgLMiEuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW'
-    '9uUHJlc3N1cmVIAFIUbm90aWZpY2F0aW9uUHJlc3N1cmUSYwoZbm90aWZpY2F0aW9uX2RlYnVn'
-    'X3N0cmluZxjoByABKAsyJC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25EZWJ1Z1N0cmluZ0gAUh'
-    'dub3RpZmljYXRpb25EZWJ1Z1N0cmluZxJjChlub3RpZmljYXRpb25fZGVidWdfYXM1MzExGOkH'
-    'IAEoCzIkLmZvY3N0aW1fcnBjLk5vdGlmaWNhdGlvbkRlYnVnQVM1MzExSABSF25vdGlmaWNhdG'
-    'lvbkRlYnVnQXM1MzExEmMKGW5vdGlmaWNhdGlvbl9kZWJ1Z19lZGdpbmcY6gcgASgLMiQuZm9j'
-    'c3RpbV9ycGMuTm90aWZpY2F0aW9uRGVidWdFZGdpbmdIAFIXbm90aWZpY2F0aW9uRGVidWdFZG'
-    'dpbmcSHQoJdGltZXN0YW1wGOcHIAEoBFIJdGltZXN0YW1wQg4KDG5vdGlmaWNhdGlvbg==');
+    '9uUHJlc3N1cmVIAFIUbm90aWZpY2F0aW9uUHJlc3N1cmUSYgoZbm90aWZpY2F0aW9uX2J1dHRv'
+    'bl9wcmVzcxgKIAEoCzIkLmZvY3N0aW1fcnBjLk5vdGlmaWNhdGlvbkJ1dHRvblByZXNzSABSF2'
+    '5vdGlmaWNhdGlvbkJ1dHRvblByZXNzEmMKGW5vdGlmaWNhdGlvbl9kZWJ1Z19zdHJpbmcY6Acg'
+    'ASgLMiQuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW9uRGVidWdTdHJpbmdIAFIXbm90aWZpY2F0aW'
+    '9uRGVidWdTdHJpbmcSYwoZbm90aWZpY2F0aW9uX2RlYnVnX2FzNTMxMRjpByABKAsyJC5mb2Nz'
+    'dGltX3JwYy5Ob3RpZmljYXRpb25EZWJ1Z0FTNTMxMUgAUhdub3RpZmljYXRpb25EZWJ1Z0FzNT'
+    'MxMRJjChlub3RpZmljYXRpb25fZGVidWdfZWRnaW5nGOoHIAEoCzIkLmZvY3N0aW1fcnBjLk5v'
+    'dGlmaWNhdGlvbkRlYnVnRWRnaW5nSABSF25vdGlmaWNhdGlvbkRlYnVnRWRnaW5nEh0KCXRpbW'
+    'VzdGFtcBjnByABKARSCXRpbWVzdGFtcEIOCgxub3RpZmljYXRpb24=');
 
 @$core.Deprecated('Use requestDescriptor instead')
 const Request$json = {

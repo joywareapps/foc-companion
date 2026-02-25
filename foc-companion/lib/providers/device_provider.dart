@@ -201,6 +201,19 @@ class DeviceProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleHardwareLock() {
+    if (!api.isConnected) return;
+    // Simulate a long press by sending a button press notification.
+    // The firmware handles the 2s logic, but here we can send a special 
+    // debug command or just toggle it if we add a request.
+    // For now, let's send a ButtonPress(pressed: true) then false after 2.1s
+    // to simulate the hardware interaction.
+    api.sendNotification(Notification()..notificationButtonPress = (NotificationButtonPress()..pressed = true));
+    Timer(const Duration(milliseconds: 2100), () {
+      api.sendNotification(Notification()..notificationButtonPress = (NotificationButtonPress()..pressed = false));
+    });
+  }
+
   void clearLogs() {
     _logInactivityTimer?.cancel();
     capturedLogs.clear();

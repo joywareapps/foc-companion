@@ -109,6 +109,15 @@ class FocStimApiService {
     });
   }
 
+  /// Sends a notification to the device (fire-and-forget).
+  void sendNotification(Notification notification) {
+    if (_socket == null) return;
+    var rpcMessage = RpcMessage()..notification = notification;
+    var data = rpcMessage.writeToBuffer();
+    var framed = Hdlc.encode(Uint8List.fromList(data));
+    _socket!.add(framed);
+  }
+
   Future<ResponseFirmwareVersion> requestFirmwareVersion() async {
     var req = Request()..requestFirmwareVersion = RequestFirmwareVersion();
     final response = await sendRequest(req);

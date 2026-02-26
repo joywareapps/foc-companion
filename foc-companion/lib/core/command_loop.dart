@@ -32,8 +32,7 @@ class FourPhaseCommandLoop {
   /// Playback speed multiplier (applied to dt fed into the pattern).
   double velocity = 1.0;
 
-  /// Volume (0–1). Sent to device as: volume² × maxAmp (matching desktop
-  /// fourphase_algorithm: AXIS_WAVEFORM_AMPLITUDE_AMPS = volume² × maxAmp).
+  /// Volume (0–1). Sent to device as: volume × maxAmp.
   double volume = 1.0;
 
   /// Called with `true` when ticks are being skipped (connection slow),
@@ -122,7 +121,7 @@ class FourPhaseCommandLoop {
     final double elapsed = now - _startTime;
     final double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
     final double currentAmp =
-        volume * volume * _settings.device.waveformAmplitude * ramp;
+        volume * _settings.device.waveformAmplitude * ramp;
 
     final norm = _pulseFreqMod.update(dt, velocity); // [-1,1] when active, 0 when off
     final modCfg = _pulseFreqMod.config;

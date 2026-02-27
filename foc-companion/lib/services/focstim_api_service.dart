@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:foc_companion/core/hdlc.dart';
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart'; // Will be generated
 import 'package:foc_companion/generated/protobuf/messages.pb.dart';
-import 'package:foc_companion/generated/protobuf/notifications.pb.dart';
+import 'package:foc_companion/services/app_logger.dart';
 import 'package:foc_companion/generated/protobuf/constants.pbenum.dart';
+
+final _log = AppLogger.instance;
 
 const int _kVersionMajor = 1;
 const int _kVersionMinorMin = 1;
@@ -67,7 +69,7 @@ class FocStimApiService {
           onNotification?.call(message.notification);
         }
       } catch (e) {
-        print("Proto parse error: $e");
+        _log.e("Proto parse error", error: e);
       }
     }
   }

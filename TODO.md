@@ -46,6 +46,16 @@ See [DONE.md](DONE.md) for a detailed history of completed phases and implemente
   - **Location:** Add to `focstim_api_service.dart` connection logic.
   - **Testing:** Test with mock versions (1.0.9, 1.1.0, 1.1.5, 1.9.9, 2.0.0).
 
+### Task 09: Impedance Display in Calibration Screen ✅
+- **Priority:** LOW–MEDIUM
+- **Status:** ✅ Completed (2026-02-27)
+- **Prompt:** `todo/09-model-estimation-display.md`
+- **Summary:**
+  - Handle `NotificationModelEstimation` from firmware in `DeviceProvider`.
+  - Expose `impedanceA/B/C/D` (nullable double, ohms) updated at ~1.2 Hz while playing.
+  - Show coloured impedance badges next to each electrode in the calibration overlay.
+  - 4-phase: badge per slider (A/B/C/D). 3-phase: compact row below sliders (Ch A/B/C).
+
 ### Task 08: Command Loop Optimization ⚡ ✅
 - **Priority:** MEDIUM
 - **Status:** ✅ Completed (2026-02-23)

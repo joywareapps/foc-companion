@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/providers/device_provider.dart';
+import 'package:foc_companion/services/app_logger.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -129,6 +131,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onChanged: (v) => setState(() => d.waveformAmplitude = v / 1000),
         ),
 
+        const SizedBox(height: 24),
+
+        // ── Application Log ─────────────────────────────
+        const Text("Application Log",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Divider(),
+        const _LogViewer(),
+
         const SizedBox(height: 30),
         Row(
           children: [
@@ -230,4 +240,142 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────
+// Log viewer — scrollable list of in-memory log entries.
+// Newest entry at top. Colour-coded by level.
+// ─────────────────────────────────────────────────────────
+
+class _LogViewer extends StatelessWidget {
+  const _LogViewer();
+
+  static const _levelColors = {
+    LogLevel.debug: Colors.grey,
+    LogLevel.info: Colors.blue,
+    LogLevel.warning: Colors.amber,
+    LogLevel.error: Colors.red,
+  };
+
+  static const _levelLabels = {
+    LogLevel.debug: 'D',
+    LogLevel.info: 'I',
+    LogLevel.warning: 'W',
+    LogLevel.error: 'E',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AppLogger.instance,
+      builder: (context, _) {
+        final entries = AppLogger.instance.entries.reversed.toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${entries.length} entries',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.copy, size: 16),
+                  label: const Text('Copy all'),
+                  onPressed: entries.isEmpty
+                      ? null
+                      : () {
+                          final text = AppLogger.instance.entries
+                              .map((e) =>
+                                  '[${_fmt(e.time)}] ${_levelLabels[e.level]} ${e.message}')
+                              .join('\n');
+                          Clipboard.setData(ClipboardData(text: text));
+                          ScaffoldMessenger.of(context)
+                            ..clearSnackBars()
+                            ..showSnackBar(const SnackBar(
+                                content: Text('Log copied to clipboard')));
+                        },
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: const Text('Clear'),
+                  onPressed: entries.isEmpty
+                      ? null
+                      : () => AppLogger.instance.clear(),
+                ),
+              ],
+            ),
+            if (entries.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text('No log entries yet.',
+                    style: TextStyle(color: Colors.grey)),
+              )
+            else
+              SizedBox(
+                height: 280,
+                child: ListView.builder(
+                  itemCount: entries.length,
+                  itemBuilder: (context, i) {
+                    final entry = entries[i];
+                    final color = _levelColors[entry.level]!;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 1),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Level badge
+                          Container(
+                            width: 16,
+                            alignment: Alignment.center,
+                            child: Text(
+                              _levelLabels[entry.level]!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                                fontFamily: 'SpaceMono',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          // Timestamp
+                          Text(
+                            _fmt(entry.time),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                              fontFamily: 'SpaceMono',
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          // Message
+                          Expanded(
+                            child: Text(
+                              entry.message,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: color,
+                                fontFamily: 'SpaceMono',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  static String _fmt(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:'
+      '${t.minute.toString().padLeft(2, '0')}:'
+      '${t.second.toString().padLeft(2, '0')}';
 }

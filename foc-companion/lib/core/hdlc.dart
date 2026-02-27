@@ -1,4 +1,7 @@
 import 'dart:typed_data';
+import 'package:foc_companion/services/app_logger.dart';
+
+final _log = AppLogger.instance;
 
 class Hdlc {
   static const int frameBoundaryMarker = 0x7E;
@@ -30,7 +33,7 @@ class Hdlc {
           if (computedCrc == packetCrc) {
             resultingFrames.add(payload);
           } else {
-            print("HDLC: CRC Mismatch! Computed: 0x${computedCrc.toRadixString(16)}, Packet: 0x${packetCrc.toRadixString(16)}");
+            _log.w("HDLC: CRC Mismatch! Computed: 0x${computedCrc.toRadixString(16)}, Packet: 0x${packetCrc.toRadixString(16)}");
           }
         }
         _reset();
@@ -46,7 +49,7 @@ class Hdlc {
         _pendingPayload.add(val);
 
         if (_pendingPayload.length > _maxLen) {
-          print('HDLC: max length exceeded, resetting buffer');
+          _log.w('HDLC: max length exceeded, resetting buffer');
           _reset();
         }
       }

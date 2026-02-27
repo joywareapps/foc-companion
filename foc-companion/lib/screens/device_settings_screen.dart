@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
+import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/widgets/gradient_slider_track.dart';
 
@@ -15,6 +16,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
+    final device = Provider.of<DeviceProvider>(context);
     final d = settings.device;
 
     return ListView(
@@ -43,6 +45,16 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             value: d.calibration3Left,
             onChanged: (v) => setState(() => d.calibration3Left = v),
           ),
+          if (device.impedanceA != null) ...[
+            const SizedBox(height: 8),
+            _ImpedanceRow(
+              channels: [
+                ('Ch A', device.impedanceA),
+                ('Ch B', device.impedanceB),
+                ('Ch C', device.impedanceC),
+              ],
+            ),
+          ],
         ] else ...[
           const Text("4-Phase Calibration",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -54,6 +66,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             max: 2,
             onChanged: (v) => setState(() => d.calibration4A = v),
             color: Colors.red,
+            impedance: device.impedanceA,
           ),
           _buildSlider(
             label: "Electrode B",
@@ -62,6 +75,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             max: 2,
             onChanged: (v) => setState(() => d.calibration4B = v),
             color: Colors.blue,
+            impedance: device.impedanceB,
           ),
           _buildSlider(
             label: "Electrode C",
@@ -70,6 +84,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             max: 2,
             onChanged: (v) => setState(() => d.calibration4C = v),
             color: Colors.amber,
+            impedance: device.impedanceC,
           ),
           _buildSlider(
             label: "Electrode D",
@@ -78,6 +93,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             max: 2,
             onChanged: (v) => setState(() => d.calibration4D = v),
             color: Colors.green,
+            impedance: device.impedanceD,
           ),
         ],
 
@@ -175,6 +191,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     required double max,
     required Function(double) onChanged,
     Color? color,
+    double? impedance,
   }) {
     final slider = Slider(
       value: value.clamp(min, max),
@@ -194,7 +211,16 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   ? TextStyle(color: color, fontWeight: FontWeight.w500)
                   : null,
             ),
-            Text(value.toStringAsFixed(2)),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (impedance != null) ...[
+                  _ImpedanceBadge(impedance),
+                  const SizedBox(width: 8),
+                ],
+                Text(value.toStringAsFixed(2)),
+              ],
+            ),
           ],
         ),
         color != null
@@ -207,6 +233,78 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 child: slider,
               )
             : slider,
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Impedance badge — coloured "420 Ω" chip shown next to a channel label.
+// Green < 600 Ω · Amber 600–1000 Ω · Red > 1000 Ω
+// ─────────────────────────────────────────────────────────
+
+class _ImpedanceBadge extends StatelessWidget {
+  final double ohms;
+  const _ImpedanceBadge(this.ohms);
+
+  Color _color() {
+    if (ohms < 600) return Colors.green;
+    if (ohms < 1000) return Colors.amber;
+    return Colors.red;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: _color().withAlpha(30),
+        border: Border.all(color: _color().withAlpha(120)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        '${ohms.round()} Ω',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: _color(),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Compact impedance row for 3-phase (channels don't map 1:1 to sliders).
+// ─────────────────────────────────────────────────────────
+
+class _ImpedanceRow extends StatelessWidget {
+  final List<(String, double?)> channels;
+  const _ImpedanceRow({required this.channels});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text('Impedance:', style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(width: 8),
+        ...channels.map((ch) {
+          final label = ch.$1;
+          final ohms = ch.$2;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('$label ', style: Theme.of(context).textTheme.bodySmall),
+                if (ohms != null)
+                  _ImpedanceBadge(ohms)
+                else
+                  Text('—', style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }

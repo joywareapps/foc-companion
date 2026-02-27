@@ -1,15 +1,18 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/focstim_api_service.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/command_loop.dart';
 import 'package:foc_companion/core/patterns.dart';
-import 'package:fixnum/fixnum.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io' as io;
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
+import 'package:foc_companion/services/app_logger.dart';
+
+final _log = AppLogger.instance;
 
 // If no notification arrives within this window the device is considered
 // unresponsive and is disconnected automatically.
@@ -48,6 +51,14 @@ class DeviceProvider with ChangeNotifier {
   /// True if the hardware volume is locked (long-press on knob).
   bool isHardwareVolumeLocked = false;
 
+  /// Per-channel impedance magnitude in ohms, estimated by the firmware.
+  /// Null when no data has been received yet (device not playing).
+  /// In 3-phase mode impedanceD is always null.
+  double? impedanceA;
+  double? impedanceB;
+  double? impedanceC;
+  double? impedanceD;
+
   Timer? _notificationWatchdog;
   Timer? _buttonPressTimer;
   bool _buttonLongPressDetected = false;
@@ -60,6 +71,7 @@ class DeviceProvider with ChangeNotifier {
       connectionStatus = "Disconnected";
       isLoopRunning = false;
       isSlowConnection = false;
+      impedanceA = impedanceB = impedanceC = impedanceD = null;
       _threePhaseLoop?.stop();
       _fourPhaseLoop?.stop();
       notifyListeners();
@@ -100,7 +112,7 @@ class DeviceProvider with ChangeNotifier {
     isSlowConnection = false;
     connectionStatus = "Timeout: $error";
     // Best-effort stop signal — may fail if link is already broken.
-    api.stopSignal().catchError((e) => print("stopSignal after timeout: $e"));
+    api.stopSignal().catchError((e) => _log.e("stopSignal after timeout", error: e));
     notifyListeners();
   }
 
@@ -227,7 +239,7 @@ class DeviceProvider with ChangeNotifier {
         subject: 'FOC Companion Diagnostic Log',
       );
     } catch (e) {
-      print("Error sharing logs: $e");
+      _log.e("Error sharing logs", error: e);
       // Fallback to plain text share if file fails
       await Share.share(allText, subject: 'FOC Companion Diagnostic Log');
     }
@@ -241,7 +253,7 @@ class DeviceProvider with ChangeNotifier {
     _fourPhaseLoop?.volume = volume;
     try {
       connectionStatus = "Connecting to ${settings.focStim.wifiIp}:${settings.focStim.wifiPort}...";
-      print("Attempting connection to ${settings.focStim.wifiIp}:${settings.focStim.wifiPort}");
+      _log.i("Attempting connection to ${settings.focStim.wifiIp}:${settings.focStim.wifiPort}");
       notifyListeners();
       await api.connectTcp(settings.focStim.wifiIp, settings.focStim.wifiPort);
 
@@ -301,8 +313,11 @@ class DeviceProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  static double _calcImpedance(double r, double x) =>
+      math.sqrt(r * r + x * x);
+
   void _handleNotification(Notification n) {
-    print("Received notification: ${n.whichNotification()}");
+    _log.d("Notification: ${n.whichNotification()}");
     _resetNotificationWatchdog();
 
     // ── Log Recording Logic ────────────────────────────────────────────────
@@ -324,6 +339,16 @@ class DeviceProvider with ChangeNotifier {
       }
     }
 
+    if (n.hasNotificationModelEstimation()) {
+      final e = n.notificationModelEstimation;
+      impedanceA = _calcImpedance(e.resistanceA, e.reluctanceA);
+      impedanceB = _calcImpedance(e.resistanceB, e.reluctanceB);
+      impedanceC = _calcImpedance(e.resistanceC, e.reluctanceC);
+      // D is zero in 3-phase mode; treat as unavailable.
+      impedanceD = (e.resistanceD == 0.0 && e.reluctanceD == 0.0)
+          ? null
+          : _calcImpedance(e.resistanceD, e.reluctanceD);
+    }
     if (n.hasNotificationSystemStats()) {
       final stats = n.notificationSystemStats;
       if (stats.hasFocstimv3()) {
@@ -361,7 +386,7 @@ class DeviceProvider with ChangeNotifier {
     }
     if (n.hasNotificationDebugString()) {
       final msg = n.notificationDebugString.message;
-      print("Device Debug: $msg");
+      _log.d("Device: $msg");
 
       // Detect critical error to start recording/show dialog
       if (msg.contains("Current limit exceeded") || msg.contains("Producer too slow")) {

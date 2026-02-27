@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:foc_companion/services/app_logger.dart';
+
+final _log = AppLogger.instance;
 
 class HereSphereStatus {
   final String identifier;
@@ -83,7 +86,7 @@ class HereSphereService {
         final status = HereSphereStatus.fromJson(jsonDecode(jsonStr));
         _statusController.add(status);
       } catch (e) {
-        print("HereSphere JSON error: $e");
+        _log.e("HereSphere JSON error", error: e);
       }
     }
   }

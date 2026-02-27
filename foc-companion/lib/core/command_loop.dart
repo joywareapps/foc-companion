@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:foc_companion/services/app_logger.dart';
 import 'package:foc_companion/services/focstim_api_service.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/patterns.dart';
@@ -7,6 +8,8 @@ import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/generated/protobuf/constants.pbenum.dart';
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
 import 'package:foc_companion/generated/protobuf/messages.pb.dart';
+
+final _log = AppLogger.instance;
 
 // Tick requests use a shorter timeout than setup requests so congestion is
 // detected quickly. 2 s gives a couple of WiFi retransmit attempts before
@@ -60,7 +63,7 @@ class FourPhaseCommandLoop {
 
   Future<void> start() async {
     if (_isRunning) return;
-    print("FourPhaseCommandLoop: Starting...");
+    _log.i("FourPhaseCommandLoop: Starting...");
 
     // Reset stale state from any previous session.
     _tickInFlight = false;
@@ -73,30 +76,30 @@ class FourPhaseCommandLoop {
 
     try {
       await _setupParams();
-      print("FourPhaseCommandLoop: Params setup complete. Starting signal...");
+      _log.i("FourPhaseCommandLoop: Params setup complete. Starting signal...");
       await _api.startSignal(mode: OutputMode.OUTPUT_FOURPHASE_INDIVIDUAL_ELECTRODES);
-      print("FourPhaseCommandLoop: Signal started.");
+      _log.i("FourPhaseCommandLoop: Signal started.");
       _isRunning = true;
       _startTime = DateTime.now().millisecondsSinceEpoch / 1000.0;
       _timer = Timer.periodic(_kTickInterval, _tick);
     } catch (e) {
-      print("FourPhaseCommandLoop: Error starting: $e");
+      _log.e("FourPhaseCommandLoop: Error starting", error: e);
       _isRunning = false;
       rethrow;
     }
   }
 
   Future<void> stop() async {
-    print("FourPhaseCommandLoop: Stopping...");
+    _log.i("FourPhaseCommandLoop: Stopping...");
     _timer?.cancel();
     _timer = null;
     _isRunning = false;
     try {
       await _api.stopSignal();
     } catch (e) {
-      print("FourPhaseCommandLoop: Error stopping signal: $e");
+      _log.e("FourPhaseCommandLoop: Error stopping signal", error: e);
     }
-    print("FourPhaseCommandLoop: Stopped.");
+    _log.i("FourPhaseCommandLoop: Stopped.");
   }
 
   void _tick(Timer _) async {
@@ -189,14 +192,14 @@ class FourPhaseCommandLoop {
       _isRunning = false;
       onTimeout?.call("Request timed out — connection lost");
     } catch (e) {
-      print("4-phase loop error: $e");
+      _log.e("4-phase loop error", error: e);
     } finally {
       _tickInFlight = false;
     }
   }
 
   Future<void> _setupParams() async {
-    print("FourPhaseCommandLoop: Setting up params...");
+    _log.d("FourPhaseCommandLoop: Setting up params...");
     Future<void> send(AxisType axis, double val) async {
       await _api.sendRequest(Request()
         ..requestAxisMoveTo = (RequestAxisMoveTo()
@@ -269,7 +272,7 @@ class CommandLoop {
 
   Future<void> start() async {
     if (_isRunning) return;
-    print("CommandLoop: Starting...");
+    _log.i("CommandLoop: Starting...");
 
     // Reset stale state from any previous session.
     _tickInFlight = false;
@@ -282,31 +285,31 @@ class CommandLoop {
 
     try {
       await _setupParams();
-      print("CommandLoop: Params setup complete. Starting signal...");
+      _log.i("CommandLoop: Params setup complete. Starting signal...");
       await _api.startSignal();
-      print("CommandLoop: Signal started.");
+      _log.i("CommandLoop: Signal started.");
 
       _isRunning = true;
       _startTime = DateTime.now().millisecondsSinceEpoch / 1000.0;
       _timer = Timer.periodic(_kTickInterval, _tick);
     } catch (e) {
-      print("CommandLoop: Error starting: $e");
+      _log.e("CommandLoop: Error starting", error: e);
       _isRunning = false;
       rethrow;
     }
   }
 
   Future<void> stop() async {
-    print("CommandLoop: Stopping...");
+    _log.i("CommandLoop: Stopping...");
     _timer?.cancel();
     _timer = null;
     _isRunning = false;
     try {
       await _api.stopSignal();
     } catch (e) {
-      print("CommandLoop: Error stopping signal: $e");
+      _log.e("CommandLoop: Error stopping signal", error: e);
     }
-    print("CommandLoop: Stopped.");
+    _log.i("CommandLoop: Stopped.");
   }
 
   void _tick(Timer _) async {
@@ -394,16 +397,16 @@ class CommandLoop {
       _isRunning = false;
       onTimeout?.call("Request timed out — connection lost");
     } catch (e) {
-      print("Loop error: $e");
+      _log.e("Loop error", error: e);
     } finally {
       _tickInFlight = false;
     }
   }
 
   Future<void> _setupParams() async {
-    print("CommandLoop: Setting up params...");
+    _log.d("CommandLoop: Setting up params...");
     Future<void> send(AxisType axis, double val) async {
-      print("CommandLoop: Sending $axis = $val");
+      _log.d("CommandLoop: Sending $axis = $val");
       await _api.sendRequest(Request()
         ..requestAxisMoveTo = (RequestAxisMoveTo()
           ..axis = axis

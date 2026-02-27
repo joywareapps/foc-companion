@@ -36,6 +36,7 @@ enum Notification_Notification {
   notificationDebugString,
   notificationDebugAs5311,
   notificationDebugEdging,
+  notificationDebugTeleplot,
   notSet
 }
 
@@ -56,6 +57,7 @@ class Notification extends $pb.GeneratedMessage {
     $0.NotificationDebugString? notificationDebugString,
     $0.NotificationDebugAS5311? notificationDebugAs5311,
     $0.NotificationDebugEdging? notificationDebugEdging,
+    $0.NotificationDebugTeleplot? notificationDebugTeleplot,
   }) {
     final result = create();
     if (notificationBoot != null) result.notificationBoot = notificationBoot;
@@ -86,6 +88,8 @@ class Notification extends $pb.GeneratedMessage {
       result.notificationDebugAs5311 = notificationDebugAs5311;
     if (notificationDebugEdging != null)
       result.notificationDebugEdging = notificationDebugEdging;
+    if (notificationDebugTeleplot != null)
+      result.notificationDebugTeleplot = notificationDebugTeleplot;
     return result;
   }
 
@@ -114,13 +118,14 @@ class Notification extends $pb.GeneratedMessage {
     1000: Notification_Notification.notificationDebugString,
     1001: Notification_Notification.notificationDebugAs5311,
     1002: Notification_Notification.notificationDebugEdging,
+    1003: Notification_Notification.notificationDebugTeleplot,
     0: Notification_Notification.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
       _omitMessageNames ? '' : 'Notification',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..oo(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1000, 1001, 1002])
+    ..oo(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1000, 1001, 1002, 1003])
     ..aOM<$0.NotificationBoot>(1, _omitFieldNames ? '' : 'notificationBoot',
         subBuilder: $0.NotificationBoot.create)
     ..aOM<$0.NotificationPotentiometer>(
@@ -165,6 +170,9 @@ class Notification extends $pb.GeneratedMessage {
     ..aOM<$0.NotificationDebugEdging>(
         1002, _omitFieldNames ? '' : 'notificationDebugEdging',
         subBuilder: $0.NotificationDebugEdging.create)
+    ..aOM<$0.NotificationDebugTeleplot>(
+        1003, _omitFieldNames ? '' : 'notificationDebugTeleplot',
+        subBuilder: $0.NotificationDebugTeleplot.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -200,6 +208,7 @@ class Notification extends $pb.GeneratedMessage {
   @$pb.TagNumber(1000)
   @$pb.TagNumber(1001)
   @$pb.TagNumber(1002)
+  @$pb.TagNumber(1003)
   Notification_Notification whichNotification() =>
       _Notification_NotificationByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(1)
@@ -216,6 +225,7 @@ class Notification extends $pb.GeneratedMessage {
   @$pb.TagNumber(1000)
   @$pb.TagNumber(1001)
   @$pb.TagNumber(1002)
+  @$pb.TagNumber(1003)
   void clearNotification() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -393,6 +403,19 @@ class Notification extends $pb.GeneratedMessage {
   void clearNotificationDebugEdging() => $_clearField(1002);
   @$pb.TagNumber(1002)
   $0.NotificationDebugEdging ensureNotificationDebugEdging() => $_ensure(14);
+
+  @$pb.TagNumber(1003)
+  $0.NotificationDebugTeleplot get notificationDebugTeleplot => $_getN(15);
+  @$pb.TagNumber(1003)
+  set notificationDebugTeleplot($0.NotificationDebugTeleplot value) =>
+      $_setField(1003, value);
+  @$pb.TagNumber(1003)
+  $core.bool hasNotificationDebugTeleplot() => $_has(15);
+  @$pb.TagNumber(1003)
+  void clearNotificationDebugTeleplot() => $_clearField(1003);
+  @$pb.TagNumber(1003)
+  $0.NotificationDebugTeleplot ensureNotificationDebugTeleplot() =>
+      $_ensure(15);
 }
 
 enum Request_Params {
@@ -405,6 +428,7 @@ enum Request_Params {
   requestTimestampGet,
   requestWifiParametersSet,
   requestWifiIpGet,
+  requestSetDeviceState,
   requestLsm6dsoxStart,
   requestLsm6dsoxStop,
   requestDebugStm32DeepSleep,
@@ -424,6 +448,7 @@ class Request extends $pb.GeneratedMessage {
     $1.RequestTimestampGet? requestTimestampGet,
     $1.RequestWifiParametersSet? requestWifiParametersSet,
     $1.RequestWifiIPGet? requestWifiIpGet,
+    $1.RequestSetDeviceState? requestSetDeviceState,
     $1.RequestLSM6DSOXStart? requestLsm6dsoxStart,
     $1.RequestLSM6DSOXStop? requestLsm6dsoxStop,
     $1.RequestDebugStm32DeepSleep? requestDebugStm32DeepSleep,
@@ -446,6 +471,8 @@ class Request extends $pb.GeneratedMessage {
     if (requestWifiParametersSet != null)
       result.requestWifiParametersSet = requestWifiParametersSet;
     if (requestWifiIpGet != null) result.requestWifiIpGet = requestWifiIpGet;
+    if (requestSetDeviceState != null)
+      result.requestSetDeviceState = requestSetDeviceState;
     if (requestLsm6dsoxStart != null)
       result.requestLsm6dsoxStart = requestLsm6dsoxStart;
     if (requestLsm6dsoxStop != null)
@@ -476,6 +503,7 @@ class Request extends $pb.GeneratedMessage {
     505: Request_Params.requestTimestampGet,
     507: Request_Params.requestWifiParametersSet,
     508: Request_Params.requestWifiIpGet,
+    509: Request_Params.requestSetDeviceState,
     600: Request_Params.requestLsm6dsoxStart,
     601: Request_Params.requestLsm6dsoxStop,
     1000: Request_Params.requestDebugStm32DeepSleep,
@@ -486,7 +514,8 @@ class Request extends $pb.GeneratedMessage {
       _omitMessageNames ? '' : 'Request',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..oo(0, [5, 500, 501, 502, 503, 504, 505, 507, 508, 600, 601, 1000, 1001])
+    ..oo(0,
+        [5, 500, 501, 502, 503, 504, 505, 507, 508, 509, 600, 601, 1000, 1001])
     ..aI(1, _omitFieldNames ? '' : 'id', fieldType: $pb.PbFieldType.OU3)
     ..aOM<$1.RequestAxisMoveTo>(5, _omitFieldNames ? '' : 'requestAxisMoveTo',
         subBuilder: $1.RequestAxisMoveTo.create)
@@ -512,6 +541,9 @@ class Request extends $pb.GeneratedMessage {
         subBuilder: $1.RequestWifiParametersSet.create)
     ..aOM<$1.RequestWifiIPGet>(508, _omitFieldNames ? '' : 'requestWifiIpGet',
         subBuilder: $1.RequestWifiIPGet.create)
+    ..aOM<$1.RequestSetDeviceState>(
+        509, _omitFieldNames ? '' : 'requestSetDeviceState',
+        subBuilder: $1.RequestSetDeviceState.create)
     ..aOM<$1.RequestLSM6DSOXStart>(
         600, _omitFieldNames ? '' : 'requestLsm6dsoxStart',
         subBuilder: $1.RequestLSM6DSOXStart.create)
@@ -553,6 +585,7 @@ class Request extends $pb.GeneratedMessage {
   @$pb.TagNumber(505)
   @$pb.TagNumber(507)
   @$pb.TagNumber(508)
+  @$pb.TagNumber(509)
   @$pb.TagNumber(600)
   @$pb.TagNumber(601)
   @$pb.TagNumber(1000)
@@ -567,6 +600,7 @@ class Request extends $pb.GeneratedMessage {
   @$pb.TagNumber(505)
   @$pb.TagNumber(507)
   @$pb.TagNumber(508)
+  @$pb.TagNumber(509)
   @$pb.TagNumber(600)
   @$pb.TagNumber(601)
   @$pb.TagNumber(1000)
@@ -690,57 +724,70 @@ class Request extends $pb.GeneratedMessage {
   @$pb.TagNumber(508)
   $1.RequestWifiIPGet ensureRequestWifiIpGet() => $_ensure(9);
 
+  /// device state
+  @$pb.TagNumber(509)
+  $1.RequestSetDeviceState get requestSetDeviceState => $_getN(10);
+  @$pb.TagNumber(509)
+  set requestSetDeviceState($1.RequestSetDeviceState value) =>
+      $_setField(509, value);
+  @$pb.TagNumber(509)
+  $core.bool hasRequestSetDeviceState() => $_has(10);
+  @$pb.TagNumber(509)
+  void clearRequestSetDeviceState() => $_clearField(509);
+  @$pb.TagNumber(509)
+  $1.RequestSetDeviceState ensureRequestSetDeviceState() => $_ensure(10);
+
   /// sensors
   @$pb.TagNumber(600)
-  $1.RequestLSM6DSOXStart get requestLsm6dsoxStart => $_getN(10);
+  $1.RequestLSM6DSOXStart get requestLsm6dsoxStart => $_getN(11);
   @$pb.TagNumber(600)
   set requestLsm6dsoxStart($1.RequestLSM6DSOXStart value) =>
       $_setField(600, value);
   @$pb.TagNumber(600)
-  $core.bool hasRequestLsm6dsoxStart() => $_has(10);
+  $core.bool hasRequestLsm6dsoxStart() => $_has(11);
   @$pb.TagNumber(600)
   void clearRequestLsm6dsoxStart() => $_clearField(600);
   @$pb.TagNumber(600)
-  $1.RequestLSM6DSOXStart ensureRequestLsm6dsoxStart() => $_ensure(10);
+  $1.RequestLSM6DSOXStart ensureRequestLsm6dsoxStart() => $_ensure(11);
 
   @$pb.TagNumber(601)
-  $1.RequestLSM6DSOXStop get requestLsm6dsoxStop => $_getN(11);
+  $1.RequestLSM6DSOXStop get requestLsm6dsoxStop => $_getN(12);
   @$pb.TagNumber(601)
   set requestLsm6dsoxStop($1.RequestLSM6DSOXStop value) =>
       $_setField(601, value);
   @$pb.TagNumber(601)
-  $core.bool hasRequestLsm6dsoxStop() => $_has(11);
+  $core.bool hasRequestLsm6dsoxStop() => $_has(12);
   @$pb.TagNumber(601)
   void clearRequestLsm6dsoxStop() => $_clearField(601);
   @$pb.TagNumber(601)
-  $1.RequestLSM6DSOXStop ensureRequestLsm6dsoxStop() => $_ensure(11);
+  $1.RequestLSM6DSOXStop ensureRequestLsm6dsoxStop() => $_ensure(12);
 
   /// debug
   @$pb.TagNumber(1000)
-  $1.RequestDebugStm32DeepSleep get requestDebugStm32DeepSleep => $_getN(12);
+  $1.RequestDebugStm32DeepSleep get requestDebugStm32DeepSleep => $_getN(13);
   @$pb.TagNumber(1000)
   set requestDebugStm32DeepSleep($1.RequestDebugStm32DeepSleep value) =>
       $_setField(1000, value);
   @$pb.TagNumber(1000)
-  $core.bool hasRequestDebugStm32DeepSleep() => $_has(12);
+  $core.bool hasRequestDebugStm32DeepSleep() => $_has(13);
   @$pb.TagNumber(1000)
   void clearRequestDebugStm32DeepSleep() => $_clearField(1000);
   @$pb.TagNumber(1000)
   $1.RequestDebugStm32DeepSleep ensureRequestDebugStm32DeepSleep() =>
-      $_ensure(12);
+      $_ensure(13);
 
   @$pb.TagNumber(1001)
-  $1.RequestDebugEnterBootloader get requestDebugEnterBootloader => $_getN(13);
+  $1.RequestDebugEnterBootloader get requestDebugEnterBootloader => $_getN(14);
   @$pb.TagNumber(1001)
   set requestDebugEnterBootloader($1.RequestDebugEnterBootloader value) =>
       $_setField(1001, value);
   @$pb.TagNumber(1001)
-  $core.bool hasRequestDebugEnterBootloader() => $_has(13);
+  $core.bool hasRequestDebugEnterBootloader() => $_has(14);
   @$pb.TagNumber(1001)
   void clearRequestDebugEnterBootloader() => $_clearField(1001);
   @$pb.TagNumber(1001)
   $1.RequestDebugEnterBootloader ensureRequestDebugEnterBootloader() =>
-      $_ensure(13);
+      $_ensure(14);
 }
 
 enum Response_Result {
@@ -753,6 +800,7 @@ enum Response_Result {
   responseTimestampGet,
   responseWifiParametersSet,
   responseWifiIpGet,
+  responseSetDeviceState,
   responseLsm6dsoxStart,
   responseLsm6dsoxStop,
   responseDebugStm32DeepSleep,
@@ -773,6 +821,7 @@ class Response extends $pb.GeneratedMessage {
     $1.ResponseTimestampGet? responseTimestampGet,
     $1.ResponseWifiParametersSet? responseWifiParametersSet,
     $1.ResponseWifiIPGet? responseWifiIpGet,
+    $1.ResponseSetDeviceState? responseSetDeviceState,
     $1.ResponseLSM6DSOXStart? responseLsm6dsoxStart,
     $1.ResponseLSM6DSOXStop? responseLsm6dsoxStop,
     $1.ResponseDebugStm32DeepSleep? responseDebugStm32DeepSleep,
@@ -797,6 +846,8 @@ class Response extends $pb.GeneratedMessage {
     if (responseWifiParametersSet != null)
       result.responseWifiParametersSet = responseWifiParametersSet;
     if (responseWifiIpGet != null) result.responseWifiIpGet = responseWifiIpGet;
+    if (responseSetDeviceState != null)
+      result.responseSetDeviceState = responseSetDeviceState;
     if (responseLsm6dsoxStart != null)
       result.responseLsm6dsoxStart = responseLsm6dsoxStart;
     if (responseLsm6dsoxStop != null)
@@ -825,6 +876,7 @@ class Response extends $pb.GeneratedMessage {
     505: Response_Result.responseTimestampGet,
     507: Response_Result.responseWifiParametersSet,
     508: Response_Result.responseWifiIpGet,
+    509: Response_Result.responseSetDeviceState,
     600: Response_Result.responseLsm6dsoxStart,
     601: Response_Result.responseLsm6dsoxStop,
     1000: Response_Result.responseDebugStm32DeepSleep,
@@ -834,7 +886,7 @@ class Response extends $pb.GeneratedMessage {
       _omitMessageNames ? '' : 'Response',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..oo(0, [5, 500, 501, 502, 503, 504, 505, 507, 508, 600, 601, 1000])
+    ..oo(0, [5, 500, 501, 502, 503, 504, 505, 507, 508, 509, 600, 601, 1000])
     ..aI(1, _omitFieldNames ? '' : 'id', fieldType: $pb.PbFieldType.OU3)
     ..aOM<Error>(3, _omitFieldNames ? '' : 'error', subBuilder: Error.create)
     ..aOM<$1.ResponseAxisMoveTo>(5, _omitFieldNames ? '' : 'responseAxisMoveTo',
@@ -862,6 +914,9 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: $1.ResponseWifiParametersSet.create)
     ..aOM<$1.ResponseWifiIPGet>(508, _omitFieldNames ? '' : 'responseWifiIpGet',
         subBuilder: $1.ResponseWifiIPGet.create)
+    ..aOM<$1.ResponseSetDeviceState>(
+        509, _omitFieldNames ? '' : 'responseSetDeviceState',
+        subBuilder: $1.ResponseSetDeviceState.create)
     ..aOM<$1.ResponseLSM6DSOXStart>(
         600, _omitFieldNames ? '' : 'responseLsm6dsoxStart',
         subBuilder: $1.ResponseLSM6DSOXStart.create)
@@ -900,6 +955,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(505)
   @$pb.TagNumber(507)
   @$pb.TagNumber(508)
+  @$pb.TagNumber(509)
   @$pb.TagNumber(600)
   @$pb.TagNumber(601)
   @$pb.TagNumber(1000)
@@ -913,6 +969,7 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(505)
   @$pb.TagNumber(507)
   @$pb.TagNumber(508)
+  @$pb.TagNumber(509)
   @$pb.TagNumber(600)
   @$pb.TagNumber(601)
   @$pb.TagNumber(1000)
@@ -1047,44 +1104,57 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(508)
   $1.ResponseWifiIPGet ensureResponseWifiIpGet() => $_ensure(10);
 
+  /// device state
+  @$pb.TagNumber(509)
+  $1.ResponseSetDeviceState get responseSetDeviceState => $_getN(11);
+  @$pb.TagNumber(509)
+  set responseSetDeviceState($1.ResponseSetDeviceState value) =>
+      $_setField(509, value);
+  @$pb.TagNumber(509)
+  $core.bool hasResponseSetDeviceState() => $_has(11);
+  @$pb.TagNumber(509)
+  void clearResponseSetDeviceState() => $_clearField(509);
+  @$pb.TagNumber(509)
+  $1.ResponseSetDeviceState ensureResponseSetDeviceState() => $_ensure(11);
+
   /// sensors
   @$pb.TagNumber(600)
-  $1.ResponseLSM6DSOXStart get responseLsm6dsoxStart => $_getN(11);
+  $1.ResponseLSM6DSOXStart get responseLsm6dsoxStart => $_getN(12);
   @$pb.TagNumber(600)
   set responseLsm6dsoxStart($1.ResponseLSM6DSOXStart value) =>
       $_setField(600, value);
   @$pb.TagNumber(600)
-  $core.bool hasResponseLsm6dsoxStart() => $_has(11);
+  $core.bool hasResponseLsm6dsoxStart() => $_has(12);
   @$pb.TagNumber(600)
   void clearResponseLsm6dsoxStart() => $_clearField(600);
   @$pb.TagNumber(600)
-  $1.ResponseLSM6DSOXStart ensureResponseLsm6dsoxStart() => $_ensure(11);
+  $1.ResponseLSM6DSOXStart ensureResponseLsm6dsoxStart() => $_ensure(12);
 
   @$pb.TagNumber(601)
-  $1.ResponseLSM6DSOXStop get responseLsm6dsoxStop => $_getN(12);
+  $1.ResponseLSM6DSOXStop get responseLsm6dsoxStop => $_getN(13);
   @$pb.TagNumber(601)
   set responseLsm6dsoxStop($1.ResponseLSM6DSOXStop value) =>
       $_setField(601, value);
   @$pb.TagNumber(601)
-  $core.bool hasResponseLsm6dsoxStop() => $_has(12);
+  $core.bool hasResponseLsm6dsoxStop() => $_has(13);
   @$pb.TagNumber(601)
   void clearResponseLsm6dsoxStop() => $_clearField(601);
   @$pb.TagNumber(601)
-  $1.ResponseLSM6DSOXStop ensureResponseLsm6dsoxStop() => $_ensure(12);
+  $1.ResponseLSM6DSOXStop ensureResponseLsm6dsoxStop() => $_ensure(13);
 
   /// debug
   @$pb.TagNumber(1000)
-  $1.ResponseDebugStm32DeepSleep get responseDebugStm32DeepSleep => $_getN(13);
+  $1.ResponseDebugStm32DeepSleep get responseDebugStm32DeepSleep => $_getN(14);
   @$pb.TagNumber(1000)
   set responseDebugStm32DeepSleep($1.ResponseDebugStm32DeepSleep value) =>
       $_setField(1000, value);
   @$pb.TagNumber(1000)
-  $core.bool hasResponseDebugStm32DeepSleep() => $_has(13);
+  $core.bool hasResponseDebugStm32DeepSleep() => $_has(14);
   @$pb.TagNumber(1000)
   void clearResponseDebugStm32DeepSleep() => $_clearField(1000);
   @$pb.TagNumber(1000)
   $1.ResponseDebugStm32DeepSleep ensureResponseDebugStm32DeepSleep() =>
-      $_ensure(13);
+      $_ensure(14);
 }
 
 class Error extends $pb.GeneratedMessage {

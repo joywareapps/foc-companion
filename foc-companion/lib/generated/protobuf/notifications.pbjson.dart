@@ -15,6 +15,19 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
+@$core.Deprecated('Use buttonStateDescriptor instead')
+const ButtonState$json = {
+  '1': 'ButtonState',
+  '2': [
+    {'1': 'BUTTON_UP', '2': 0},
+    {'1': 'BUTTON_DOWN', '2': 1},
+  ],
+};
+
+/// Descriptor for `ButtonState`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List buttonStateDescriptor = $convert.base64Decode(
+    'CgtCdXR0b25TdGF0ZRINCglCVVRUT05fVVAQABIPCgtCVVRUT05fRE9XThAB');
+
 @$core.Deprecated('Use notificationBootDescriptor instead')
 const NotificationBoot$json = {
   '1': 'NotificationBoot',
@@ -41,28 +54,43 @@ final $typed_data.Uint8List notificationPotentiometerDescriptor =
 const NotificationButtonPress$json = {
   '1': 'NotificationButtonPress',
   '2': [
-    {'1': 'pressed', '3': 1, '4': 1, '5': 8, '10': 'pressed'},
+    {
+      '1': 'state',
+      '3': 1,
+      '4': 1,
+      '5': 14,
+      '6': '.focstim_rpc.ButtonState',
+      '10': 'state'
+    },
   ],
 };
 
 /// Descriptor for `NotificationButtonPress`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List notificationButtonPressDescriptor =
     $convert.base64Decode(
-        'ChdOb3RpZmljYXRpb25CdXR0b25QcmVzcxIYCgdwcmVzc2VkGAEgASgIUgdwcmVzc2Vk');
+        'ChdOb3RpZmljYXRpb25CdXR0b25QcmVzcxIuCgVzdGF0ZRgBIAEoDjIYLmZvY3N0aW1fcnBjLk'
+        'J1dHRvblN0YXRlUgVzdGF0ZQ==');
 
 @$core.Deprecated('Use notificationDeviceStateDescriptor instead')
 const NotificationDeviceState$json = {
   '1': 'NotificationDeviceState',
   '2': [
-    {'1': 'volume_locked', '3': 1, '4': 1, '5': 8, '10': 'volumeLocked'},
+    {
+      '1': 'state',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.DeviceState',
+      '10': 'state'
+    },
   ],
 };
 
 /// Descriptor for `NotificationDeviceState`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List notificationDeviceStateDescriptor =
     $convert.base64Decode(
-        'ChdOb3RpZmljYXRpb25EZXZpY2VTdGF0ZRIjCg12b2x1bWVfbG9ja2VkGAEgASgIUgx2b2x1bW'
-        'VMb2NrZWQ=');
+        'ChdOb3RpZmljYXRpb25EZXZpY2VTdGF0ZRIuCgVzdGF0ZRgBIAEoCzIYLmZvY3N0aW1fcnBjLk'
+        'RldmljZVN0YXRlUgVzdGF0ZQ==');
 
 @$core.Deprecated('Use notificationCurrentsDescriptor instead')
 const NotificationCurrents$json = {
@@ -337,3 +365,18 @@ final $typed_data.Uint8List notificationDebugEdgingDescriptor = $convert.base64D
     'ChdOb3RpZmljYXRpb25EZWJ1Z0VkZ2luZxIwChRmdWxsX3Bvd2VyX3RocmVzaG9sZBgBIAEoAl'
     'ISZnVsbFBvd2VyVGhyZXNob2xkEjYKF3JlZHVjZWRfcG93ZXJfdGhyZXNob2xkGAIgASgCUhVy'
     'ZWR1Y2VkUG93ZXJUaHJlc2hvbGQSHAoJcmVkdWN0aW9uGAMgASgCUglyZWR1Y3Rpb24=');
+
+@$core.Deprecated('Use notificationDebugTeleplotDescriptor instead')
+const NotificationDebugTeleplot$json = {
+  '1': 'NotificationDebugTeleplot',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'value', '3': 2, '4': 1, '5': 2, '10': 'value'},
+  ],
+};
+
+/// Descriptor for `NotificationDebugTeleplot`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List notificationDebugTeleplotDescriptor =
+    $convert.base64Decode(
+        'ChlOb3RpZmljYXRpb25EZWJ1Z1RlbGVwbG90Eg4KAmlkGAEgASgJUgJpZBIUCgV2YWx1ZRgCIA'
+        'EoAlIFdmFsdWU=');

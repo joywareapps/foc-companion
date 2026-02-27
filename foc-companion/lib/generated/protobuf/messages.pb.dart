@@ -1558,6 +1558,158 @@ class ResponseLSM6DSOXStop extends $pb.GeneratedMessage {
   static ResponseLSM6DSOXStop? _defaultInstance;
 }
 
+/// device state
+class DeviceState extends $pb.GeneratedMessage {
+  factory DeviceState({
+    $core.bool? potLocked,
+  }) {
+    final result = create();
+    if (potLocked != null) result.potLocked = potLocked;
+    return result;
+  }
+
+  DeviceState._();
+
+  factory DeviceState.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DeviceState.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DeviceState',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aOB(1, _omitFieldNames ? '' : 'potLocked')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeviceState clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeviceState copyWith(void Function(DeviceState) updates) =>
+      super.copyWith((message) => updates(message as DeviceState))
+          as DeviceState;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DeviceState create() => DeviceState._();
+  @$core.override
+  DeviceState createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static DeviceState getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeviceState>(create);
+  static DeviceState? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.bool get potLocked => $_getBF(0);
+  @$pb.TagNumber(1)
+  set potLocked($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasPotLocked() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPotLocked() => $_clearField(1);
+}
+
+class RequestSetDeviceState extends $pb.GeneratedMessage {
+  factory RequestSetDeviceState({
+    DeviceState? state,
+  }) {
+    final result = create();
+    if (state != null) result.state = state;
+    return result;
+  }
+
+  RequestSetDeviceState._();
+
+  factory RequestSetDeviceState.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory RequestSetDeviceState.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RequestSetDeviceState',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aOM<DeviceState>(1, _omitFieldNames ? '' : 'state',
+        subBuilder: DeviceState.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RequestSetDeviceState clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RequestSetDeviceState copyWith(
+          void Function(RequestSetDeviceState) updates) =>
+      super.copyWith((message) => updates(message as RequestSetDeviceState))
+          as RequestSetDeviceState;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static RequestSetDeviceState create() => RequestSetDeviceState._();
+  @$core.override
+  RequestSetDeviceState createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static RequestSetDeviceState getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RequestSetDeviceState>(create);
+  static RequestSetDeviceState? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  DeviceState get state => $_getN(0);
+  @$pb.TagNumber(1)
+  set state(DeviceState value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasState() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearState() => $_clearField(1);
+  @$pb.TagNumber(1)
+  DeviceState ensureState() => $_ensure(0);
+}
+
+class ResponseSetDeviceState extends $pb.GeneratedMessage {
+  factory ResponseSetDeviceState() => create();
+
+  ResponseSetDeviceState._();
+
+  factory ResponseSetDeviceState.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ResponseSetDeviceState.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ResponseSetDeviceState',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResponseSetDeviceState clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResponseSetDeviceState copyWith(
+          void Function(ResponseSetDeviceState) updates) =>
+      super.copyWith((message) => updates(message as ResponseSetDeviceState))
+          as ResponseSetDeviceState;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ResponseSetDeviceState create() => ResponseSetDeviceState._();
+  @$core.override
+  ResponseSetDeviceState createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static ResponseSetDeviceState getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ResponseSetDeviceState>(create);
+  static ResponseSetDeviceState? _defaultInstance;
+}
+
 /// debug commands
 class RequestDebugStm32DeepSleep extends $pb.GeneratedMessage {
   factory RequestDebugStm32DeepSleep() => create();

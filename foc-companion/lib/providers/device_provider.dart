@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io' as io;
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
+import 'package:foc_companion/generated/protobuf/notifications.pbenum.dart';
 import 'package:foc_companion/services/app_logger.dart';
 
 final _log = AppLogger.instance;
@@ -48,8 +49,8 @@ class DeviceProvider with ChangeNotifier {
   /// Hardware potentiometer volume (0–1). Updated from device notifications.
   double boxVolume = 0.0;
 
-  /// True if the hardware volume is locked (long-press on knob).
-  bool isHardwareVolumeLocked = false;
+  /// True if the hardware potentiometer is locked.
+  bool isPotLocked = false;
 
   /// Per-channel impedance magnitude in ohms, estimated by the firmware.
   /// Null when no data has been received yet (device not playing).
@@ -60,8 +61,7 @@ class DeviceProvider with ChangeNotifier {
   double? impedanceD;
 
   Timer? _notificationWatchdog;
-  Timer? _buttonPressTimer;
-  bool _buttonLongPressDetected = false;
+  DateTime? _buttonDownTime;
 
   DeviceProvider(this.settings) {
     api.onNotification = _handleNotification;
@@ -365,25 +365,27 @@ class DeviceProvider with ChangeNotifier {
       boxVolume = n.notificationPotentiometer.value;
     }
     if (n.hasNotificationButtonPress()) {
-      final pressed = n.notificationButtonPress.pressed;
-      if (pressed) {
-        _buttonLongPressDetected = false;
-        _buttonPressTimer?.cancel();
-        _buttonPressTimer = Timer(const Duration(milliseconds: 1800), () {
-          _buttonLongPressDetected = true;
-        });
+      final state = n.notificationButtonPress.state;
+      if (state == ButtonState.BUTTON_DOWN) {
+        _buttonDownTime = DateTime.now();
       } else {
-        _buttonPressTimer?.cancel();
-        _buttonPressTimer = null;
-        if (!_buttonLongPressDetected) {
-          toggleLoop();
+        final downTime = _buttonDownTime;
+        _buttonDownTime = null;
+        if (downTime != null) {
+          final ms = DateTime.now().difference(downTime).inMilliseconds;
+          if (ms < 50) return; // debounce: ignore sub-50ms bounce events
+          final behavior = settings.deviceBehavior;
+          final action = ms >= behavior.longPressMillis
+              ? behavior.longPressAction
+              : behavior.shortPressAction;
+          _executeButtonAction(action);
         }
-        _buttonLongPressDetected = false;
       }
     }
     if (n.hasNotificationDeviceState()) {
-      isHardwareVolumeLocked = n.notificationDeviceState.volumeLocked;
+      isPotLocked = n.notificationDeviceState.state.potLocked;
     }
+
     if (n.hasNotificationDebugString()) {
       final msg = n.notificationDebugString.message;
       _log.d("Device: $msg");
@@ -399,5 +401,24 @@ class DeviceProvider with ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  void _executeButtonAction(ButtonAction action) {
+    switch (action) {
+      case ButtonAction.nothing:
+        break;
+      case ButtonAction.togglePlayPause:
+        toggleLoop();
+        break;
+      case ButtonAction.toggleVolumeLock:
+        togglePotLock();
+        break;
+    }
+  }
+
+  Future<void> togglePotLock() async {
+    if (!api.isConnected) return;
+    await api.setDeviceState(!isPotLocked).catchError(
+        (e) => _log.e("setDeviceState failed", error: e));
   }
 }

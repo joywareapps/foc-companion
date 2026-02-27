@@ -12,6 +12,7 @@ class SettingsProvider with ChangeNotifier {
   CockpitSettings cockpit = CockpitSettings();
   CockpitSettings cockpit4Phase = CockpitSettings();
   bool keepScreenOn = false;
+  DeviceBehaviorSettings deviceBehavior = DeviceBehaviorSettings();
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -37,6 +38,9 @@ class SettingsProvider with ChangeNotifier {
     keepScreenOn = prefs.getBool('keep_screen_on') ?? false;
     if (keepScreenOn) WakelockPlus.enable(); else WakelockPlus.disable();
 
+    final behaviorJson = prefs.getString('device_behavior_settings');
+    if (behaviorJson != null) deviceBehavior = DeviceBehaviorSettings.fromJson(jsonDecode(behaviorJson));
+
     notifyListeners();
   }
 
@@ -49,6 +53,7 @@ class SettingsProvider with ChangeNotifier {
     await prefs.setString('cockpit_settings', jsonEncode(cockpit.toJson()));
     await prefs.setString('cockpit4_settings', jsonEncode(cockpit4Phase.toJson()));
     await prefs.setBool('keep_screen_on', keepScreenOn);
+    await prefs.setString('device_behavior_settings', jsonEncode(deviceBehavior.toJson()));
     notifyListeners();
   }
 

@@ -23,6 +23,7 @@ message Notification{
         NotificationDebugString notification_debug_string = 1000;
         NotificationDebugAS5311 notification_debug_as5311 = 1001;
         NotificationDebugEdging notification_debug_edging = 1002;
+        NotificationDebugTeleplot notification_debug_teleplot = 1003;
     }
 
     uint64 timestamp = 999;
@@ -48,6 +49,9 @@ message Request {
         // network
         RequestWifiParametersSet request_wifi_parameters_set = 507;
         RequestWifiIPGet request_wifi_ip_get = 508;
+
+        // device state
+        RequestSetDeviceState request_set_device_state = 509;
 
         // sensors
         RequestLSM6DSOXStart request_lsm6dsox_start = 600;
@@ -80,6 +84,9 @@ message Response {
         // network
         ResponseWifiParametersSet response_wifi_parameters_set = 507;
         ResponseWifiIPGet response_wifi_ip_get = 508;
+
+        // device state
+        ResponseSetDeviceState response_set_device_state = 509;
 
         // sensors
         ResponseLSM6DSOXStart response_lsm6dsox_start = 600;

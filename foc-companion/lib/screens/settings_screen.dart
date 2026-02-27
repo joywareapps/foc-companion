@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/providers/device_provider.dart';
+import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/app_logger.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -133,6 +134,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         const SizedBox(height: 24),
 
+        // ── Device Behavior ──────────────────────────────
+        const Text("Device Behavior",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Divider(),
+        const SizedBox(height: 8),
+        _buildActionSelector(
+          label: "Short press",
+          value: settings.deviceBehavior.shortPressAction,
+          onChanged: (v) {
+            settings.deviceBehavior.shortPressAction = v;
+            settings.saveSettings();
+          },
+        ),
+        const SizedBox(height: 8),
+        _buildActionSelector(
+          label: "Long press",
+          value: settings.deviceBehavior.longPressAction,
+          onChanged: (v) {
+            settings.deviceBehavior.longPressAction = v;
+            settings.saveSettings();
+          },
+        ),
+        _buildSlider(
+          label: "Long press threshold (ms)",
+          value: settings.deviceBehavior.longPressMillis.toDouble(),
+          min: 300,
+          max: 2000,
+          decimals: 0,
+          enabled: true,
+          onChanged: (v) {
+            settings.deviceBehavior.longPressMillis = v.round();
+            settings.saveSettings();
+          },
+        ),
+
+        const SizedBox(height: 24),
+
         // ── Application Log ─────────────────────────────
         const Text("Application Log",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -236,6 +274,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
           min: min,
           max: max,
           onChanged: enabled ? onChanged : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionSelector({
+    required String label,
+    required ButtonAction value,
+    required ValueChanged<ButtonAction> onChanged,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 100,
+          child: Text(label),
+        ),
+        Expanded(
+          child: SegmentedButton<ButtonAction>(
+            segments: const [
+              ButtonSegment(
+                value: ButtonAction.nothing,
+                label: Text("Nothing"),
+              ),
+              ButtonSegment(
+                value: ButtonAction.togglePlayPause,
+                label: Text("Play/Pause"),
+              ),
+              ButtonSegment(
+                value: ButtonAction.toggleVolumeLock,
+                label: Text("Vol. Lock"),
+              ),
+            ],
+            selected: {value},
+            onSelectionChanged: (s) => onChanged(s.first),
+            style: const ButtonStyle(
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
         ),
       ],
     );

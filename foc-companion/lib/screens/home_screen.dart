@@ -334,15 +334,15 @@ class _PlayBar extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Tooltip(
-                                  message: device.isHardwareVolumeLocked
+                                  message: device.isPotLocked
                                       ? 'Hardware volume locked'
                                       : 'Hardware volume unlocked',
                                   child: Icon(
-                                    device.isHardwareVolumeLocked
+                                    device.isPotLocked
                                         ? Icons.lock
                                         : Icons.lock_open,
                                     size: 18,
-                                    color: device.isHardwareVolumeLocked
+                                    color: device.isPotLocked
                                         ? Colors.orange
                                         : colorScheme.onSurfaceVariant,
                                   ),

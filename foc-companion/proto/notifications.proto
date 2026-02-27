@@ -1,6 +1,8 @@
 syntax = "proto3";
 package focstim_rpc;
 
+import "messages.proto";
+
 
 message NotificationBoot {
 }
@@ -9,12 +11,17 @@ message NotificationPotentiometer {
     float value = 1;
 }
 
+enum ButtonState {
+    BUTTON_UP = 0;
+    BUTTON_DOWN = 1;
+}
+
 message NotificationButtonPress {
-    bool pressed = 1;
+    ButtonState state = 1;
 }
 
 message NotificationDeviceState {
-    bool volume_locked = 1;
+    DeviceState state = 1;
 }
 
 message NotificationCurrents {
@@ -110,4 +117,9 @@ message NotificationDebugEdging {
     float full_power_threshold = 1;
     float reduced_power_threshold = 2;
     float reduction = 3;
+}
+
+message NotificationDebugTeleplot {
+    string id = 1;
+    float value = 2;
 }

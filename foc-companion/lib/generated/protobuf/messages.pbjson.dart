@@ -381,6 +381,47 @@ const ResponseLSM6DSOXStop$json = {
 final $typed_data.Uint8List responseLSM6DSOXStopDescriptor =
     $convert.base64Decode('ChRSZXNwb25zZUxTTTZEU09YU3RvcA==');
 
+@$core.Deprecated('Use deviceStateDescriptor instead')
+const DeviceState$json = {
+  '1': 'DeviceState',
+  '2': [
+    {'1': 'pot_locked', '3': 1, '4': 1, '5': 8, '10': 'potLocked'},
+  ],
+};
+
+/// Descriptor for `DeviceState`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List deviceStateDescriptor = $convert.base64Decode(
+    'CgtEZXZpY2VTdGF0ZRIdCgpwb3RfbG9ja2VkGAEgASgIUglwb3RMb2NrZWQ=');
+
+@$core.Deprecated('Use requestSetDeviceStateDescriptor instead')
+const RequestSetDeviceState$json = {
+  '1': 'RequestSetDeviceState',
+  '2': [
+    {
+      '1': 'state',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.DeviceState',
+      '10': 'state'
+    },
+  ],
+};
+
+/// Descriptor for `RequestSetDeviceState`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List requestSetDeviceStateDescriptor = $convert.base64Decode(
+    'ChVSZXF1ZXN0U2V0RGV2aWNlU3RhdGUSLgoFc3RhdGUYASABKAsyGC5mb2NzdGltX3JwYy5EZX'
+    'ZpY2VTdGF0ZVIFc3RhdGU=');
+
+@$core.Deprecated('Use responseSetDeviceStateDescriptor instead')
+const ResponseSetDeviceState$json = {
+  '1': 'ResponseSetDeviceState',
+};
+
+/// Descriptor for `ResponseSetDeviceState`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List responseSetDeviceStateDescriptor =
+    $convert.base64Decode('ChZSZXNwb25zZVNldERldmljZVN0YXRl');
+
 @$core.Deprecated('Use requestDebugStm32DeepSleepDescriptor instead')
 const RequestDebugStm32DeepSleep$json = {
   '1': 'RequestDebugStm32DeepSleep',

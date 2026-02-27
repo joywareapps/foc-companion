@@ -29,11 +29,17 @@
       "Bash(cd /home/gorano/code/restim-mobile/restim-flutter && flutter analyze 2>&1)",
       "Bash(flutter analyze:*)",
       "Bash(dart analyze:*)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(git:*)",
+      "Bash(pip3 list)",
+      "Bash(cd:*)",
+      "Bash(flutter pub:*)",
+      "Bash(bash:*)"
     ],
     "additionalDirectories": [
       "/home/gorano/code/restim-desktop",
-      "/home/gorano/code/FOC-stim/"
+      "/home/gorano/code/FOC-stim/",
+      "/home/gorano/code/restim/"
     ]
   }
 }

@@ -145,6 +145,15 @@ const Notification$json = {
       '9': 0,
       '10': 'notificationDebugEdging'
     },
+    {
+      '1': 'notification_debug_teleplot',
+      '3': 1003,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.NotificationDebugTeleplot',
+      '9': 0,
+      '10': 'notificationDebugTeleplot'
+    },
     {'1': 'timestamp', '3': 999, '4': 1, '5': 4, '10': 'timestamp'},
   ],
   '8': [
@@ -178,8 +187,10 @@ final $typed_data.Uint8List notificationDescriptor = $convert.base64Decode(
     '5nEmMKGW5vdGlmaWNhdGlvbl9kZWJ1Z19hczUzMTEY6QcgASgLMiQuZm9jc3RpbV9ycGMuTm90'
     'aWZpY2F0aW9uRGVidWdBUzUzMTFIAFIXbm90aWZpY2F0aW9uRGVidWdBczUzMTESYwoZbm90aW'
     'ZpY2F0aW9uX2RlYnVnX2VkZ2luZxjqByABKAsyJC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25E'
-    'ZWJ1Z0VkZ2luZ0gAUhdub3RpZmljYXRpb25EZWJ1Z0VkZ2luZxIdCgl0aW1lc3RhbXAY5wcgAS'
-    'gEUgl0aW1lc3RhbXBCDgoMbm90aWZpY2F0aW9u');
+    'ZWJ1Z0VkZ2luZ0gAUhdub3RpZmljYXRpb25EZWJ1Z0VkZ2luZxJpChtub3RpZmljYXRpb25fZG'
+    'VidWdfdGVsZXBsb3QY6wcgASgLMiYuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW9uRGVidWdUZWxl'
+    'cGxvdEgAUhlub3RpZmljYXRpb25EZWJ1Z1RlbGVwbG90Eh0KCXRpbWVzdGFtcBjnByABKARSCX'
+    'RpbWVzdGFtcEIOCgxub3RpZmljYXRpb24=');
 
 @$core.Deprecated('Use requestDescriptor instead')
 const Request$json = {
@@ -268,6 +279,15 @@ const Request$json = {
       '10': 'requestWifiIpGet'
     },
     {
+      '1': 'request_set_device_state',
+      '3': 509,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.RequestSetDeviceState',
+      '9': 0,
+      '10': 'requestSetDeviceState'
+    },
+    {
       '1': 'request_lsm6dsox_start',
       '3': 600,
       '4': 1,
@@ -326,14 +346,16 @@ final $typed_data.Uint8List requestDescriptor = $convert.base64Decode(
     'aV9wYXJhbWV0ZXJzX3NldBj7AyABKAsyJS5mb2NzdGltX3JwYy5SZXF1ZXN0V2lmaVBhcmFtZX'
     'RlcnNTZXRIAFIYcmVxdWVzdFdpZmlQYXJhbWV0ZXJzU2V0Ek8KE3JlcXVlc3Rfd2lmaV9pcF9n'
     'ZXQY/AMgASgLMh0uZm9jc3RpbV9ycGMuUmVxdWVzdFdpZmlJUEdldEgAUhByZXF1ZXN0V2lmaU'
-    'lwR2V0EloKFnJlcXVlc3RfbHNtNmRzb3hfc3RhcnQY2AQgASgLMiEuZm9jc3RpbV9ycGMuUmVx'
-    'dWVzdExTTTZEU09YU3RhcnRIAFIUcmVxdWVzdExzbTZkc294U3RhcnQSVwoVcmVxdWVzdF9sc2'
-    '02ZHNveF9zdG9wGNkEIAEoCzIgLmZvY3N0aW1fcnBjLlJlcXVlc3RMU002RFNPWFN0b3BIAFIT'
-    'cmVxdWVzdExzbTZkc294U3RvcBJuCh5yZXF1ZXN0X2RlYnVnX3N0bTMyX2RlZXBfc2xlZXAY6A'
-    'cgASgLMicuZm9jc3RpbV9ycGMuUmVxdWVzdERlYnVnU3RtMzJEZWVwU2xlZXBIAFIacmVxdWVz'
-    'dERlYnVnU3RtMzJEZWVwU2xlZXAScAoecmVxdWVzdF9kZWJ1Z19lbnRlcl9ib290bG9hZGVyGO'
-    'kHIAEoCzIoLmZvY3N0aW1fcnBjLlJlcXVlc3REZWJ1Z0VudGVyQm9vdGxvYWRlckgAUhtyZXF1'
-    'ZXN0RGVidWdFbnRlckJvb3Rsb2FkZXJCCAoGcGFyYW1z');
+    'lwR2V0El4KGHJlcXVlc3Rfc2V0X2RldmljZV9zdGF0ZRj9AyABKAsyIi5mb2NzdGltX3JwYy5S'
+    'ZXF1ZXN0U2V0RGV2aWNlU3RhdGVIAFIVcmVxdWVzdFNldERldmljZVN0YXRlEloKFnJlcXVlc3'
+    'RfbHNtNmRzb3hfc3RhcnQY2AQgASgLMiEuZm9jc3RpbV9ycGMuUmVxdWVzdExTTTZEU09YU3Rh'
+    'cnRIAFIUcmVxdWVzdExzbTZkc294U3RhcnQSVwoVcmVxdWVzdF9sc202ZHNveF9zdG9wGNkEIA'
+    'EoCzIgLmZvY3N0aW1fcnBjLlJlcXVlc3RMU002RFNPWFN0b3BIAFITcmVxdWVzdExzbTZkc294'
+    'U3RvcBJuCh5yZXF1ZXN0X2RlYnVnX3N0bTMyX2RlZXBfc2xlZXAY6AcgASgLMicuZm9jc3RpbV'
+    '9ycGMuUmVxdWVzdERlYnVnU3RtMzJEZWVwU2xlZXBIAFIacmVxdWVzdERlYnVnU3RtMzJEZWVw'
+    'U2xlZXAScAoecmVxdWVzdF9kZWJ1Z19lbnRlcl9ib290bG9hZGVyGOkHIAEoCzIoLmZvY3N0aW'
+    '1fcnBjLlJlcXVlc3REZWJ1Z0VudGVyQm9vdGxvYWRlckgAUhtyZXF1ZXN0RGVidWdFbnRlckJv'
+    'b3Rsb2FkZXJCCAoGcGFyYW1z');
 
 @$core.Deprecated('Use responseDescriptor instead')
 const Response$json = {
@@ -422,6 +444,15 @@ const Response$json = {
       '10': 'responseWifiIpGet'
     },
     {
+      '1': 'response_set_device_state',
+      '3': 509,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.ResponseSetDeviceState',
+      '9': 0,
+      '10': 'responseSetDeviceState'
+    },
+    {
       '1': 'response_lsm6dsox_start',
       '3': 600,
       '4': 1,
@@ -479,13 +510,15 @@ final $typed_data.Uint8List responseDescriptor = $convert.base64Decode(
     'dGFtcEdldBJqChxyZXNwb25zZV93aWZpX3BhcmFtZXRlcnNfc2V0GPsDIAEoCzImLmZvY3N0aW'
     '1fcnBjLlJlc3BvbnNlV2lmaVBhcmFtZXRlcnNTZXRIAFIZcmVzcG9uc2VXaWZpUGFyYW1ldGVy'
     'c1NldBJSChRyZXNwb25zZV93aWZpX2lwX2dldBj8AyABKAsyHi5mb2NzdGltX3JwYy5SZXNwb2'
-    '5zZVdpZmlJUEdldEgAUhFyZXNwb25zZVdpZmlJcEdldBJdChdyZXNwb25zZV9sc202ZHNveF9z'
-    'dGFydBjYBCABKAsyIi5mb2NzdGltX3JwYy5SZXNwb25zZUxTTTZEU09YU3RhcnRIAFIVcmVzcG'
-    '9uc2VMc202ZHNveFN0YXJ0EloKFnJlc3BvbnNlX2xzbTZkc294X3N0b3AY2QQgASgLMiEuZm9j'
-    'c3RpbV9ycGMuUmVzcG9uc2VMU002RFNPWFN0b3BIAFIUcmVzcG9uc2VMc202ZHNveFN0b3AScQ'
-    'ofcmVzcG9uc2VfZGVidWdfc3RtMzJfZGVlcF9zbGVlcBjoByABKAsyKC5mb2NzdGltX3JwYy5S'
-    'ZXNwb25zZURlYnVnU3RtMzJEZWVwU2xlZXBIAFIbcmVzcG9uc2VEZWJ1Z1N0bTMyRGVlcFNsZW'
-    'VwEigKBWVycm9yGAMgASgLMhIuZm9jc3RpbV9ycGMuRXJyb3JSBWVycm9yQggKBnJlc3VsdA==');
+    '5zZVdpZmlJUEdldEgAUhFyZXNwb25zZVdpZmlJcEdldBJhChlyZXNwb25zZV9zZXRfZGV2aWNl'
+    'X3N0YXRlGP0DIAEoCzIjLmZvY3N0aW1fcnBjLlJlc3BvbnNlU2V0RGV2aWNlU3RhdGVIAFIWcm'
+    'VzcG9uc2VTZXREZXZpY2VTdGF0ZRJdChdyZXNwb25zZV9sc202ZHNveF9zdGFydBjYBCABKAsy'
+    'Ii5mb2NzdGltX3JwYy5SZXNwb25zZUxTTTZEU09YU3RhcnRIAFIVcmVzcG9uc2VMc202ZHNveF'
+    'N0YXJ0EloKFnJlc3BvbnNlX2xzbTZkc294X3N0b3AY2QQgASgLMiEuZm9jc3RpbV9ycGMuUmVz'
+    'cG9uc2VMU002RFNPWFN0b3BIAFIUcmVzcG9uc2VMc202ZHNveFN0b3AScQofcmVzcG9uc2VfZG'
+    'VidWdfc3RtMzJfZGVlcF9zbGVlcBjoByABKAsyKC5mb2NzdGltX3JwYy5SZXNwb25zZURlYnVn'
+    'U3RtMzJEZWVwU2xlZXBIAFIbcmVzcG9uc2VEZWJ1Z1N0bTMyRGVlcFNsZWVwEigKBWVycm9yGA'
+    'MgASgLMhIuZm9jc3RpbV9ycGMuRXJyb3JSBWVycm9yQggKBnJlc3VsdA==');
 
 @$core.Deprecated('Use errorDescriptor instead')
 const Error$json = {

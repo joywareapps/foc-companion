@@ -1,5 +1,34 @@
 enum DeviceMode { threePhase, fourPhase }
 
+enum ButtonAction { nothing, togglePlayPause, toggleVolumeLock }
+
+class DeviceBehaviorSettings {
+  ButtonAction shortPressAction;
+  ButtonAction longPressAction;
+  int longPressMillis;
+
+  DeviceBehaviorSettings({
+    this.shortPressAction = ButtonAction.nothing,
+    this.longPressAction = ButtonAction.nothing,
+    this.longPressMillis = 800,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'shortPressAction': shortPressAction.name,
+        'longPressAction': longPressAction.name,
+        'longPressMillis': longPressMillis,
+      };
+
+  DeviceBehaviorSettings.fromJson(Map<String, dynamic> json)
+      : shortPressAction = ButtonAction.values.firstWhere(
+            (e) => e.name == json['shortPressAction'],
+            orElse: () => ButtonAction.nothing),
+        longPressAction = ButtonAction.values.firstWhere(
+            (e) => e.name == json['longPressAction'],
+            orElse: () => ButtonAction.nothing),
+        longPressMillis = (json['longPressMillis'] ?? 800) as int;
+}
+
 // ──────────────────────────────────────────────
 // Pulse frequency modulation config
 // (JSON-serialisable; String function field for SharedPreferences)

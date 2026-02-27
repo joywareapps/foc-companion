@@ -14,7 +14,12 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
+import 'messages.pb.dart' as $0;
+import 'notifications.pbenum.dart';
+
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
+
+export 'notifications.pbenum.dart';
 
 class NotificationBoot extends $pb.GeneratedMessage {
   factory NotificationBoot() => create();
@@ -111,10 +116,10 @@ class NotificationPotentiometer extends $pb.GeneratedMessage {
 
 class NotificationButtonPress extends $pb.GeneratedMessage {
   factory NotificationButtonPress({
-    $core.bool? pressed,
+    ButtonState? state,
   }) {
     final result = create();
-    if (pressed != null) result.pressed = pressed;
+    if (state != null) result.state = state;
     return result;
   }
 
@@ -131,7 +136,8 @@ class NotificationButtonPress extends $pb.GeneratedMessage {
       _omitMessageNames ? '' : 'NotificationButtonPress',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..aOB(1, _omitFieldNames ? '' : 'pressed')
+    ..aE<ButtonState>(1, _omitFieldNames ? '' : 'state',
+        enumValues: ButtonState.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -155,21 +161,21 @@ class NotificationButtonPress extends $pb.GeneratedMessage {
   static NotificationButtonPress? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.bool get pressed => $_getBF(0);
+  ButtonState get state => $_getN(0);
   @$pb.TagNumber(1)
-  set pressed($core.bool value) => $_setBool(0, value);
+  set state(ButtonState value) => $_setField(1, value);
   @$pb.TagNumber(1)
-  $core.bool hasPressed() => $_has(0);
+  $core.bool hasState() => $_has(0);
   @$pb.TagNumber(1)
-  void clearPressed() => $_clearField(1);
+  void clearState() => $_clearField(1);
 }
 
 class NotificationDeviceState extends $pb.GeneratedMessage {
   factory NotificationDeviceState({
-    $core.bool? volumeLocked,
+    $0.DeviceState? state,
   }) {
     final result = create();
-    if (volumeLocked != null) result.volumeLocked = volumeLocked;
+    if (state != null) result.state = state;
     return result;
   }
 
@@ -186,7 +192,8 @@ class NotificationDeviceState extends $pb.GeneratedMessage {
       _omitMessageNames ? '' : 'NotificationDeviceState',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..aOB(1, _omitFieldNames ? '' : 'volumeLocked')
+    ..aOM<$0.DeviceState>(1, _omitFieldNames ? '' : 'state',
+        subBuilder: $0.DeviceState.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -210,13 +217,15 @@ class NotificationDeviceState extends $pb.GeneratedMessage {
   static NotificationDeviceState? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.bool get volumeLocked => $_getBF(0);
+  $0.DeviceState get state => $_getN(0);
   @$pb.TagNumber(1)
-  set volumeLocked($core.bool value) => $_setBool(0, value);
+  set state($0.DeviceState value) => $_setField(1, value);
   @$pb.TagNumber(1)
-  $core.bool hasVolumeLocked() => $_has(0);
+  $core.bool hasState() => $_has(0);
   @$pb.TagNumber(1)
-  void clearVolumeLocked() => $_clearField(1);
+  void clearState() => $_clearField(1);
+  @$pb.TagNumber(1)
+  $0.DeviceState ensureState() => $_ensure(0);
 }
 
 class NotificationCurrents extends $pb.GeneratedMessage {
@@ -1413,6 +1422,73 @@ class NotificationDebugEdging extends $pb.GeneratedMessage {
   $core.bool hasReduction() => $_has(2);
   @$pb.TagNumber(3)
   void clearReduction() => $_clearField(3);
+}
+
+class NotificationDebugTeleplot extends $pb.GeneratedMessage {
+  factory NotificationDebugTeleplot({
+    $core.String? id,
+    $core.double? value,
+  }) {
+    final result = create();
+    if (id != null) result.id = id;
+    if (value != null) result.value = value;
+    return result;
+  }
+
+  NotificationDebugTeleplot._();
+
+  factory NotificationDebugTeleplot.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory NotificationDebugTeleplot.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'NotificationDebugTeleplot',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aD(2, _omitFieldNames ? '' : 'value', fieldType: $pb.PbFieldType.OF)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationDebugTeleplot clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationDebugTeleplot copyWith(
+          void Function(NotificationDebugTeleplot) updates) =>
+      super.copyWith((message) => updates(message as NotificationDebugTeleplot))
+          as NotificationDebugTeleplot;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static NotificationDebugTeleplot create() => NotificationDebugTeleplot._();
+  @$core.override
+  NotificationDebugTeleplot createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static NotificationDebugTeleplot getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<NotificationDebugTeleplot>(create);
+  static NotificationDebugTeleplot? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get value => $_getN(1);
+  @$pb.TagNumber(2)
+  set value($core.double value) => $_setFloat(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasValue() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearValue() => $_clearField(2);
 }
 
 const $core.bool _omitFieldNames =

@@ -62,14 +62,14 @@ const NotificationButtonPress$json = {
       '6': '.focstim_rpc.ButtonState',
       '10': 'state'
     },
+    {'1': 'timestamp_ms', '3': 2, '4': 1, '5': 13, '10': 'timestampMs'},
   ],
 };
 
 /// Descriptor for `NotificationButtonPress`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List notificationButtonPressDescriptor =
-    $convert.base64Decode(
-        'ChdOb3RpZmljYXRpb25CdXR0b25QcmVzcxIuCgVzdGF0ZRgBIAEoDjIYLmZvY3N0aW1fcnBjLk'
-        'J1dHRvblN0YXRlUgVzdGF0ZQ==');
+final $typed_data.Uint8List notificationButtonPressDescriptor = $convert.base64Decode(
+    'ChdOb3RpZmljYXRpb25CdXR0b25QcmVzcxIuCgVzdGF0ZRgBIAEoDjIYLmZvY3N0aW1fcnBjLk'
+    'J1dHRvblN0YXRlUgVzdGF0ZRIhCgx0aW1lc3RhbXBfbXMYAiABKA1SC3RpbWVzdGFtcE1z');
 
 @$core.Deprecated('Use notificationDeviceStateDescriptor instead')
 const NotificationDeviceState$json = {

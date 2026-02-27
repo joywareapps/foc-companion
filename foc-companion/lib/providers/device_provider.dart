@@ -61,7 +61,10 @@ class DeviceProvider with ChangeNotifier {
   double? impedanceD;
 
   Timer? _notificationWatchdog;
-  DateTime? _buttonDownTime;
+  // Button press timing. Firmware timestamps (ms) are used when available
+  // (timestampMs != 0); otherwise falls back to local DateTime.
+  int? _buttonEventTimestampMs;       // firmware millis() timestamp, or null
+  DateTime? _buttonEventDateTime;     // local fallback timestamp
 
   DeviceProvider(this.settings) {
     api.onNotification = _handleNotification;
@@ -365,15 +368,27 @@ class DeviceProvider with ChangeNotifier {
       boxVolume = n.notificationPotentiometer.value;
     }
     if (n.hasNotificationButtonPress()) {
-      final state = n.notificationButtonPress.state;
-      if (state == ButtonState.BUTTON_DOWN) {
-        _buttonDownTime = DateTime.now();
+      final bp = n.notificationButtonPress;
+      final firmwareTs = bp.timestampMs != 0 ? bp.timestampMs : null;
+      if (bp.state == ButtonState.BUTTON_DOWN) {
+        _buttonEventTimestampMs = firmwareTs;
+        _buttonEventDateTime = firmwareTs == null ? DateTime.now() : null;
       } else {
-        final downTime = _buttonDownTime;
-        _buttonDownTime = null;
-        if (downTime != null) {
-          final ms = DateTime.now().difference(downTime).inMilliseconds;
-          if (ms < 50) return; // debounce: ignore sub-50ms bounce events
+        final downFirmwareTs = _buttonEventTimestampMs;
+        final downDateTime = _buttonEventDateTime;
+        _buttonEventTimestampMs = firmwareTs;
+        _buttonEventDateTime = firmwareTs == null ? DateTime.now() : null;
+
+        int? ms;
+        if (firmwareTs != null && downFirmwareTs != null) {
+          // Firmware timestamps available: immune to network jitter.
+          // uint32 subtraction wraps correctly across ~49.7-day millis() rollover.
+          ms = (firmwareTs - downFirmwareTs) & 0xFFFFFFFF;
+        } else if (downDateTime != null) {
+          ms = DateTime.now().difference(downDateTime).inMilliseconds;
+        }
+
+        if (ms != null) {
           final behavior = settings.deviceBehavior;
           final action = ms >= behavior.longPressMillis
               ? behavior.longPressAction

@@ -117,9 +117,11 @@ class NotificationPotentiometer extends $pb.GeneratedMessage {
 class NotificationButtonPress extends $pb.GeneratedMessage {
   factory NotificationButtonPress({
     ButtonState? state,
+    $core.int? timestampMs,
   }) {
     final result = create();
     if (state != null) result.state = state;
+    if (timestampMs != null) result.timestampMs = timestampMs;
     return result;
   }
 
@@ -138,6 +140,8 @@ class NotificationButtonPress extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aE<ButtonState>(1, _omitFieldNames ? '' : 'state',
         enumValues: ButtonState.values)
+    ..aI(2, _omitFieldNames ? '' : 'timestampMs',
+        fieldType: $pb.PbFieldType.OU3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -168,6 +172,15 @@ class NotificationButtonPress extends $pb.GeneratedMessage {
   $core.bool hasState() => $_has(0);
   @$pb.TagNumber(1)
   void clearState() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.int get timestampMs => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set timestampMs($core.int value) => $_setUnsignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTimestampMs() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTimestampMs() => $_clearField(2);
 }
 
 class NotificationDeviceState extends $pb.GeneratedMessage {

@@ -123,3 +123,18 @@ final $typed_data.Uint8List errorsDescriptor = $convert.base64Decode(
     'CgZFcnJvcnMSEQoNRVJST1JfVU5LTk9XThAAEh4KGkVSUk9SX09VVFBVVF9OT1RfU1VQUE9SVE'
     'VEEAESGQoVRVJST1JfVU5LTk9XTl9SRVFVRVNUEAISGwoXRVJST1JfUE9XRVJfTk9UX1BSRVNF'
     'TlQQAxIZChVFUlJPUl9BTFJFQURZX1BMQVlJTkcQBA==');
+
+@$core.Deprecated('Use buttonStateDescriptor instead')
+const ButtonState$json = {
+  '1': 'ButtonState',
+  '2': [
+    {'1': 'BUTTON_UNKNOWN', '2': 0},
+    {'1': 'BUTTON_DOWN', '2': 1},
+    {'1': 'BUTTON_UP', '2': 2},
+  ],
+};
+
+/// Descriptor for `ButtonState`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List buttonStateDescriptor = $convert.base64Decode(
+    'CgtCdXR0b25TdGF0ZRISCg5CVVRUT05fVU5LTk9XThAAEg8KC0JVVFRPTl9ET1dOEAESDQoJQl'
+    'VUVE9OX1VQEAI=');

@@ -28,7 +28,7 @@ message ResponseCapabilitiesGet {
     bool threephase = 1;
     bool fourphase = 2;
     bool battery = 3;       // true if device has a battery installed
-    bool potentiometer = 4;
+    bool device_volume = 4;
     float maximum_waveform_amplitude_amps = 5;
     bool lsm6dsox = 6;
 }
@@ -101,6 +101,12 @@ message ResponseWifiIPGet {
     uint32 ip = 1;
 }
 
+message RequestLockDeviceVolume {
+    bool lock = 1;
+}
+message ResponseLockDeviceVolume {
+}
+
 // sensors
 message RequestLSM6DSOXStart {
     float imu_samplerate = 1;   // Available values are 12.5, 26, 52, 104, 208, 417, 833, 1667, 3333, 6667 Hz
@@ -115,17 +121,6 @@ message ResponseLSM6DSOXStart {
 message RequestLSM6DSOXStop {
 }
 message ResponseLSM6DSOXStop {
-}
-
-// device state
-message DeviceState {
-    bool pot_locked = 1;
-}
-
-message RequestSetDeviceState {
-    DeviceState state = 1;
-}
-message ResponseSetDeviceState {
 }
 
 // debug commands

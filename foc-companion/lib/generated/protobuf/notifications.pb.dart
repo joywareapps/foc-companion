@@ -14,12 +14,9 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'messages.pb.dart' as $0;
-import 'notifications.pbenum.dart';
+import 'constants.pbenum.dart' as $0;
 
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
-
-export 'notifications.pbenum.dart';
 
 class NotificationBoot extends $pb.GeneratedMessage {
   factory NotificationBoot() => create();
@@ -59,64 +56,76 @@ class NotificationBoot extends $pb.GeneratedMessage {
   static NotificationBoot? _defaultInstance;
 }
 
-class NotificationPotentiometer extends $pb.GeneratedMessage {
-  factory NotificationPotentiometer({
-    $core.double? value,
+class NotificationDeviceVolume extends $pb.GeneratedMessage {
+  factory NotificationDeviceVolume({
+    $core.double? volume,
+    $core.bool? locked,
   }) {
     final result = create();
-    if (value != null) result.value = value;
+    if (volume != null) result.volume = volume;
+    if (locked != null) result.locked = locked;
     return result;
   }
 
-  NotificationPotentiometer._();
+  NotificationDeviceVolume._();
 
-  factory NotificationPotentiometer.fromBuffer($core.List<$core.int> data,
+  factory NotificationDeviceVolume.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory NotificationPotentiometer.fromJson($core.String json,
+  factory NotificationDeviceVolume.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'NotificationPotentiometer',
+      _omitMessageNames ? '' : 'NotificationDeviceVolume',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..aD(1, _omitFieldNames ? '' : 'value', fieldType: $pb.PbFieldType.OF)
+    ..aD(1, _omitFieldNames ? '' : 'volume', fieldType: $pb.PbFieldType.OF)
+    ..aOB(2, _omitFieldNames ? '' : 'locked')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  NotificationPotentiometer clone() => deepCopy();
+  NotificationDeviceVolume clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  NotificationPotentiometer copyWith(
-          void Function(NotificationPotentiometer) updates) =>
-      super.copyWith((message) => updates(message as NotificationPotentiometer))
-          as NotificationPotentiometer;
+  NotificationDeviceVolume copyWith(
+          void Function(NotificationDeviceVolume) updates) =>
+      super.copyWith((message) => updates(message as NotificationDeviceVolume))
+          as NotificationDeviceVolume;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static NotificationPotentiometer create() => NotificationPotentiometer._();
+  static NotificationDeviceVolume create() => NotificationDeviceVolume._();
   @$core.override
-  NotificationPotentiometer createEmptyInstance() => create();
+  NotificationDeviceVolume createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static NotificationPotentiometer getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<NotificationPotentiometer>(create);
-  static NotificationPotentiometer? _defaultInstance;
+  static NotificationDeviceVolume getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<NotificationDeviceVolume>(create);
+  static NotificationDeviceVolume? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.double get value => $_getN(0);
+  $core.double get volume => $_getN(0);
   @$pb.TagNumber(1)
-  set value($core.double value) => $_setFloat(0, value);
+  set volume($core.double value) => $_setFloat(0, value);
   @$pb.TagNumber(1)
-  $core.bool hasValue() => $_has(0);
+  $core.bool hasVolume() => $_has(0);
   @$pb.TagNumber(1)
-  void clearValue() => $_clearField(1);
+  void clearVolume() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.bool get locked => $_getBF(1);
+  @$pb.TagNumber(2)
+  set locked($core.bool value) => $_setBool(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasLocked() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearLocked() => $_clearField(2);
 }
 
 class NotificationButtonPress extends $pb.GeneratedMessage {
   factory NotificationButtonPress({
-    ButtonState? state,
+    $0.ButtonState? state,
     $core.int? timestampMs,
   }) {
     final result = create();
@@ -138,8 +147,8 @@ class NotificationButtonPress extends $pb.GeneratedMessage {
       _omitMessageNames ? '' : 'NotificationButtonPress',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..aE<ButtonState>(1, _omitFieldNames ? '' : 'state',
-        enumValues: ButtonState.values)
+    ..aE<$0.ButtonState>(1, _omitFieldNames ? '' : 'state',
+        enumValues: $0.ButtonState.values)
     ..aI(2, _omitFieldNames ? '' : 'timestampMs',
         fieldType: $pb.PbFieldType.OU3)
     ..hasRequiredFields = false;
@@ -165,9 +174,9 @@ class NotificationButtonPress extends $pb.GeneratedMessage {
   static NotificationButtonPress? _defaultInstance;
 
   @$pb.TagNumber(1)
-  ButtonState get state => $_getN(0);
+  $0.ButtonState get state => $_getN(0);
   @$pb.TagNumber(1)
-  set state(ButtonState value) => $_setField(1, value);
+  set state($0.ButtonState value) => $_setField(1, value);
   @$pb.TagNumber(1)
   $core.bool hasState() => $_has(0);
   @$pb.TagNumber(1)
@@ -181,64 +190,6 @@ class NotificationButtonPress extends $pb.GeneratedMessage {
   $core.bool hasTimestampMs() => $_has(1);
   @$pb.TagNumber(2)
   void clearTimestampMs() => $_clearField(2);
-}
-
-class NotificationDeviceState extends $pb.GeneratedMessage {
-  factory NotificationDeviceState({
-    $0.DeviceState? state,
-  }) {
-    final result = create();
-    if (state != null) result.state = state;
-    return result;
-  }
-
-  NotificationDeviceState._();
-
-  factory NotificationDeviceState.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory NotificationDeviceState.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'NotificationDeviceState',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
-      createEmptyInstance: create)
-    ..aOM<$0.DeviceState>(1, _omitFieldNames ? '' : 'state',
-        subBuilder: $0.DeviceState.create)
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  NotificationDeviceState clone() => deepCopy();
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  NotificationDeviceState copyWith(
-          void Function(NotificationDeviceState) updates) =>
-      super.copyWith((message) => updates(message as NotificationDeviceState))
-          as NotificationDeviceState;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static NotificationDeviceState create() => NotificationDeviceState._();
-  @$core.override
-  NotificationDeviceState createEmptyInstance() => create();
-  @$core.pragma('dart2js:noInline')
-  static NotificationDeviceState getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<NotificationDeviceState>(create);
-  static NotificationDeviceState? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $0.DeviceState get state => $_getN(0);
-  @$pb.TagNumber(1)
-  set state($0.DeviceState value) => $_setField(1, value);
-  @$pb.TagNumber(1)
-  $core.bool hasState() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearState() => $_clearField(1);
-  @$pb.TagNumber(1)
-  $0.DeviceState ensureState() => $_ensure(0);
 }
 
 class NotificationCurrents extends $pb.GeneratedMessage {
@@ -880,11 +831,17 @@ class NotificationSignalStats extends $pb.GeneratedMessage {
   factory NotificationSignalStats({
     $core.double? actualPulseFrequency,
     $core.double? vDrive,
+    $core.double? transformerUtilization,
+    $core.double? voltageUtilization,
   }) {
     final result = create();
     if (actualPulseFrequency != null)
       result.actualPulseFrequency = actualPulseFrequency;
     if (vDrive != null) result.vDrive = vDrive;
+    if (transformerUtilization != null)
+      result.transformerUtilization = transformerUtilization;
+    if (voltageUtilization != null)
+      result.voltageUtilization = voltageUtilization;
     return result;
   }
 
@@ -904,6 +861,10 @@ class NotificationSignalStats extends $pb.GeneratedMessage {
     ..aD(1, _omitFieldNames ? '' : 'actualPulseFrequency',
         fieldType: $pb.PbFieldType.OF)
     ..aD(2, _omitFieldNames ? '' : 'vDrive', fieldType: $pb.PbFieldType.OF)
+    ..aD(3, _omitFieldNames ? '' : 'transformerUtilization',
+        fieldType: $pb.PbFieldType.OF)
+    ..aD(4, _omitFieldNames ? '' : 'voltageUtilization',
+        fieldType: $pb.PbFieldType.OF)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -943,6 +904,24 @@ class NotificationSignalStats extends $pb.GeneratedMessage {
   $core.bool hasVDrive() => $_has(1);
   @$pb.TagNumber(2)
   void clearVDrive() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.double get transformerUtilization => $_getN(2);
+  @$pb.TagNumber(3)
+  set transformerUtilization($core.double value) => $_setFloat(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTransformerUtilization() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTransformerUtilization() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.double get voltageUtilization => $_getN(3);
+  @$pb.TagNumber(4)
+  set voltageUtilization($core.double value) => $_setFloat(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasVoltageUtilization() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearVoltageUtilization() => $_clearField(4);
 }
 
 class NotificationBattery extends $pb.GeneratedMessage {

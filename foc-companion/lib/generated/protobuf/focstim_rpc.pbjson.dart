@@ -29,13 +29,13 @@ const Notification$json = {
       '10': 'notificationBoot'
     },
     {
-      '1': 'notification_potentiometer',
+      '1': 'notification_device_volume',
       '3': 2,
       '4': 1,
       '5': 11,
-      '6': '.focstim_rpc.NotificationPotentiometer',
+      '6': '.focstim_rpc.NotificationDeviceVolume',
       '9': 0,
-      '10': 'notificationPotentiometer'
+      '10': 'notificationDeviceVolume'
     },
     {
       '1': 'notification_currents',
@@ -110,15 +110,6 @@ const Notification$json = {
       '10': 'notificationButtonPress'
     },
     {
-      '1': 'notification_device_state',
-      '3': 11,
-      '4': 1,
-      '5': 11,
-      '6': '.focstim_rpc.NotificationDeviceState',
-      '9': 0,
-      '10': 'notificationDeviceState'
-    },
-    {
       '1': 'notification_debug_string',
       '3': 1000,
       '4': 1,
@@ -164,33 +155,31 @@ const Notification$json = {
 /// Descriptor for `Notification`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List notificationDescriptor = $convert.base64Decode(
     'CgxOb3RpZmljYXRpb24STAoRbm90aWZpY2F0aW9uX2Jvb3QYASABKAsyHS5mb2NzdGltX3JwYy'
-    '5Ob3RpZmljYXRpb25Cb290SABSEG5vdGlmaWNhdGlvbkJvb3QSZwoabm90aWZpY2F0aW9uX3Bv'
-    'dGVudGlvbWV0ZXIYAiABKAsyJi5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25Qb3RlbnRpb21ldG'
-    'VySABSGW5vdGlmaWNhdGlvblBvdGVudGlvbWV0ZXISWAoVbm90aWZpY2F0aW9uX2N1cnJlbnRz'
-    'GAMgASgLMiEuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW9uQ3VycmVudHNIAFIUbm90aWZpY2F0aW'
-    '9uQ3VycmVudHMSbgodbm90aWZpY2F0aW9uX21vZGVsX2VzdGltYXRpb24YBCABKAsyKC5mb2Nz'
-    'dGltX3JwYy5Ob3RpZmljYXRpb25Nb2RlbEVzdGltYXRpb25IAFIbbm90aWZpY2F0aW9uTW9kZW'
-    'xFc3RpbWF0aW9uEmIKGW5vdGlmaWNhdGlvbl9zeXN0ZW1fc3RhdHMYBSABKAsyJC5mb2NzdGlt'
-    'X3JwYy5Ob3RpZmljYXRpb25TeXN0ZW1TdGF0c0gAUhdub3RpZmljYXRpb25TeXN0ZW1TdGF0cx'
-    'JiChlub3RpZmljYXRpb25fc2lnbmFsX3N0YXRzGAYgASgLMiQuZm9jc3RpbV9ycGMuTm90aWZp'
-    'Y2F0aW9uU2lnbmFsU3RhdHNIAFIXbm90aWZpY2F0aW9uU2lnbmFsU3RhdHMSVQoUbm90aWZpY2'
-    'F0aW9uX2JhdHRlcnkYByABKAsyIC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25CYXR0ZXJ5SABS'
-    'E25vdGlmaWNhdGlvbkJhdHRlcnkSWAoVbm90aWZpY2F0aW9uX2xzbTZkc294GAggASgLMiEuZm'
-    '9jc3RpbV9ycGMuTm90aWZpY2F0aW9uTFNNNkRTT1hIAFIUbm90aWZpY2F0aW9uTHNtNmRzb3gS'
-    'WAoVbm90aWZpY2F0aW9uX3ByZXNzdXJlGAkgASgLMiEuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW'
-    '9uUHJlc3N1cmVIAFIUbm90aWZpY2F0aW9uUHJlc3N1cmUSYgoZbm90aWZpY2F0aW9uX2J1dHRv'
-    'bl9wcmVzcxgKIAEoCzIkLmZvY3N0aW1fcnBjLk5vdGlmaWNhdGlvbkJ1dHRvblByZXNzSABSF2'
-    '5vdGlmaWNhdGlvbkJ1dHRvblByZXNzEmIKGW5vdGlmaWNhdGlvbl9kZXZpY2Vfc3RhdGUYCyAB'
-    'KAsyJC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25EZXZpY2VTdGF0ZUgAUhdub3RpZmljYXRpb2'
-    '5EZXZpY2VTdGF0ZRJjChlub3RpZmljYXRpb25fZGVidWdfc3RyaW5nGOgHIAEoCzIkLmZvY3N0'
-    'aW1fcnBjLk5vdGlmaWNhdGlvbkRlYnVnU3RyaW5nSABSF25vdGlmaWNhdGlvbkRlYnVnU3RyaW'
-    '5nEmMKGW5vdGlmaWNhdGlvbl9kZWJ1Z19hczUzMTEY6QcgASgLMiQuZm9jc3RpbV9ycGMuTm90'
-    'aWZpY2F0aW9uRGVidWdBUzUzMTFIAFIXbm90aWZpY2F0aW9uRGVidWdBczUzMTESYwoZbm90aW'
-    'ZpY2F0aW9uX2RlYnVnX2VkZ2luZxjqByABKAsyJC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25E'
-    'ZWJ1Z0VkZ2luZ0gAUhdub3RpZmljYXRpb25EZWJ1Z0VkZ2luZxJpChtub3RpZmljYXRpb25fZG'
-    'VidWdfdGVsZXBsb3QY6wcgASgLMiYuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW9uRGVidWdUZWxl'
-    'cGxvdEgAUhlub3RpZmljYXRpb25EZWJ1Z1RlbGVwbG90Eh0KCXRpbWVzdGFtcBjnByABKARSCX'
-    'RpbWVzdGFtcEIOCgxub3RpZmljYXRpb24=');
+    '5Ob3RpZmljYXRpb25Cb290SABSEG5vdGlmaWNhdGlvbkJvb3QSZQoabm90aWZpY2F0aW9uX2Rl'
+    'dmljZV92b2x1bWUYAiABKAsyJS5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25EZXZpY2VWb2x1bW'
+    'VIAFIYbm90aWZpY2F0aW9uRGV2aWNlVm9sdW1lElgKFW5vdGlmaWNhdGlvbl9jdXJyZW50cxgD'
+    'IAEoCzIhLmZvY3N0aW1fcnBjLk5vdGlmaWNhdGlvbkN1cnJlbnRzSABSFG5vdGlmaWNhdGlvbk'
+    'N1cnJlbnRzEm4KHW5vdGlmaWNhdGlvbl9tb2RlbF9lc3RpbWF0aW9uGAQgASgLMiguZm9jc3Rp'
+    'bV9ycGMuTm90aWZpY2F0aW9uTW9kZWxFc3RpbWF0aW9uSABSG25vdGlmaWNhdGlvbk1vZGVsRX'
+    'N0aW1hdGlvbhJiChlub3RpZmljYXRpb25fc3lzdGVtX3N0YXRzGAUgASgLMiQuZm9jc3RpbV9y'
+    'cGMuTm90aWZpY2F0aW9uU3lzdGVtU3RhdHNIAFIXbm90aWZpY2F0aW9uU3lzdGVtU3RhdHMSYg'
+    'oZbm90aWZpY2F0aW9uX3NpZ25hbF9zdGF0cxgGIAEoCzIkLmZvY3N0aW1fcnBjLk5vdGlmaWNh'
+    'dGlvblNpZ25hbFN0YXRzSABSF25vdGlmaWNhdGlvblNpZ25hbFN0YXRzElUKFG5vdGlmaWNhdG'
+    'lvbl9iYXR0ZXJ5GAcgASgLMiAuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW9uQmF0dGVyeUgAUhNu'
+    'b3RpZmljYXRpb25CYXR0ZXJ5ElgKFW5vdGlmaWNhdGlvbl9sc202ZHNveBgIIAEoCzIhLmZvY3'
+    'N0aW1fcnBjLk5vdGlmaWNhdGlvbkxTTTZEU09YSABSFG5vdGlmaWNhdGlvbkxzbTZkc294ElgK'
+    'FW5vdGlmaWNhdGlvbl9wcmVzc3VyZRgJIAEoCzIhLmZvY3N0aW1fcnBjLk5vdGlmaWNhdGlvbl'
+    'ByZXNzdXJlSABSFG5vdGlmaWNhdGlvblByZXNzdXJlEmIKGW5vdGlmaWNhdGlvbl9idXR0b25f'
+    'cHJlc3MYCiABKAsyJC5mb2NzdGltX3JwYy5Ob3RpZmljYXRpb25CdXR0b25QcmVzc0gAUhdub3'
+    'RpZmljYXRpb25CdXR0b25QcmVzcxJjChlub3RpZmljYXRpb25fZGVidWdfc3RyaW5nGOgHIAEo'
+    'CzIkLmZvY3N0aW1fcnBjLk5vdGlmaWNhdGlvbkRlYnVnU3RyaW5nSABSF25vdGlmaWNhdGlvbk'
+    'RlYnVnU3RyaW5nEmMKGW5vdGlmaWNhdGlvbl9kZWJ1Z19hczUzMTEY6QcgASgLMiQuZm9jc3Rp'
+    'bV9ycGMuTm90aWZpY2F0aW9uRGVidWdBUzUzMTFIAFIXbm90aWZpY2F0aW9uRGVidWdBczUzMT'
+    'ESYwoZbm90aWZpY2F0aW9uX2RlYnVnX2VkZ2luZxjqByABKAsyJC5mb2NzdGltX3JwYy5Ob3Rp'
+    'ZmljYXRpb25EZWJ1Z0VkZ2luZ0gAUhdub3RpZmljYXRpb25EZWJ1Z0VkZ2luZxJpChtub3RpZm'
+    'ljYXRpb25fZGVidWdfdGVsZXBsb3QY6wcgASgLMiYuZm9jc3RpbV9ycGMuTm90aWZpY2F0aW9u'
+    'RGVidWdUZWxlcGxvdEgAUhlub3RpZmljYXRpb25EZWJ1Z1RlbGVwbG90Eh0KCXRpbWVzdGFtcB'
+    'jnByABKARSCXRpbWVzdGFtcEIOCgxub3RpZmljYXRpb24=');
 
 @$core.Deprecated('Use requestDescriptor instead')
 const Request$json = {
@@ -279,13 +268,13 @@ const Request$json = {
       '10': 'requestWifiIpGet'
     },
     {
-      '1': 'request_set_device_state',
+      '1': 'request_lock_device_volume',
       '3': 509,
       '4': 1,
       '5': 11,
-      '6': '.focstim_rpc.RequestSetDeviceState',
+      '6': '.focstim_rpc.RequestLockDeviceVolume',
       '9': 0,
-      '10': 'requestSetDeviceState'
+      '10': 'requestLockDeviceVolume'
     },
     {
       '1': 'request_lsm6dsox_start',
@@ -346,16 +335,16 @@ final $typed_data.Uint8List requestDescriptor = $convert.base64Decode(
     'aV9wYXJhbWV0ZXJzX3NldBj7AyABKAsyJS5mb2NzdGltX3JwYy5SZXF1ZXN0V2lmaVBhcmFtZX'
     'RlcnNTZXRIAFIYcmVxdWVzdFdpZmlQYXJhbWV0ZXJzU2V0Ek8KE3JlcXVlc3Rfd2lmaV9pcF9n'
     'ZXQY/AMgASgLMh0uZm9jc3RpbV9ycGMuUmVxdWVzdFdpZmlJUEdldEgAUhByZXF1ZXN0V2lmaU'
-    'lwR2V0El4KGHJlcXVlc3Rfc2V0X2RldmljZV9zdGF0ZRj9AyABKAsyIi5mb2NzdGltX3JwYy5S'
-    'ZXF1ZXN0U2V0RGV2aWNlU3RhdGVIAFIVcmVxdWVzdFNldERldmljZVN0YXRlEloKFnJlcXVlc3'
-    'RfbHNtNmRzb3hfc3RhcnQY2AQgASgLMiEuZm9jc3RpbV9ycGMuUmVxdWVzdExTTTZEU09YU3Rh'
-    'cnRIAFIUcmVxdWVzdExzbTZkc294U3RhcnQSVwoVcmVxdWVzdF9sc202ZHNveF9zdG9wGNkEIA'
-    'EoCzIgLmZvY3N0aW1fcnBjLlJlcXVlc3RMU002RFNPWFN0b3BIAFITcmVxdWVzdExzbTZkc294'
-    'U3RvcBJuCh5yZXF1ZXN0X2RlYnVnX3N0bTMyX2RlZXBfc2xlZXAY6AcgASgLMicuZm9jc3RpbV'
-    '9ycGMuUmVxdWVzdERlYnVnU3RtMzJEZWVwU2xlZXBIAFIacmVxdWVzdERlYnVnU3RtMzJEZWVw'
-    'U2xlZXAScAoecmVxdWVzdF9kZWJ1Z19lbnRlcl9ib290bG9hZGVyGOkHIAEoCzIoLmZvY3N0aW'
-    '1fcnBjLlJlcXVlc3REZWJ1Z0VudGVyQm9vdGxvYWRlckgAUhtyZXF1ZXN0RGVidWdFbnRlckJv'
-    'b3Rsb2FkZXJCCAoGcGFyYW1z');
+    'lwR2V0EmQKGnJlcXVlc3RfbG9ja19kZXZpY2Vfdm9sdW1lGP0DIAEoCzIkLmZvY3N0aW1fcnBj'
+    'LlJlcXVlc3RMb2NrRGV2aWNlVm9sdW1lSABSF3JlcXVlc3RMb2NrRGV2aWNlVm9sdW1lEloKFn'
+    'JlcXVlc3RfbHNtNmRzb3hfc3RhcnQY2AQgASgLMiEuZm9jc3RpbV9ycGMuUmVxdWVzdExTTTZE'
+    'U09YU3RhcnRIAFIUcmVxdWVzdExzbTZkc294U3RhcnQSVwoVcmVxdWVzdF9sc202ZHNveF9zdG'
+    '9wGNkEIAEoCzIgLmZvY3N0aW1fcnBjLlJlcXVlc3RMU002RFNPWFN0b3BIAFITcmVxdWVzdExz'
+    'bTZkc294U3RvcBJuCh5yZXF1ZXN0X2RlYnVnX3N0bTMyX2RlZXBfc2xlZXAY6AcgASgLMicuZm'
+    '9jc3RpbV9ycGMuUmVxdWVzdERlYnVnU3RtMzJEZWVwU2xlZXBIAFIacmVxdWVzdERlYnVnU3Rt'
+    'MzJEZWVwU2xlZXAScAoecmVxdWVzdF9kZWJ1Z19lbnRlcl9ib290bG9hZGVyGOkHIAEoCzIoLm'
+    'ZvY3N0aW1fcnBjLlJlcXVlc3REZWJ1Z0VudGVyQm9vdGxvYWRlckgAUhtyZXF1ZXN0RGVidWdF'
+    'bnRlckJvb3Rsb2FkZXJCCAoGcGFyYW1z');
 
 @$core.Deprecated('Use responseDescriptor instead')
 const Response$json = {
@@ -444,13 +433,13 @@ const Response$json = {
       '10': 'responseWifiIpGet'
     },
     {
-      '1': 'response_set_device_state',
+      '1': 'response_lock_device_volume',
       '3': 509,
       '4': 1,
       '5': 11,
-      '6': '.focstim_rpc.ResponseSetDeviceState',
+      '6': '.focstim_rpc.ResponseLockDeviceVolume',
       '9': 0,
-      '10': 'responseSetDeviceState'
+      '10': 'responseLockDeviceVolume'
     },
     {
       '1': 'response_lsm6dsox_start',
@@ -510,15 +499,15 @@ final $typed_data.Uint8List responseDescriptor = $convert.base64Decode(
     'dGFtcEdldBJqChxyZXNwb25zZV93aWZpX3BhcmFtZXRlcnNfc2V0GPsDIAEoCzImLmZvY3N0aW'
     '1fcnBjLlJlc3BvbnNlV2lmaVBhcmFtZXRlcnNTZXRIAFIZcmVzcG9uc2VXaWZpUGFyYW1ldGVy'
     'c1NldBJSChRyZXNwb25zZV93aWZpX2lwX2dldBj8AyABKAsyHi5mb2NzdGltX3JwYy5SZXNwb2'
-    '5zZVdpZmlJUEdldEgAUhFyZXNwb25zZVdpZmlJcEdldBJhChlyZXNwb25zZV9zZXRfZGV2aWNl'
-    'X3N0YXRlGP0DIAEoCzIjLmZvY3N0aW1fcnBjLlJlc3BvbnNlU2V0RGV2aWNlU3RhdGVIAFIWcm'
-    'VzcG9uc2VTZXREZXZpY2VTdGF0ZRJdChdyZXNwb25zZV9sc202ZHNveF9zdGFydBjYBCABKAsy'
-    'Ii5mb2NzdGltX3JwYy5SZXNwb25zZUxTTTZEU09YU3RhcnRIAFIVcmVzcG9uc2VMc202ZHNveF'
-    'N0YXJ0EloKFnJlc3BvbnNlX2xzbTZkc294X3N0b3AY2QQgASgLMiEuZm9jc3RpbV9ycGMuUmVz'
-    'cG9uc2VMU002RFNPWFN0b3BIAFIUcmVzcG9uc2VMc202ZHNveFN0b3AScQofcmVzcG9uc2VfZG'
-    'VidWdfc3RtMzJfZGVlcF9zbGVlcBjoByABKAsyKC5mb2NzdGltX3JwYy5SZXNwb25zZURlYnVn'
-    'U3RtMzJEZWVwU2xlZXBIAFIbcmVzcG9uc2VEZWJ1Z1N0bTMyRGVlcFNsZWVwEigKBWVycm9yGA'
-    'MgASgLMhIuZm9jc3RpbV9ycGMuRXJyb3JSBWVycm9yQggKBnJlc3VsdA==');
+    '5zZVdpZmlJUEdldEgAUhFyZXNwb25zZVdpZmlJcEdldBJnChtyZXNwb25zZV9sb2NrX2Rldmlj'
+    'ZV92b2x1bWUY/QMgASgLMiUuZm9jc3RpbV9ycGMuUmVzcG9uc2VMb2NrRGV2aWNlVm9sdW1lSA'
+    'BSGHJlc3BvbnNlTG9ja0RldmljZVZvbHVtZRJdChdyZXNwb25zZV9sc202ZHNveF9zdGFydBjY'
+    'BCABKAsyIi5mb2NzdGltX3JwYy5SZXNwb25zZUxTTTZEU09YU3RhcnRIAFIVcmVzcG9uc2VMc2'
+    '02ZHNveFN0YXJ0EloKFnJlc3BvbnNlX2xzbTZkc294X3N0b3AY2QQgASgLMiEuZm9jc3RpbV9y'
+    'cGMuUmVzcG9uc2VMU002RFNPWFN0b3BIAFIUcmVzcG9uc2VMc202ZHNveFN0b3AScQofcmVzcG'
+    '9uc2VfZGVidWdfc3RtMzJfZGVlcF9zbGVlcBjoByABKAsyKC5mb2NzdGltX3JwYy5SZXNwb25z'
+    'ZURlYnVnU3RtMzJEZWVwU2xlZXBIAFIbcmVzcG9uc2VEZWJ1Z1N0bTMyRGVlcFNsZWVwEigKBW'
+    'Vycm9yGAMgASgLMhIuZm9jc3RpbV9ycGMuRXJyb3JSBWVycm9yQggKBnJlc3VsdA==');
 
 @$core.Deprecated('Use errorDescriptor instead')
 const Error$json = {

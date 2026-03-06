@@ -23,7 +23,7 @@ export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
 
 enum Notification_Notification {
   notificationBoot,
-  notificationPotentiometer,
+  notificationDeviceVolume,
   notificationCurrents,
   notificationModelEstimation,
   notificationSystemStats,
@@ -32,7 +32,6 @@ enum Notification_Notification {
   notificationLsm6dsox,
   notificationPressure,
   notificationButtonPress,
-  notificationDeviceState,
   notificationDebugString,
   notificationDebugAs5311,
   notificationDebugEdging,
@@ -43,7 +42,7 @@ enum Notification_Notification {
 class Notification extends $pb.GeneratedMessage {
   factory Notification({
     $0.NotificationBoot? notificationBoot,
-    $0.NotificationPotentiometer? notificationPotentiometer,
+    $0.NotificationDeviceVolume? notificationDeviceVolume,
     $0.NotificationCurrents? notificationCurrents,
     $0.NotificationModelEstimation? notificationModelEstimation,
     $0.NotificationSystemStats? notificationSystemStats,
@@ -52,7 +51,6 @@ class Notification extends $pb.GeneratedMessage {
     $0.NotificationLSM6DSOX? notificationLsm6dsox,
     $0.NotificationPressure? notificationPressure,
     $0.NotificationButtonPress? notificationButtonPress,
-    $0.NotificationDeviceState? notificationDeviceState,
     $fixnum.Int64? timestamp,
     $0.NotificationDebugString? notificationDebugString,
     $0.NotificationDebugAS5311? notificationDebugAs5311,
@@ -61,8 +59,8 @@ class Notification extends $pb.GeneratedMessage {
   }) {
     final result = create();
     if (notificationBoot != null) result.notificationBoot = notificationBoot;
-    if (notificationPotentiometer != null)
-      result.notificationPotentiometer = notificationPotentiometer;
+    if (notificationDeviceVolume != null)
+      result.notificationDeviceVolume = notificationDeviceVolume;
     if (notificationCurrents != null)
       result.notificationCurrents = notificationCurrents;
     if (notificationModelEstimation != null)
@@ -79,8 +77,6 @@ class Notification extends $pb.GeneratedMessage {
       result.notificationPressure = notificationPressure;
     if (notificationButtonPress != null)
       result.notificationButtonPress = notificationButtonPress;
-    if (notificationDeviceState != null)
-      result.notificationDeviceState = notificationDeviceState;
     if (timestamp != null) result.timestamp = timestamp;
     if (notificationDebugString != null)
       result.notificationDebugString = notificationDebugString;
@@ -105,7 +101,7 @@ class Notification extends $pb.GeneratedMessage {
   static const $core.Map<$core.int, Notification_Notification>
       _Notification_NotificationByTag = {
     1: Notification_Notification.notificationBoot,
-    2: Notification_Notification.notificationPotentiometer,
+    2: Notification_Notification.notificationDeviceVolume,
     3: Notification_Notification.notificationCurrents,
     4: Notification_Notification.notificationModelEstimation,
     5: Notification_Notification.notificationSystemStats,
@@ -114,7 +110,6 @@ class Notification extends $pb.GeneratedMessage {
     8: Notification_Notification.notificationLsm6dsox,
     9: Notification_Notification.notificationPressure,
     10: Notification_Notification.notificationButtonPress,
-    11: Notification_Notification.notificationDeviceState,
     1000: Notification_Notification.notificationDebugString,
     1001: Notification_Notification.notificationDebugAs5311,
     1002: Notification_Notification.notificationDebugEdging,
@@ -125,12 +120,12 @@ class Notification extends $pb.GeneratedMessage {
       _omitMessageNames ? '' : 'Notification',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
-    ..oo(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1000, 1001, 1002, 1003])
+    ..oo(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 1001, 1002, 1003])
     ..aOM<$0.NotificationBoot>(1, _omitFieldNames ? '' : 'notificationBoot',
         subBuilder: $0.NotificationBoot.create)
-    ..aOM<$0.NotificationPotentiometer>(
-        2, _omitFieldNames ? '' : 'notificationPotentiometer',
-        subBuilder: $0.NotificationPotentiometer.create)
+    ..aOM<$0.NotificationDeviceVolume>(
+        2, _omitFieldNames ? '' : 'notificationDeviceVolume',
+        subBuilder: $0.NotificationDeviceVolume.create)
     ..aOM<$0.NotificationCurrents>(
         3, _omitFieldNames ? '' : 'notificationCurrents',
         subBuilder: $0.NotificationCurrents.create)
@@ -155,9 +150,6 @@ class Notification extends $pb.GeneratedMessage {
     ..aOM<$0.NotificationButtonPress>(
         10, _omitFieldNames ? '' : 'notificationButtonPress',
         subBuilder: $0.NotificationButtonPress.create)
-    ..aOM<$0.NotificationDeviceState>(
-        11, _omitFieldNames ? '' : 'notificationDeviceState',
-        subBuilder: $0.NotificationDeviceState.create)
     ..a<$fixnum.Int64>(
         999, _omitFieldNames ? '' : 'timestamp', $pb.PbFieldType.OU6,
         defaultOrMaker: $fixnum.Int64.ZERO)
@@ -204,7 +196,6 @@ class Notification extends $pb.GeneratedMessage {
   @$pb.TagNumber(8)
   @$pb.TagNumber(9)
   @$pb.TagNumber(10)
-  @$pb.TagNumber(11)
   @$pb.TagNumber(1000)
   @$pb.TagNumber(1001)
   @$pb.TagNumber(1002)
@@ -221,7 +212,6 @@ class Notification extends $pb.GeneratedMessage {
   @$pb.TagNumber(8)
   @$pb.TagNumber(9)
   @$pb.TagNumber(10)
-  @$pb.TagNumber(11)
   @$pb.TagNumber(1000)
   @$pb.TagNumber(1001)
   @$pb.TagNumber(1002)
@@ -240,16 +230,16 @@ class Notification extends $pb.GeneratedMessage {
   $0.NotificationBoot ensureNotificationBoot() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $0.NotificationPotentiometer get notificationPotentiometer => $_getN(1);
+  $0.NotificationDeviceVolume get notificationDeviceVolume => $_getN(1);
   @$pb.TagNumber(2)
-  set notificationPotentiometer($0.NotificationPotentiometer value) =>
+  set notificationDeviceVolume($0.NotificationDeviceVolume value) =>
       $_setField(2, value);
   @$pb.TagNumber(2)
-  $core.bool hasNotificationPotentiometer() => $_has(1);
+  $core.bool hasNotificationDeviceVolume() => $_has(1);
   @$pb.TagNumber(2)
-  void clearNotificationPotentiometer() => $_clearField(2);
+  void clearNotificationDeviceVolume() => $_clearField(2);
   @$pb.TagNumber(2)
-  $0.NotificationPotentiometer ensureNotificationPotentiometer() => $_ensure(1);
+  $0.NotificationDeviceVolume ensureNotificationDeviceVolume() => $_ensure(1);
 
   @$pb.TagNumber(3)
   $0.NotificationCurrents get notificationCurrents => $_getN(2);
@@ -347,75 +337,63 @@ class Notification extends $pb.GeneratedMessage {
   @$pb.TagNumber(10)
   $0.NotificationButtonPress ensureNotificationButtonPress() => $_ensure(9);
 
-  @$pb.TagNumber(11)
-  $0.NotificationDeviceState get notificationDeviceState => $_getN(10);
-  @$pb.TagNumber(11)
-  set notificationDeviceState($0.NotificationDeviceState value) =>
-      $_setField(11, value);
-  @$pb.TagNumber(11)
-  $core.bool hasNotificationDeviceState() => $_has(10);
-  @$pb.TagNumber(11)
-  void clearNotificationDeviceState() => $_clearField(11);
-  @$pb.TagNumber(11)
-  $0.NotificationDeviceState ensureNotificationDeviceState() => $_ensure(10);
-
   @$pb.TagNumber(999)
-  $fixnum.Int64 get timestamp => $_getI64(11);
+  $fixnum.Int64 get timestamp => $_getI64(10);
   @$pb.TagNumber(999)
-  set timestamp($fixnum.Int64 value) => $_setInt64(11, value);
+  set timestamp($fixnum.Int64 value) => $_setInt64(10, value);
   @$pb.TagNumber(999)
-  $core.bool hasTimestamp() => $_has(11);
+  $core.bool hasTimestamp() => $_has(10);
   @$pb.TagNumber(999)
   void clearTimestamp() => $_clearField(999);
 
   @$pb.TagNumber(1000)
-  $0.NotificationDebugString get notificationDebugString => $_getN(12);
+  $0.NotificationDebugString get notificationDebugString => $_getN(11);
   @$pb.TagNumber(1000)
   set notificationDebugString($0.NotificationDebugString value) =>
       $_setField(1000, value);
   @$pb.TagNumber(1000)
-  $core.bool hasNotificationDebugString() => $_has(12);
+  $core.bool hasNotificationDebugString() => $_has(11);
   @$pb.TagNumber(1000)
   void clearNotificationDebugString() => $_clearField(1000);
   @$pb.TagNumber(1000)
-  $0.NotificationDebugString ensureNotificationDebugString() => $_ensure(12);
+  $0.NotificationDebugString ensureNotificationDebugString() => $_ensure(11);
 
   @$pb.TagNumber(1001)
-  $0.NotificationDebugAS5311 get notificationDebugAs5311 => $_getN(13);
+  $0.NotificationDebugAS5311 get notificationDebugAs5311 => $_getN(12);
   @$pb.TagNumber(1001)
   set notificationDebugAs5311($0.NotificationDebugAS5311 value) =>
       $_setField(1001, value);
   @$pb.TagNumber(1001)
-  $core.bool hasNotificationDebugAs5311() => $_has(13);
+  $core.bool hasNotificationDebugAs5311() => $_has(12);
   @$pb.TagNumber(1001)
   void clearNotificationDebugAs5311() => $_clearField(1001);
   @$pb.TagNumber(1001)
-  $0.NotificationDebugAS5311 ensureNotificationDebugAs5311() => $_ensure(13);
+  $0.NotificationDebugAS5311 ensureNotificationDebugAs5311() => $_ensure(12);
 
   @$pb.TagNumber(1002)
-  $0.NotificationDebugEdging get notificationDebugEdging => $_getN(14);
+  $0.NotificationDebugEdging get notificationDebugEdging => $_getN(13);
   @$pb.TagNumber(1002)
   set notificationDebugEdging($0.NotificationDebugEdging value) =>
       $_setField(1002, value);
   @$pb.TagNumber(1002)
-  $core.bool hasNotificationDebugEdging() => $_has(14);
+  $core.bool hasNotificationDebugEdging() => $_has(13);
   @$pb.TagNumber(1002)
   void clearNotificationDebugEdging() => $_clearField(1002);
   @$pb.TagNumber(1002)
-  $0.NotificationDebugEdging ensureNotificationDebugEdging() => $_ensure(14);
+  $0.NotificationDebugEdging ensureNotificationDebugEdging() => $_ensure(13);
 
   @$pb.TagNumber(1003)
-  $0.NotificationDebugTeleplot get notificationDebugTeleplot => $_getN(15);
+  $0.NotificationDebugTeleplot get notificationDebugTeleplot => $_getN(14);
   @$pb.TagNumber(1003)
   set notificationDebugTeleplot($0.NotificationDebugTeleplot value) =>
       $_setField(1003, value);
   @$pb.TagNumber(1003)
-  $core.bool hasNotificationDebugTeleplot() => $_has(15);
+  $core.bool hasNotificationDebugTeleplot() => $_has(14);
   @$pb.TagNumber(1003)
   void clearNotificationDebugTeleplot() => $_clearField(1003);
   @$pb.TagNumber(1003)
   $0.NotificationDebugTeleplot ensureNotificationDebugTeleplot() =>
-      $_ensure(15);
+      $_ensure(14);
 }
 
 enum Request_Params {
@@ -428,7 +406,7 @@ enum Request_Params {
   requestTimestampGet,
   requestWifiParametersSet,
   requestWifiIpGet,
-  requestSetDeviceState,
+  requestLockDeviceVolume,
   requestLsm6dsoxStart,
   requestLsm6dsoxStop,
   requestDebugStm32DeepSleep,
@@ -448,7 +426,7 @@ class Request extends $pb.GeneratedMessage {
     $1.RequestTimestampGet? requestTimestampGet,
     $1.RequestWifiParametersSet? requestWifiParametersSet,
     $1.RequestWifiIPGet? requestWifiIpGet,
-    $1.RequestSetDeviceState? requestSetDeviceState,
+    $1.RequestLockDeviceVolume? requestLockDeviceVolume,
     $1.RequestLSM6DSOXStart? requestLsm6dsoxStart,
     $1.RequestLSM6DSOXStop? requestLsm6dsoxStop,
     $1.RequestDebugStm32DeepSleep? requestDebugStm32DeepSleep,
@@ -471,8 +449,8 @@ class Request extends $pb.GeneratedMessage {
     if (requestWifiParametersSet != null)
       result.requestWifiParametersSet = requestWifiParametersSet;
     if (requestWifiIpGet != null) result.requestWifiIpGet = requestWifiIpGet;
-    if (requestSetDeviceState != null)
-      result.requestSetDeviceState = requestSetDeviceState;
+    if (requestLockDeviceVolume != null)
+      result.requestLockDeviceVolume = requestLockDeviceVolume;
     if (requestLsm6dsoxStart != null)
       result.requestLsm6dsoxStart = requestLsm6dsoxStart;
     if (requestLsm6dsoxStop != null)
@@ -503,7 +481,7 @@ class Request extends $pb.GeneratedMessage {
     505: Request_Params.requestTimestampGet,
     507: Request_Params.requestWifiParametersSet,
     508: Request_Params.requestWifiIpGet,
-    509: Request_Params.requestSetDeviceState,
+    509: Request_Params.requestLockDeviceVolume,
     600: Request_Params.requestLsm6dsoxStart,
     601: Request_Params.requestLsm6dsoxStop,
     1000: Request_Params.requestDebugStm32DeepSleep,
@@ -541,9 +519,9 @@ class Request extends $pb.GeneratedMessage {
         subBuilder: $1.RequestWifiParametersSet.create)
     ..aOM<$1.RequestWifiIPGet>(508, _omitFieldNames ? '' : 'requestWifiIpGet',
         subBuilder: $1.RequestWifiIPGet.create)
-    ..aOM<$1.RequestSetDeviceState>(
-        509, _omitFieldNames ? '' : 'requestSetDeviceState',
-        subBuilder: $1.RequestSetDeviceState.create)
+    ..aOM<$1.RequestLockDeviceVolume>(
+        509, _omitFieldNames ? '' : 'requestLockDeviceVolume',
+        subBuilder: $1.RequestLockDeviceVolume.create)
     ..aOM<$1.RequestLSM6DSOXStart>(
         600, _omitFieldNames ? '' : 'requestLsm6dsoxStart',
         subBuilder: $1.RequestLSM6DSOXStart.create)
@@ -724,18 +702,18 @@ class Request extends $pb.GeneratedMessage {
   @$pb.TagNumber(508)
   $1.RequestWifiIPGet ensureRequestWifiIpGet() => $_ensure(9);
 
-  /// device state
+  /// device volume lock
   @$pb.TagNumber(509)
-  $1.RequestSetDeviceState get requestSetDeviceState => $_getN(10);
+  $1.RequestLockDeviceVolume get requestLockDeviceVolume => $_getN(10);
   @$pb.TagNumber(509)
-  set requestSetDeviceState($1.RequestSetDeviceState value) =>
+  set requestLockDeviceVolume($1.RequestLockDeviceVolume value) =>
       $_setField(509, value);
   @$pb.TagNumber(509)
-  $core.bool hasRequestSetDeviceState() => $_has(10);
+  $core.bool hasRequestLockDeviceVolume() => $_has(10);
   @$pb.TagNumber(509)
-  void clearRequestSetDeviceState() => $_clearField(509);
+  void clearRequestLockDeviceVolume() => $_clearField(509);
   @$pb.TagNumber(509)
-  $1.RequestSetDeviceState ensureRequestSetDeviceState() => $_ensure(10);
+  $1.RequestLockDeviceVolume ensureRequestLockDeviceVolume() => $_ensure(10);
 
   /// sensors
   @$pb.TagNumber(600)
@@ -800,7 +778,7 @@ enum Response_Result {
   responseTimestampGet,
   responseWifiParametersSet,
   responseWifiIpGet,
-  responseSetDeviceState,
+  responseLockDeviceVolume,
   responseLsm6dsoxStart,
   responseLsm6dsoxStop,
   responseDebugStm32DeepSleep,
@@ -821,7 +799,7 @@ class Response extends $pb.GeneratedMessage {
     $1.ResponseTimestampGet? responseTimestampGet,
     $1.ResponseWifiParametersSet? responseWifiParametersSet,
     $1.ResponseWifiIPGet? responseWifiIpGet,
-    $1.ResponseSetDeviceState? responseSetDeviceState,
+    $1.ResponseLockDeviceVolume? responseLockDeviceVolume,
     $1.ResponseLSM6DSOXStart? responseLsm6dsoxStart,
     $1.ResponseLSM6DSOXStop? responseLsm6dsoxStop,
     $1.ResponseDebugStm32DeepSleep? responseDebugStm32DeepSleep,
@@ -846,8 +824,8 @@ class Response extends $pb.GeneratedMessage {
     if (responseWifiParametersSet != null)
       result.responseWifiParametersSet = responseWifiParametersSet;
     if (responseWifiIpGet != null) result.responseWifiIpGet = responseWifiIpGet;
-    if (responseSetDeviceState != null)
-      result.responseSetDeviceState = responseSetDeviceState;
+    if (responseLockDeviceVolume != null)
+      result.responseLockDeviceVolume = responseLockDeviceVolume;
     if (responseLsm6dsoxStart != null)
       result.responseLsm6dsoxStart = responseLsm6dsoxStart;
     if (responseLsm6dsoxStop != null)
@@ -876,7 +854,7 @@ class Response extends $pb.GeneratedMessage {
     505: Response_Result.responseTimestampGet,
     507: Response_Result.responseWifiParametersSet,
     508: Response_Result.responseWifiIpGet,
-    509: Response_Result.responseSetDeviceState,
+    509: Response_Result.responseLockDeviceVolume,
     600: Response_Result.responseLsm6dsoxStart,
     601: Response_Result.responseLsm6dsoxStop,
     1000: Response_Result.responseDebugStm32DeepSleep,
@@ -914,9 +892,9 @@ class Response extends $pb.GeneratedMessage {
         subBuilder: $1.ResponseWifiParametersSet.create)
     ..aOM<$1.ResponseWifiIPGet>(508, _omitFieldNames ? '' : 'responseWifiIpGet',
         subBuilder: $1.ResponseWifiIPGet.create)
-    ..aOM<$1.ResponseSetDeviceState>(
-        509, _omitFieldNames ? '' : 'responseSetDeviceState',
-        subBuilder: $1.ResponseSetDeviceState.create)
+    ..aOM<$1.ResponseLockDeviceVolume>(
+        509, _omitFieldNames ? '' : 'responseLockDeviceVolume',
+        subBuilder: $1.ResponseLockDeviceVolume.create)
     ..aOM<$1.ResponseLSM6DSOXStart>(
         600, _omitFieldNames ? '' : 'responseLsm6dsoxStart',
         subBuilder: $1.ResponseLSM6DSOXStart.create)
@@ -1104,18 +1082,18 @@ class Response extends $pb.GeneratedMessage {
   @$pb.TagNumber(508)
   $1.ResponseWifiIPGet ensureResponseWifiIpGet() => $_ensure(10);
 
-  /// device state
+  /// device volume lock
   @$pb.TagNumber(509)
-  $1.ResponseSetDeviceState get responseSetDeviceState => $_getN(11);
+  $1.ResponseLockDeviceVolume get responseLockDeviceVolume => $_getN(11);
   @$pb.TagNumber(509)
-  set responseSetDeviceState($1.ResponseSetDeviceState value) =>
+  set responseLockDeviceVolume($1.ResponseLockDeviceVolume value) =>
       $_setField(509, value);
   @$pb.TagNumber(509)
-  $core.bool hasResponseSetDeviceState() => $_has(11);
+  $core.bool hasResponseLockDeviceVolume() => $_has(11);
   @$pb.TagNumber(509)
-  void clearResponseSetDeviceState() => $_clearField(509);
+  void clearResponseLockDeviceVolume() => $_clearField(509);
   @$pb.TagNumber(509)
-  $1.ResponseSetDeviceState ensureResponseSetDeviceState() => $_ensure(11);
+  $1.ResponseLockDeviceVolume ensureResponseLockDeviceVolume() => $_ensure(11);
 
   /// sensors
   @$pb.TagNumber(600)

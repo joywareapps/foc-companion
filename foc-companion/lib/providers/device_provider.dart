@@ -10,7 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io' as io;
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
-import 'package:foc_companion/generated/protobuf/notifications.pbenum.dart';
+import 'package:foc_companion/generated/protobuf/constants.pbenum.dart';
 import 'package:foc_companion/services/app_logger.dart';
 
 final _log = AppLogger.instance;
@@ -364,8 +364,9 @@ class DeviceProvider with ChangeNotifier {
       batteryVoltage = "${n.notificationBattery.batteryVoltage.toStringAsFixed(2)}V";
       batterySoc = n.notificationBattery.batterySoc;
     }
-    if (n.hasNotificationPotentiometer()) {
-      boxVolume = n.notificationPotentiometer.value;
+    if (n.hasNotificationDeviceVolume()) {
+      boxVolume = n.notificationDeviceVolume.volume;
+      isPotLocked = n.notificationDeviceVolume.locked;
     }
     if (n.hasNotificationButtonPress()) {
       final bp = n.notificationButtonPress;
@@ -373,7 +374,7 @@ class DeviceProvider with ChangeNotifier {
       if (bp.state == ButtonState.BUTTON_DOWN) {
         _buttonEventTimestampMs = firmwareTs;
         _buttonEventDateTime = firmwareTs == null ? DateTime.now() : null;
-      } else {
+      } else if (bp.state == ButtonState.BUTTON_UP) {
         final downFirmwareTs = _buttonEventTimestampMs;
         final downDateTime = _buttonEventDateTime;
         _buttonEventTimestampMs = firmwareTs;
@@ -396,9 +397,7 @@ class DeviceProvider with ChangeNotifier {
           _executeButtonAction(action);
         }
       }
-    }
-    if (n.hasNotificationDeviceState()) {
-      isPotLocked = n.notificationDeviceState.state.potLocked;
+      // BUTTON_UNKNOWN (0) is ignored
     }
 
     if (n.hasNotificationDebugString()) {
@@ -433,7 +432,7 @@ class DeviceProvider with ChangeNotifier {
 
   Future<void> togglePotLock() async {
     if (!api.isConnected) return;
-    await api.setDeviceState(!isPotLocked).catchError(
-        (e) => _log.e("setDeviceState failed", error: e));
+    await api.lockDeviceVolume(!isPotLocked).catchError(
+        (e) => _log.e("lockDeviceVolume failed", error: e));
   }
 }

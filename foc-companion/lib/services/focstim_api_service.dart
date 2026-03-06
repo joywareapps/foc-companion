@@ -141,10 +141,9 @@ class FocStimApiService {
     await sendRequest(req);
   }
 
-  Future<void> setDeviceState(bool potLocked) async {
+  Future<void> lockDeviceVolume(bool lock) async {
     var req = Request()
-      ..requestSetDeviceState = (RequestSetDeviceState()
-        ..state = (DeviceState()..potLocked = potLocked));
+      ..requestLockDeviceVolume = (RequestLockDeviceVolume()..lock = lock);
     await sendRequest(req);
   }
 }

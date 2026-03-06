@@ -34,7 +34,9 @@
       "Bash(pip3 list)",
       "Bash(cd:*)",
       "Bash(flutter pub:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh api:*)"
     ],
     "additionalDirectories": [
       "/home/gorano/code/restim-desktop",

@@ -1,28 +1,20 @@
 syntax = "proto3";
 package focstim_rpc;
 
-import "messages.proto";
+import "constants.proto";
 
 
 message NotificationBoot {
 }
 
-message NotificationPotentiometer {
-    float value = 1;
-}
-
-enum ButtonState {
-    BUTTON_UP = 0;
-    BUTTON_DOWN = 1;
+message NotificationDeviceVolume {
+    float volume = 1;   // (0, 1)
+    bool locked = 2;
 }
 
 message NotificationButtonPress {
     ButtonState state = 1;
     uint32 timestamp_ms = 2;  // millis() on STM32 (uint32_t, wraps ~49.7 days)
-}
-
-message NotificationDeviceState {
-    DeviceState state = 1;
 }
 
 message NotificationCurrents {
@@ -41,7 +33,7 @@ message NotificationCurrents {
 
 message NotificationModelEstimation {
     float resistance_a = 1;     // estimated output resistance, including output stage
-    float reluctance_a = 2;     // at 1000hz (?)
+    float reluctance_a = 2;     // at the current carrier frequency
     float resistance_b = 3;
     float reluctance_b = 4;
     float resistance_c = 5;
@@ -78,7 +70,9 @@ message NotificationSystemStats {
 
 message NotificationSignalStats {
     float actual_pulse_frequency = 1;
-    float v_drive = 2; // TODO: replace v_drive with some sort of "percent of max power"
+    float v_drive = 2;                  // maximum peak-to-peak voltage (low side)
+    float transformer_utilization = 3;  // 0-1 precentage of transformer saturation
+    float voltage_utilization = 4;      // 0-1 percentage of maximum usable voltage
 }
 
 message NotificationBattery {
@@ -87,7 +81,6 @@ message NotificationBattery {
     float battery_soc = 3;  // int?
     bool wall_power_present = 4;
     float chip_temperature = 5;
-    // todo: usb connected?
 }
 
 message NotificationLSM6DSOX {

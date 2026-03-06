@@ -87,7 +87,7 @@ const ResponseCapabilitiesGet$json = {
     {'1': 'threephase', '3': 1, '4': 1, '5': 8, '10': 'threephase'},
     {'1': 'fourphase', '3': 2, '4': 1, '5': 8, '10': 'fourphase'},
     {'1': 'battery', '3': 3, '4': 1, '5': 8, '10': 'battery'},
-    {'1': 'potentiometer', '3': 4, '4': 1, '5': 8, '10': 'potentiometer'},
+    {'1': 'device_volume', '3': 4, '4': 1, '5': 8, '10': 'deviceVolume'},
     {
       '1': 'maximum_waveform_amplitude_amps',
       '3': 5,
@@ -103,9 +103,9 @@ const ResponseCapabilitiesGet$json = {
 final $typed_data.Uint8List responseCapabilitiesGetDescriptor = $convert.base64Decode(
     'ChdSZXNwb25zZUNhcGFiaWxpdGllc0dldBIeCgp0aHJlZXBoYXNlGAEgASgIUgp0aHJlZXBoYX'
     'NlEhwKCWZvdXJwaGFzZRgCIAEoCFIJZm91cnBoYXNlEhgKB2JhdHRlcnkYAyABKAhSB2JhdHRl'
-    'cnkSJAoNcG90ZW50aW9tZXRlchgEIAEoCFINcG90ZW50aW9tZXRlchJFCh9tYXhpbXVtX3dhdm'
-    'Vmb3JtX2FtcGxpdHVkZV9hbXBzGAUgASgCUhxtYXhpbXVtV2F2ZWZvcm1BbXBsaXR1ZGVBbXBz'
-    'EhoKCGxzbTZkc294GAYgASgIUghsc202ZHNveA==');
+    'cnkSIwoNZGV2aWNlX3ZvbHVtZRgEIAEoCFIMZGV2aWNlVm9sdW1lEkUKH21heGltdW1fd2F2ZW'
+    'Zvcm1fYW1wbGl0dWRlX2FtcHMYBSABKAJSHG1heGltdW1XYXZlZm9ybUFtcGxpdHVkZUFtcHMS'
+    'GgoIbHNtNmRzb3gYBiABKAhSCGxzbTZkc294');
 
 @$core.Deprecated('Use requestSignalStartDescriptor instead')
 const RequestSignalStart$json = {
@@ -333,6 +333,28 @@ const ResponseWifiIPGet$json = {
 final $typed_data.Uint8List responseWifiIPGetDescriptor =
     $convert.base64Decode('ChFSZXNwb25zZVdpZmlJUEdldBIOCgJpcBgBIAEoDVICaXA=');
 
+@$core.Deprecated('Use requestLockDeviceVolumeDescriptor instead')
+const RequestLockDeviceVolume$json = {
+  '1': 'RequestLockDeviceVolume',
+  '2': [
+    {'1': 'lock', '3': 1, '4': 1, '5': 8, '10': 'lock'},
+  ],
+};
+
+/// Descriptor for `RequestLockDeviceVolume`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List requestLockDeviceVolumeDescriptor =
+    $convert.base64Decode(
+        'ChdSZXF1ZXN0TG9ja0RldmljZVZvbHVtZRISCgRsb2NrGAEgASgIUgRsb2Nr');
+
+@$core.Deprecated('Use responseLockDeviceVolumeDescriptor instead')
+const ResponseLockDeviceVolume$json = {
+  '1': 'ResponseLockDeviceVolume',
+};
+
+/// Descriptor for `ResponseLockDeviceVolume`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List responseLockDeviceVolumeDescriptor =
+    $convert.base64Decode('ChhSZXNwb25zZUxvY2tEZXZpY2VWb2x1bWU=');
+
 @$core.Deprecated('Use requestLSM6DSOXStartDescriptor instead')
 const RequestLSM6DSOXStart$json = {
   '1': 'RequestLSM6DSOXStart',
@@ -380,47 +402,6 @@ const ResponseLSM6DSOXStop$json = {
 /// Descriptor for `ResponseLSM6DSOXStop`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List responseLSM6DSOXStopDescriptor =
     $convert.base64Decode('ChRSZXNwb25zZUxTTTZEU09YU3RvcA==');
-
-@$core.Deprecated('Use deviceStateDescriptor instead')
-const DeviceState$json = {
-  '1': 'DeviceState',
-  '2': [
-    {'1': 'pot_locked', '3': 1, '4': 1, '5': 8, '10': 'potLocked'},
-  ],
-};
-
-/// Descriptor for `DeviceState`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List deviceStateDescriptor = $convert.base64Decode(
-    'CgtEZXZpY2VTdGF0ZRIdCgpwb3RfbG9ja2VkGAEgASgIUglwb3RMb2NrZWQ=');
-
-@$core.Deprecated('Use requestSetDeviceStateDescriptor instead')
-const RequestSetDeviceState$json = {
-  '1': 'RequestSetDeviceState',
-  '2': [
-    {
-      '1': 'state',
-      '3': 1,
-      '4': 1,
-      '5': 11,
-      '6': '.focstim_rpc.DeviceState',
-      '10': 'state'
-    },
-  ],
-};
-
-/// Descriptor for `RequestSetDeviceState`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List requestSetDeviceStateDescriptor = $convert.base64Decode(
-    'ChVSZXF1ZXN0U2V0RGV2aWNlU3RhdGUSLgoFc3RhdGUYASABKAsyGC5mb2NzdGltX3JwYy5EZX'
-    'ZpY2VTdGF0ZVIFc3RhdGU=');
-
-@$core.Deprecated('Use responseSetDeviceStateDescriptor instead')
-const ResponseSetDeviceState$json = {
-  '1': 'ResponseSetDeviceState',
-};
-
-/// Descriptor for `ResponseSetDeviceState`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List responseSetDeviceStateDescriptor =
-    $convert.base64Decode('ChZSZXNwb25zZVNldERldmljZVN0YXRl');
 
 @$core.Deprecated('Use requestDebugStm32DeepSleepDescriptor instead')
 const RequestDebugStm32DeepSleep$json = {

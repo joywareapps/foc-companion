@@ -15,19 +15,6 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
-@$core.Deprecated('Use buttonStateDescriptor instead')
-const ButtonState$json = {
-  '1': 'ButtonState',
-  '2': [
-    {'1': 'BUTTON_UP', '2': 0},
-    {'1': 'BUTTON_DOWN', '2': 1},
-  ],
-};
-
-/// Descriptor for `ButtonState`. Decode as a `google.protobuf.EnumDescriptorProto`.
-final $typed_data.Uint8List buttonStateDescriptor = $convert.base64Decode(
-    'CgtCdXR0b25TdGF0ZRINCglCVVRUT05fVVAQABIPCgtCVVRUT05fRE9XThAB');
-
 @$core.Deprecated('Use notificationBootDescriptor instead')
 const NotificationBoot$json = {
   '1': 'NotificationBoot',
@@ -37,18 +24,20 @@ const NotificationBoot$json = {
 final $typed_data.Uint8List notificationBootDescriptor =
     $convert.base64Decode('ChBOb3RpZmljYXRpb25Cb290');
 
-@$core.Deprecated('Use notificationPotentiometerDescriptor instead')
-const NotificationPotentiometer$json = {
-  '1': 'NotificationPotentiometer',
+@$core.Deprecated('Use notificationDeviceVolumeDescriptor instead')
+const NotificationDeviceVolume$json = {
+  '1': 'NotificationDeviceVolume',
   '2': [
-    {'1': 'value', '3': 1, '4': 1, '5': 2, '10': 'value'},
+    {'1': 'volume', '3': 1, '4': 1, '5': 2, '10': 'volume'},
+    {'1': 'locked', '3': 2, '4': 1, '5': 8, '10': 'locked'},
   ],
 };
 
-/// Descriptor for `NotificationPotentiometer`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List notificationPotentiometerDescriptor =
+/// Descriptor for `NotificationDeviceVolume`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List notificationDeviceVolumeDescriptor =
     $convert.base64Decode(
-        'ChlOb3RpZmljYXRpb25Qb3RlbnRpb21ldGVyEhQKBXZhbHVlGAEgASgCUgV2YWx1ZQ==');
+        'ChhOb3RpZmljYXRpb25EZXZpY2VWb2x1bWUSFgoGdm9sdW1lGAEgASgCUgZ2b2x1bWUSFgoGbG'
+        '9ja2VkGAIgASgIUgZsb2NrZWQ=');
 
 @$core.Deprecated('Use notificationButtonPressDescriptor instead')
 const NotificationButtonPress$json = {
@@ -70,27 +59,6 @@ const NotificationButtonPress$json = {
 final $typed_data.Uint8List notificationButtonPressDescriptor = $convert.base64Decode(
     'ChdOb3RpZmljYXRpb25CdXR0b25QcmVzcxIuCgVzdGF0ZRgBIAEoDjIYLmZvY3N0aW1fcnBjLk'
     'J1dHRvblN0YXRlUgVzdGF0ZRIhCgx0aW1lc3RhbXBfbXMYAiABKA1SC3RpbWVzdGFtcE1z');
-
-@$core.Deprecated('Use notificationDeviceStateDescriptor instead')
-const NotificationDeviceState$json = {
-  '1': 'NotificationDeviceState',
-  '2': [
-    {
-      '1': 'state',
-      '3': 1,
-      '4': 1,
-      '5': 11,
-      '6': '.focstim_rpc.DeviceState',
-      '10': 'state'
-    },
-  ],
-};
-
-/// Descriptor for `NotificationDeviceState`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List notificationDeviceStateDescriptor =
-    $convert.base64Decode(
-        'ChdOb3RpZmljYXRpb25EZXZpY2VTdGF0ZRIuCgVzdGF0ZRgBIAEoCzIYLmZvY3N0aW1fcnBjLk'
-        'RldmljZVN0YXRlUgVzdGF0ZQ==');
 
 @$core.Deprecated('Use notificationCurrentsDescriptor instead')
 const NotificationCurrents$json = {
@@ -236,14 +204,29 @@ const NotificationSignalStats$json = {
       '10': 'actualPulseFrequency'
     },
     {'1': 'v_drive', '3': 2, '4': 1, '5': 2, '10': 'vDrive'},
+    {
+      '1': 'transformer_utilization',
+      '3': 3,
+      '4': 1,
+      '5': 2,
+      '10': 'transformerUtilization'
+    },
+    {
+      '1': 'voltage_utilization',
+      '3': 4,
+      '4': 1,
+      '5': 2,
+      '10': 'voltageUtilization'
+    },
   ],
 };
 
 /// Descriptor for `NotificationSignalStats`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List notificationSignalStatsDescriptor =
-    $convert.base64Decode(
-        'ChdOb3RpZmljYXRpb25TaWduYWxTdGF0cxI0ChZhY3R1YWxfcHVsc2VfZnJlcXVlbmN5GAEgAS'
-        'gCUhRhY3R1YWxQdWxzZUZyZXF1ZW5jeRIXCgd2X2RyaXZlGAIgASgCUgZ2RHJpdmU=');
+final $typed_data.Uint8List notificationSignalStatsDescriptor = $convert.base64Decode(
+    'ChdOb3RpZmljYXRpb25TaWduYWxTdGF0cxI0ChZhY3R1YWxfcHVsc2VfZnJlcXVlbmN5GAEgAS'
+    'gCUhRhY3R1YWxQdWxzZUZyZXF1ZW5jeRIXCgd2X2RyaXZlGAIgASgCUgZ2RHJpdmUSNwoXdHJh'
+    'bnNmb3JtZXJfdXRpbGl6YXRpb24YAyABKAJSFnRyYW5zZm9ybWVyVXRpbGl6YXRpb24SLwoTdm'
+    '9sdGFnZV91dGlsaXphdGlvbhgEIAEoAlISdm9sdGFnZVV0aWxpemF0aW9u');
 
 @$core.Deprecated('Use notificationBatteryDescriptor instead')
 const NotificationBattery$json = {

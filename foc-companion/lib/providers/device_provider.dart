@@ -18,16 +18,48 @@ class BackgroundApiCompatibility {
   bool get isConnected => _provider.connectionStatus == "Connected" || _provider.connectionStatus.startsWith("Connected");
 }
 
-class DeviceProvider with ChangeNotifier {
-  late final BackgroundApiCompatibility api = BackgroundApiCompatibility(this);
-  SettingsProvider settings;
-
+class BoxStatus {
+  final int index;
   String connectionStatus = "Disconnected";
-  String firmwareVersion = '';
+  String firmwareVersion = "";
   String temperature = "--";
   String batteryVoltage = "--";
   double? batterySoc;
   bool isLoopRunning = false;
+  bool isSlowConnection = false;
+  bool isPotLocked = false;
+  double boxVolume = 0.0;
+
+  double? impedanceA;
+  double? impedanceB;
+  double? impedanceC;
+  double? impedanceD;
+
+  BoxStatus(this.index);
+}
+
+class DeviceProvider with ChangeNotifier {
+  late final BackgroundApiCompatibility api = BackgroundApiCompatibility(this);
+  SettingsProvider settings;
+
+  final List<BoxStatus> boxes = [BoxStatus(0), BoxStatus(1)];
+
+  // Active Focused Box Status Getters (For backwards compatibility)
+  BoxStatus get activeBoxStatus => boxes[settings.activeUiBoxIndex];
+
+  String get connectionStatus => activeBoxStatus.connectionStatus;
+  String get firmwareVersion => activeBoxStatus.firmwareVersion;
+  String get temperature => activeBoxStatus.temperature;
+  String get batteryVoltage => activeBoxStatus.batteryVoltage;
+  double? get batterySoc => activeBoxStatus.batterySoc;
+  bool get isLoopRunning => activeBoxStatus.isLoopRunning;
+  bool get isSlowConnection => activeBoxStatus.isSlowConnection;
+  bool get isPotLocked => activeBoxStatus.isPotLocked;
+  double get boxVolume => activeBoxStatus.boxVolume;
+  double? get impedanceA => activeBoxStatus.impedanceA;
+  double? get impedanceB => activeBoxStatus.impedanceB;
+  double? get impedanceC => activeBoxStatus.impedanceC;
+  double? get impedanceD => activeBoxStatus.impedanceD;
 
   /// Captured debug notifications/logs
   final List<String> capturedLogs = [];
@@ -37,25 +69,8 @@ class DeviceProvider with ChangeNotifier {
   static const int _kMaxLogRows = 1000;
   Timer? _logInactivityTimer;
 
-  /// True while tick round-trips are taking longer than 16 ms (can't keep 60 Hz).
-  bool isSlowConnection = false;
-
   /// Master volume (0–1). Not persisted — resets to 0.1 on app restart/connect.
   double volume = 0.1;
-
-  /// Hardware potentiometer volume (0–1). Updated from device notifications.
-  double boxVolume = 0.0;
-
-  /// True if the hardware potentiometer is locked.
-  bool isPotLocked = false;
-
-  /// Per-channel impedance magnitude in ohms, estimated by the firmware.
-  /// Null when no data has been received yet (device not playing).
-  /// In 3-phase mode impedanceD is always null.
-  double? impedanceA;
-  double? impedanceB;
-  double? impedanceC;
-  double? impedanceD;
 
   DeviceProvider(this.settings) {
     FlutterForegroundTask.addTaskDataCallback(_handleBackgroundMessage);
@@ -77,24 +92,32 @@ class DeviceProvider with ChangeNotifier {
   }
 
   void _syncSettingsToBackground() {
-    BackgroundServiceManager.sendCommand('updateSettings', {
-      'device': settings.device.toJson(),
-      'pulse': settings.pulse.toJson(),
-      'deviceBehavior': settings.deviceBehavior.toJson(),
-    });
+    for (int i = 0; i < 2; i++) {
+      BackgroundServiceManager.sendCommand('updateSettings', {
+        'boxIndex': i,
+        'device': settings.boxes[i].device.toJson(),
+        'pulse': settings.boxes[i].pulse.toJson(),
+        'cockpit': settings.boxes[i].cockpit.toJson(),
+        'cockpit4Phase': settings.boxes[i].cockpit4Phase.toJson(),
+        'deviceBehavior': settings.deviceBehavior.toJson(),
+      });
+    }
   }
 
   void _handleBackgroundMessage(dynamic msg) {
     if (msg is! Map) return;
 
     final type = msg['type'];
+    final int boxIndex = msg['boxIndex'] as int? ?? 0;
+    final box = boxes[boxIndex];
+
     switch (type) {
       case 'stateUpdate':
-        connectionStatus = msg['connectionStatus'] as String? ?? connectionStatus;
-        firmwareVersion = msg['firmwareVersion'] as String? ?? firmwareVersion;
-        isLoopRunning = msg['isLoopRunning'] as bool? ?? isLoopRunning;
-        isSlowConnection = msg['isSlowConnection'] as bool? ?? isSlowConnection;
-        isPotLocked = msg['isPotLocked'] as bool? ?? isPotLocked;
+        box.connectionStatus = msg['connectionStatus'] as String? ?? box.connectionStatus;
+        box.firmwareVersion = msg['firmwareVersion'] as String? ?? box.firmwareVersion;
+        box.isLoopRunning = msg['isLoopRunning'] as bool? ?? box.isLoopRunning;
+        box.isSlowConnection = msg['isSlowConnection'] as bool? ?? box.isSlowConnection;
+        box.isPotLocked = msg['isPotLocked'] as bool? ?? box.isPotLocked;
         notifyListeners();
         break;
 
@@ -122,46 +145,46 @@ class DeviceProvider with ChangeNotifier {
         }
 
         if (msg.containsKey('impedanceA')) {
-          impedanceA = (msg['impedanceA'] as num?)?.toDouble();
+          box.impedanceA = (msg['impedanceA'] as num?)?.toDouble();
         }
         if (msg.containsKey('impedanceB')) {
-          impedanceB = (msg['impedanceB'] as num?)?.toDouble();
+          box.impedanceB = (msg['impedanceB'] as num?)?.toDouble();
         }
         if (msg.containsKey('impedanceC')) {
-          impedanceC = (msg['impedanceC'] as num?)?.toDouble();
+          box.impedanceC = (msg['impedanceC'] as num?)?.toDouble();
         }
         if (msg.containsKey('impedanceD')) {
-          impedanceD = (msg['impedanceD'] as num?)?.toDouble();
+          box.impedanceD = (msg['impedanceD'] as num?)?.toDouble();
         }
         if (msg.containsKey('temperature')) {
-          temperature = msg['temperature'] as String;
+          box.temperature = msg['temperature'] as String;
         }
         if (msg.containsKey('batteryVoltage')) {
-          batteryVoltage = msg['batteryVoltage'] as String;
+          box.batteryVoltage = msg['batteryVoltage'] as String;
         }
         if (msg.containsKey('batterySoc')) {
-          batterySoc = (msg['batterySoc'] as num?)?.toDouble();
+          box.batterySoc = (msg['batterySoc'] as num?)?.toDouble();
         }
         if (msg.containsKey('boxVolume')) {
-          boxVolume = (msg['boxVolume'] as num).toDouble();
+          box.boxVolume = (msg['boxVolume'] as num).toDouble();
         }
         if (msg.containsKey('isPotLocked')) {
-          isPotLocked = msg['isPotLocked'] as bool;
+          box.isPotLocked = msg['isPotLocked'] as bool;
         }
         if (msg.containsKey('debugMessage')) {
           final dbgMsg = msg['debugMessage'] as String;
-          _log.d("Device: $dbgMsg");
+          _log.d("Device $boxIndex: $dbgMsg");
 
           if (isRecordingLogs && capturedLogs.length < _kMaxLogRows) {
-            capturedLogs.add("${DateTime.now().toIso8601String()} [Device Debug] $dbgMsg");
+            capturedLogs.add("${DateTime.now().toIso8601String()} [Device $boxIndex Debug] $dbgMsg");
           }
 
           if (dbgMsg.contains("Current limit exceeded") || dbgMsg.contains("Producer too slow")) {
             if (!isRecordingLogs) {
-              lastErrorMessage = dbgMsg;
+              lastErrorMessage = "[Box ${boxIndex + 1}] $dbgMsg";
               isRecordingLogs = true;
               capturedLogs.clear();
-              capturedLogs.add("${DateTime.now().toIso8601String()} [INITIAL_ERROR] $dbgMsg");
+              capturedLogs.add("${DateTime.now().toIso8601String()} [INITIAL_ERROR] [Box ${boxIndex + 1}] $dbgMsg");
             }
           }
         }
@@ -182,22 +205,32 @@ class DeviceProvider with ChangeNotifier {
 
   void selectPattern(int index) {
     final idx = index.clamp(0, ThreephasePatternRegistry.all.length - 1);
-    settings.cockpit.patternIndex = idx;
-    BackgroundServiceManager.sendCommand('selectPattern', {'index': idx});
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      settings.boxes[i].cockpit.patternIndex = idx;
+      BackgroundServiceManager.sendCommand('selectPattern', {'boxIndex': i, 'index': idx});
+    }
     settings.saveSettings();
     notifyListeners();
   }
 
   void setVelocity(double v) {
-    settings.cockpit.velocity = v.clamp(0.1, 4.0);
-    BackgroundServiceManager.sendCommand('setVelocity', {'velocity': settings.cockpit.velocity});
+    final speed = v.clamp(0.1, 4.0);
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      settings.boxes[i].cockpit.velocity = speed;
+      BackgroundServiceManager.sendCommand('setVelocity', {'boxIndex': i, 'velocity': speed});
+    }
     settings.saveSettings();
     notifyListeners();
   }
 
   void updatePulseModConfig(PulseModulationConfig config) {
-    settings.cockpit.pulseFreqMod = config;
-    BackgroundServiceManager.sendCommand('updatePulseModConfig', {'config': config.toJson()});
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      settings.boxes[i].cockpit.pulseFreqMod = config;
+      BackgroundServiceManager.sendCommand('updatePulseModConfig', {'boxIndex': i, 'config': config.toJson()});
+    }
     settings.saveSettings();
     notifyListeners();
   }
@@ -206,22 +239,32 @@ class DeviceProvider with ChangeNotifier {
 
   void select4PhasePattern(int index) {
     final idx = index.clamp(0, FourphasePatternRegistry.all.length - 1);
-    settings.cockpit4Phase.patternIndex = idx;
-    BackgroundServiceManager.sendCommand('select4PhasePattern', {'index': idx});
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      settings.boxes[i].cockpit4Phase.patternIndex = idx;
+      BackgroundServiceManager.sendCommand('select4PhasePattern', {'boxIndex': i, 'index': idx});
+    }
     settings.saveSettings();
     notifyListeners();
   }
 
   void set4PhaseVelocity(double v) {
-    settings.cockpit4Phase.velocity = v.clamp(0.1, 4.0);
-    BackgroundServiceManager.sendCommand('set4PhaseVelocity', {'velocity': settings.cockpit4Phase.velocity});
+    final speed = v.clamp(0.1, 4.0);
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      settings.boxes[i].cockpit4Phase.velocity = speed;
+      BackgroundServiceManager.sendCommand('set4PhaseVelocity', {'boxIndex': i, 'velocity': speed});
+    }
     settings.saveSettings();
     notifyListeners();
   }
 
   void update4PhasePulseModConfig(PulseModulationConfig config) {
-    settings.cockpit4Phase.pulseFreqMod = config;
-    BackgroundServiceManager.sendCommand('update4PhasePulseModConfig', {'config': config.toJson()});
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      settings.boxes[i].cockpit4Phase.pulseFreqMod = config;
+      BackgroundServiceManager.sendCommand('update4PhasePulseModConfig', {'boxIndex': i, 'config': config.toJson()});
+    }
     settings.saveSettings();
     notifyListeners();
   }
@@ -230,7 +273,10 @@ class DeviceProvider with ChangeNotifier {
 
   void setVolume(double v) {
     volume = v.clamp(0.0, 1.0);
-    BackgroundServiceManager.sendCommand('setVolume', {'volume': volume});
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      BackgroundServiceManager.sendCommand('setVolume', {'boxIndex': i, 'volume': volume});
+    }
     notifyListeners();
   }
 
@@ -268,39 +314,44 @@ class DeviceProvider with ChangeNotifier {
 
   // ── Connection ───────────────────────────────────────────────────────────
 
-  Future<void> connect() async {
-    volume = 0.1;
-    connectionStatus = "Starting service...";
+  Future<void> connect({int? boxIndex}) async {
+    final targetIndex = boxIndex ?? settings.activeUiBoxIndex;
+    final boxProfile = settings.boxes[targetIndex];
+
+    boxes[targetIndex].connectionStatus = "Starting service...";
     notifyListeners();
 
     try {
       final success = await BackgroundServiceManager.start();
       if (!success) {
-        connectionStatus = "Error: Permission Denied";
+        boxes[targetIndex].connectionStatus = "Error: Permission Denied";
         notifyListeners();
         return;
       }
 
-      // Sync active state
+      // Sync settings
       _syncSettingsToBackground();
-      BackgroundServiceManager.sendCommand('setDeviceMode', {'mode': settings.device.deviceMode.name});
-      BackgroundServiceManager.sendCommand('setVolume', {'volume': volume});
-      BackgroundServiceManager.sendCommand('selectPattern', {'index': settings.cockpit.patternIndex});
-      BackgroundServiceManager.sendCommand('select4PhasePattern', {'index': settings.cockpit4Phase.patternIndex});
-      BackgroundServiceManager.sendCommand('setVelocity', {'velocity': settings.cockpit.velocity});
-      BackgroundServiceManager.sendCommand('set4PhaseVelocity', {'velocity': settings.cockpit4Phase.velocity});
-      BackgroundServiceManager.sendCommand('updatePulseModConfig', {'config': settings.cockpit.pulseFreqMod.toJson()});
-      BackgroundServiceManager.sendCommand('update4PhasePulseModConfig', {'config': settings.cockpit4Phase.pulseFreqMod.toJson()});
 
-      connectionStatus = "Connecting...";
+      // Send initial control settings
+      BackgroundServiceManager.sendCommand('setDeviceMode', {'boxIndex': targetIndex, 'mode': boxProfile.device.deviceMode.name});
+      BackgroundServiceManager.sendCommand('setVolume', {'boxIndex': targetIndex, 'volume': volume});
+      BackgroundServiceManager.sendCommand('selectPattern', {'boxIndex': targetIndex, 'index': boxProfile.cockpit.patternIndex});
+      BackgroundServiceManager.sendCommand('select4PhasePattern', {'boxIndex': targetIndex, 'index': boxProfile.cockpit4Phase.patternIndex});
+      BackgroundServiceManager.sendCommand('setVelocity', {'boxIndex': targetIndex, 'velocity': boxProfile.cockpit.velocity});
+      BackgroundServiceManager.sendCommand('set4PhaseVelocity', {'boxIndex': targetIndex, 'velocity': boxProfile.cockpit4Phase.velocity});
+      BackgroundServiceManager.sendCommand('updatePulseModConfig', {'boxIndex': targetIndex, 'config': boxProfile.cockpit.pulseFreqMod.toJson()});
+      BackgroundServiceManager.sendCommand('update4PhasePulseModConfig', {'boxIndex': targetIndex, 'config': boxProfile.cockpit4Phase.pulseFreqMod.toJson()});
+
+      boxes[targetIndex].connectionStatus = "Connecting...";
       notifyListeners();
       
       BackgroundServiceManager.sendCommand('connect', {
-        'ip': settings.focStim.wifiIp,
-        'port': settings.focStim.wifiPort,
+        'boxIndex': targetIndex,
+        'ip': boxProfile.connection.wifiIp,
+        'port': boxProfile.connection.wifiPort,
       });
     } catch (e) {
-      connectionStatus = "Error: $e";
+      boxes[targetIndex].connectionStatus = "Error: $e";
       notifyListeners();
     }
   }
@@ -308,31 +359,46 @@ class DeviceProvider with ChangeNotifier {
   DeviceMode get deviceMode => settings.device.deviceMode;
 
   void setDeviceMode(DeviceMode mode) {
-    settings.device.deviceMode = mode;
-    BackgroundServiceManager.sendCommand('setDeviceMode', {'mode': mode.name});
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      settings.boxes[i].device.deviceMode = mode;
+      BackgroundServiceManager.sendCommand('setDeviceMode', {'boxIndex': i, 'mode': mode.name});
+    }
     settings.saveSettings();
     notifyListeners();
   }
 
-  Future<void> disconnect() async {
-    _logInactivityTimer?.cancel();
-    isRecordingLogs = false;
+  Future<void> disconnect({int? boxIndex}) async {
+    final targetIndex = boxIndex ?? settings.activeUiBoxIndex;
     
-    BackgroundServiceManager.sendCommand('disconnect');
-    await BackgroundServiceManager.stop();
+    BackgroundServiceManager.sendCommand('disconnect', {'boxIndex': targetIndex});
 
-    connectionStatus = "Disconnected";
-    isLoopRunning = false;
-    isSlowConnection = false;
-    impedanceA = impedanceB = impedanceC = impedanceD = null;
+    boxes[targetIndex].connectionStatus = "Disconnected";
+    boxes[targetIndex].isLoopRunning = false;
+    boxes[targetIndex].isSlowConnection = false;
+    boxes[targetIndex].impedanceA = boxes[targetIndex].impedanceB = boxes[targetIndex].impedanceC = boxes[targetIndex].impedanceD = null;
     notifyListeners();
+
+    // Stop foreground service only if both devices are disconnected
+    bool anyConnected = boxes.any((b) => b.connectionStatus != "Disconnected");
+    if (!anyConnected) {
+      _logInactivityTimer?.cancel();
+      isRecordingLogs = false;
+      await BackgroundServiceManager.stop();
+    }
   }
 
   Future<void> toggleLoop() async {
-    BackgroundServiceManager.sendCommand('toggleLoop');
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      BackgroundServiceManager.sendCommand('toggleLoop', {'boxIndex': i});
+    }
   }
 
   Future<void> togglePotLock() async {
-    BackgroundServiceManager.sendCommand('togglePotLock');
+    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    for (var i in targets) {
+      BackgroundServiceManager.sendCommand('togglePotLock', {'boxIndex': i});
+    }
   }
 }

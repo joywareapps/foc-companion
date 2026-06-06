@@ -7,38 +7,92 @@ import 'package:foc_companion/utils/calibration_utils.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class SettingsProvider with ChangeNotifier {
-  DeviceSettings device = DeviceSettings();
-  PulseSettings pulse = PulseSettings();
-  FocStimSettings focStim = FocStimSettings();
+  List<BoxProfile> boxes = [
+    BoxProfile(name: "Box 1"),
+    BoxProfile(name: "Box 2"),
+  ];
+  int activeUiBoxIndex = 0;
+  bool linkDevicesEnabled = false;
+
   MediaSyncSettings mediaSync = MediaSyncSettings();
-  CockpitSettings cockpit = CockpitSettings();
-  CockpitSettings cockpit4Phase = CockpitSettings();
   bool keepScreenOn = false;
   DeviceBehaviorSettings deviceBehavior = DeviceBehaviorSettings();
+
+  BoxProfile get activeBox => boxes[activeUiBoxIndex.clamp(0, boxes.length - 1)];
+
+  // Compatibility getters/setters mapping to active focused box in UI
+  DeviceSettings get device => activeBox.device;
+  set device(DeviceSettings val) {
+    activeBox.device = val;
+  }
+
+  PulseSettings get pulse => activeBox.pulse;
+  set pulse(PulseSettings val) {
+    activeBox.pulse = val;
+  }
+
+  FocStimSettings get focStim => activeBox.connection;
+  set focStim(FocStimSettings val) {
+    activeBox.connection = val;
+  }
+
+  CockpitSettings get cockpit => activeBox.cockpit;
+  set cockpit(CockpitSettings val) {
+    activeBox.cockpit = val;
+  }
+
+  CockpitSettings get cockpit4Phase => activeBox.cockpit4Phase;
+  set cockpit4Phase(CockpitSettings val) {
+    activeBox.cockpit4Phase = val;
+  }
+
+  void setActiveUiBoxIndex(int index) {
+    activeUiBoxIndex = index.clamp(0, boxes.length - 1);
+    saveSettings();
+    notifyListeners();
+  }
+
+  void setLinkDevicesEnabled(bool enabled) {
+    linkDevicesEnabled = enabled;
+    saveSettings();
+    notifyListeners();
+  }
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final deviceJson = prefs.getString('device_settings');
-    if (deviceJson != null) {
-      device = DeviceSettings.fromJson(jsonDecode(deviceJson));
-      syncFromUdLr();
+    final boxesJson = prefs.getString('box_profiles_v2');
+    if (boxesJson != null) {
+      try {
+        final List decoded = jsonDecode(boxesJson);
+        boxes = decoded.map((e) => BoxProfile.fromJson(Map<String, dynamic>.from(e))).toList();
+        while (boxes.length < 2) {
+          boxes.add(BoxProfile(name: "Box ${boxes.length + 1}"));
+        }
+        if (boxes.length > 2) {
+          boxes = boxes.sublist(0, 2);
+        }
+      } catch (_) {}
+    } else {
+      // Migrate old single settings
+      final deviceJson = prefs.getString('device_settings');
+      final pulseJson = prefs.getString('pulse_settings');
+      final focStimJson = prefs.getString('focstim_settings');
+      final cockpitJson = prefs.getString('cockpit_settings');
+      final cockpit4Json = prefs.getString('cockpit4_settings');
+
+      if (deviceJson != null) boxes[0].device = DeviceSettings.fromJson(jsonDecode(deviceJson));
+      if (pulseJson != null) boxes[0].pulse = PulseSettings.fromJson(jsonDecode(pulseJson));
+      if (focStimJson != null) boxes[0].connection = FocStimSettings.fromJson(jsonDecode(focStimJson));
+      if (cockpitJson != null) boxes[0].cockpit = CockpitSettings.fromJson(jsonDecode(cockpitJson));
+      if (cockpit4Json != null) boxes[0].cockpit4Phase = CockpitSettings.fromJson(jsonDecode(cockpit4Json));
     }
 
-    final pulseJson = prefs.getString('pulse_settings');
-    if (pulseJson != null) pulse = PulseSettings.fromJson(jsonDecode(pulseJson));
-
-    final focStimJson = prefs.getString('focstim_settings');
-    if (focStimJson != null) focStim = FocStimSettings.fromJson(jsonDecode(focStimJson));
+    activeUiBoxIndex = prefs.getInt('active_ui_box_index') ?? 0;
+    linkDevicesEnabled = prefs.getBool('link_devices_enabled') ?? false;
 
     final mediaJson = prefs.getString('media_settings');
     if (mediaJson != null) mediaSync = MediaSyncSettings.fromJson(jsonDecode(mediaJson));
-
-    final cockpitJson = prefs.getString('cockpit_settings');
-    if (cockpitJson != null) cockpit = CockpitSettings.fromJson(jsonDecode(cockpitJson));
-
-    final cockpit4Json = prefs.getString('cockpit4_settings');
-    if (cockpit4Json != null) cockpit4Phase = CockpitSettings.fromJson(jsonDecode(cockpit4Json));
 
     keepScreenOn = prefs.getBool('keep_screen_on') ?? false;
     if (keepScreenOn) WakelockPlus.enable(); else WakelockPlus.disable();
@@ -46,17 +100,20 @@ class SettingsProvider with ChangeNotifier {
     final behaviorJson = prefs.getString('device_behavior_settings');
     if (behaviorJson != null) deviceBehavior = DeviceBehaviorSettings.fromJson(jsonDecode(behaviorJson));
 
+    // Run calibration sync for both boxes
+    for (var box in boxes) {
+      _syncFromUdLrForBox(box.device);
+    }
+
     notifyListeners();
   }
 
   Future<void> saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('device_settings', jsonEncode(device.toJson()));
-    await prefs.setString('pulse_settings', jsonEncode(pulse.toJson()));
-    await prefs.setString('focstim_settings', jsonEncode(focStim.toJson()));
+    await prefs.setString('box_profiles_v2', jsonEncode(boxes.map((e) => e.toJson()).toList()));
+    await prefs.setInt('active_ui_box_index', activeUiBoxIndex);
+    await prefs.setBool('link_devices_enabled', linkDevicesEnabled);
     await prefs.setString('media_settings', jsonEncode(mediaSync.toJson()));
-    await prefs.setString('cockpit_settings', jsonEncode(cockpit.toJson()));
-    await prefs.setString('cockpit4_settings', jsonEncode(cockpit4Phase.toJson()));
     await prefs.setBool('keep_screen_on', keepScreenOn);
     await prefs.setString('device_behavior_settings', jsonEncode(deviceBehavior.toJson()));
     notifyListeners();
@@ -72,14 +129,18 @@ class SettingsProvider with ChangeNotifier {
 
   // ── Calibration ──
 
+  void _syncFromUdLrForBox(DeviceSettings dev) {
+    final abc = CalibrationUtils.udLrToIntensityRatio(dev.calibration3Up, dev.calibration3Left);
+    dev.calibration3A = abc[0] > 0.0 ? (math.log(abc[0]) / math.ln10) * 10.0 : -20.0;
+    dev.calibration3B = abc[1] > 0.0 ? (math.log(abc[1]) / math.ln10) * 10.0 : -20.0;
+    dev.calibration3C = abc[2] > 0.0 ? (math.log(abc[2]) / math.ln10) * 10.0 : -20.0;
+    dev.calibration3A = dev.calibration3A.clamp(-20.0, 0.0);
+    dev.calibration3B = dev.calibration3B.clamp(-20.0, 0.0);
+    dev.calibration3C = dev.calibration3C.clamp(-20.0, 0.0);
+  }
+
   void syncFromUdLr() {
-    final abc = CalibrationUtils.udLrToIntensityRatio(device.calibration3Up, device.calibration3Left);
-    device.calibration3A = abc[0] > 0.0 ? (math.log(abc[0]) / math.ln10) * 10.0 : -20.0;
-    device.calibration3B = abc[1] > 0.0 ? (math.log(abc[1]) / math.ln10) * 10.0 : -20.0;
-    device.calibration3C = abc[2] > 0.0 ? (math.log(abc[2]) / math.ln10) * 10.0 : -20.0;
-    device.calibration3A = device.calibration3A.clamp(-20.0, 0.0);
-    device.calibration3B = device.calibration3B.clamp(-20.0, 0.0);
-    device.calibration3C = device.calibration3C.clamp(-20.0, 0.0);
+    _syncFromUdLrForBox(device);
   }
 
   void updateCalibration3Modern(double a, double b, double c) {

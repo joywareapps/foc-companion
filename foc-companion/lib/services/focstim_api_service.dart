@@ -50,6 +50,7 @@ class FocStimApiService {
   }
 
   void disconnect() {
+    if (_socket == null) return;
     _socket?.close();
     _socket = null;
     onDisconnect?.call();

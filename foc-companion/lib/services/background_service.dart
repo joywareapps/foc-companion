@@ -88,82 +88,90 @@ class BackgroundServiceManager {
   }
 }
 
-class FocStimTaskHandler extends TaskHandler {
-  FocStimApiService? _api;
-  SettingsProvider? _settings;
-  CommandLoop? _threePhaseLoop;
-  FourPhaseCommandLoop? _fourPhaseLoop;
+class ActiveBoxState {
+  final int index;
+  final FocStimApiService api = FocStimApiService();
+  late final CommandLoop threePhaseLoop;
+  late final FourPhaseCommandLoop fourPhaseLoop;
 
-  // Active state
-  String _connectionStatus = "Disconnected";
-  String _firmwareVersion = "";
-  bool _isLoopRunning = false;
-  bool _isSlowConnection = false;
-  bool _isPotLocked = false;
-  DeviceMode _deviceMode = DeviceMode.threePhase;
+  String connectionStatus = "Disconnected";
+  String firmwareVersion = "";
+  bool isLoopRunning = false;
+  bool isSlowConnection = false;
+  bool isPotLocked = false;
+  DeviceMode deviceMode = DeviceMode.threePhase;
+
+  int? buttonEventTimestampMs;
+  DateTime? buttonEventDateTime;
+  Timer? notificationWatchdog;
+  final Map<String, dynamic> lastTelemetry = {};
+
+  DateTime lastNotificationUpdateTime = DateTime.fromMillisecondsSinceEpoch(0);
+  bool? lastIsLoopRunningState;
+
+  ActiveBoxState(this.index, SettingsProvider settings) {
+    threePhaseLoop = CommandLoop(api, settings)..boxIndex = index;
+    fourPhaseLoop = FourPhaseCommandLoop(api, settings)..boxIndex = index;
+  }
+}
+
+class FocStimTaskHandler extends TaskHandler {
+  final Map<int, ActiveBoxState> _boxes = {};
+  SettingsProvider? _settings;
 
   // Cache settings behavior to handle buttons in background
   DeviceBehaviorSettings _deviceBehavior = DeviceBehaviorSettings();
-
-  // Button tracking
-  int? _buttonEventTimestampMs;
-  DateTime? _buttonEventDateTime;
-
-  Timer? _notificationWatchdog;
-
-  // Cache telemetry data to resend on requestState
-  final Map<String, dynamic> _lastTelemetry = {};
-
-  // Throttling notification updates
-  DateTime _lastNotificationUpdateTime = DateTime.fromMillisecondsSinceEpoch(0);
-  bool? _lastIsLoopRunningState;
 
   static double _calcImpedance(double r, double x) =>
       math.sqrt(r * r + x * x);
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
-    _api = FocStimApiService();
     _settings = SettingsProvider(); // Safe stub provider
 
-    _threePhaseLoop = CommandLoop(_api!, _settings!);
-    _fourPhaseLoop = FourPhaseCommandLoop(_api!, _settings!);
+    for (int i = 0; i < 2; i++) {
+      final box = ActiveBoxState(i, _settings!);
+      _boxes[i] = box;
 
-    // Wire up loops
-    _threePhaseLoop!.onSlowConnection = _handleSlowConnection;
-    _threePhaseLoop!.onTimeout = _handleLoopTimeout;
-    _fourPhaseLoop!.onSlowConnection = _handleSlowConnection;
-    _fourPhaseLoop!.onTimeout = _handleLoopTimeout;
+      box.threePhaseLoop.onSlowConnection = (slow) => _handleSlowConnection(i, slow);
+      box.threePhaseLoop.onTimeout = (err) => _handleLoopTimeout(i, err);
+      box.fourPhaseLoop.onSlowConnection = (slow) => _handleSlowConnection(i, slow);
+      box.fourPhaseLoop.onTimeout = (err) => _handleLoopTimeout(i, err);
 
-    _api!.onNotification = _handleNotification;
-    _api!.onDisconnect = _handleDisconnect;
-    _api!.onError = _handleError;
+      box.api.onNotification = (n) => _handleNotification(i, n);
+      box.api.onDisconnect = () => _handleDisconnect(i);
+      box.api.onError = (err) => _handleError(i, err);
+    }
   }
 
   @override
   void onRepeatEvent(DateTime timestamp) {
     // We do not rely on periodic repeat ticks of foreground task
-    // because our CommandLoop runs its own high-frequency 30 Hz timers.
   }
 
   @override
   Future<void> onDestroy(DateTime timestamp) async {
-    _notificationWatchdog?.cancel();
-    await _stopStimulation();
-    _disconnect();
+    for (int i = 0; i < 2; i++) {
+      _boxes[i]?.notificationWatchdog?.cancel();
+      await _stopStimulation(i);
+      _disconnect(i);
+    }
   }
 
   @override
   void onNotificationButtonPressed(String id) {
     if (id == 'disconnect') {
-      _logToMain("Disconnect requested via notification.");
-      _disconnect();
+      _logToMain(0, "Disconnect requested via notification.");
+      _disconnect(0);
+      _disconnect(1);
       FlutterForegroundTask.stopService();
     } else if (id == 'stop_stimulation') {
-      _logToMain("Stop stimulation requested via notification.");
-      _stopStimulation();
-      _sendStateUpdate();
-      _updateNotificationDetails(null);
+      _logToMain(0, "Stop stimulation requested via notification.");
+      _stopStimulation(0);
+      _stopStimulation(1);
+      _sendStateUpdate(0);
+      _sendStateUpdate(1);
+      _updateNotificationDetails();
     }
   }
 
@@ -173,73 +181,107 @@ class FocStimTaskHandler extends TaskHandler {
       final type = data['type'];
       switch (type) {
         case 'requestState':
-          _sendStateUpdate();
-          if (_lastTelemetry.isNotEmpty) {
-            FlutterForegroundTask.sendDataToMain({
-              ..._lastTelemetry,
-              'type': 'notification',
-            });
+          for (int i = 0; i < 2; i++) {
+            _sendStateUpdate(i);
+            final box = _boxes[i]!;
+            if (box.lastTelemetry.isNotEmpty) {
+              FlutterForegroundTask.sendDataToMain({
+                ...box.lastTelemetry,
+                'type': 'notification',
+                'boxIndex': i,
+              });
+            }
           }
           break;
         case 'connect':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
           final ip = data['ip'] as String;
           final port = data['port'] as int;
-          _connect(ip, port);
+          _connect(boxIndex, ip, port);
           break;
         case 'disconnect':
-          _disconnect();
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          _disconnect(boxIndex);
           break;
         case 'toggleLoop':
-          _toggleLoop();
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          _toggleLoop(boxIndex);
           break;
         case 'setVolume':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
           final vol = (data['volume'] as num).toDouble();
-          _threePhaseLoop?.volume = vol;
-          _fourPhaseLoop?.volume = vol;
+          final box = _boxes[boxIndex]!;
+          box.threePhaseLoop.volume = vol;
+          box.fourPhaseLoop.volume = vol;
           break;
         case 'setVelocity':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
           final vel = (data['velocity'] as num).toDouble();
-          _threePhaseLoop?.velocity = vel;
+          final box = _boxes[boxIndex]!;
+          box.threePhaseLoop.velocity = vel;
           break;
         case 'set4PhaseVelocity':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
           final vel = (data['velocity'] as num).toDouble();
-          _fourPhaseLoop?.velocity = vel;
+          final box = _boxes[boxIndex]!;
+          box.fourPhaseLoop.velocity = vel;
           break;
         case 'selectPattern':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
           final index = data['index'] as int;
           final idx = index.clamp(0, ThreephasePatternRegistry.all.length - 1);
-          _threePhaseLoop?.pattern = ThreephasePatternRegistry.all[idx];
+          final box = _boxes[boxIndex]!;
+          box.threePhaseLoop.pattern = ThreephasePatternRegistry.all[idx];
           break;
         case 'select4PhasePattern':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
           final index = data['index'] as int;
           final idx = index.clamp(0, FourphasePatternRegistry.all.length - 1);
-          _fourPhaseLoop?.pattern = FourphasePatternRegistry.all[idx];
+          final box = _boxes[boxIndex]!;
+          box.fourPhaseLoop.pattern = FourphasePatternRegistry.all[idx];
           break;
         case 'updatePulseModConfig':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
           final configMap = Map<String, dynamic>.from(data['config']);
-          _threePhaseLoop?.setPulseModConfig(PulseModulationConfig.fromJson(configMap));
+          final box = _boxes[boxIndex]!;
+          box.threePhaseLoop.setPulseModConfig(PulseModulationConfig.fromJson(configMap));
           break;
         case 'update4PhasePulseModConfig':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
           final configMap = Map<String, dynamic>.from(data['config']);
-          _fourPhaseLoop?.setPulseModConfig(PulseModulationConfig.fromJson(configMap));
+          final box = _boxes[boxIndex]!;
+          box.fourPhaseLoop.setPulseModConfig(PulseModulationConfig.fromJson(configMap));
           break;
         case 'togglePotLock':
-          _togglePotLock();
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          _togglePotLock(boxIndex);
           break;
         case 'setDeviceMode':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
           final modeStr = data['mode'] as String;
-          _deviceMode = DeviceMode.values.firstWhere(
+          final box = _boxes[boxIndex]!;
+          box.deviceMode = DeviceMode.values.firstWhere(
             (e) => e.name == modeStr,
             orElse: () => DeviceMode.threePhase,
           );
-          _sendStateUpdate();
+          _sendStateUpdate(boxIndex);
           break;
         case 'updateSettings':
-          if (data.containsKey('device')) {
-            _settings?.device = DeviceSettings.fromJson(Map<String, dynamic>.from(data['device']));
-          }
-          if (data.containsKey('pulse')) {
-            _settings?.pulse = PulseSettings.fromJson(Map<String, dynamic>.from(data['pulse']));
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          final box = _settings?.boxes[boxIndex];
+          if (box != null) {
+            if (data.containsKey('device')) {
+              box.device = DeviceSettings.fromJson(Map<String, dynamic>.from(data['device']));
+            }
+            if (data.containsKey('pulse')) {
+              box.pulse = PulseSettings.fromJson(Map<String, dynamic>.from(data['pulse']));
+            }
+            if (data.containsKey('cockpit')) {
+              box.cockpit = CockpitSettings.fromJson(Map<String, dynamic>.from(data['cockpit']));
+            }
+            if (data.containsKey('cockpit4Phase')) {
+              box.cockpit4Phase = CockpitSettings.fromJson(Map<String, dynamic>.from(data['cockpit4Phase']));
+            }
           }
           if (data.containsKey('deviceBehavior')) {
             _deviceBehavior = DeviceBehaviorSettings.fromJson(Map<String, dynamic>.from(data['deviceBehavior']));
@@ -249,103 +291,111 @@ class FocStimTaskHandler extends TaskHandler {
     }
   }
 
-  Future<void> _connect(String ip, int port) async {
-    _connectionStatus = "Connecting...";
-    _sendStateUpdate();
-    _logToMain("Connecting to $ip:$port");
+  Future<void> _connect(int boxIndex, String ip, int port) async {
+    final box = _boxes[boxIndex]!;
+    box.connectionStatus = "Connecting...";
+    _sendStateUpdate(boxIndex);
+    _logToMain(boxIndex, "Connecting to $ip:$port");
     try {
-      await _api?.connectTcp(ip, port);
-      _connectionStatus = "Checking firmware...";
-      _sendStateUpdate();
+      await box.api.connectTcp(ip, port);
+      box.connectionStatus = "Checking firmware...";
+      _sendStateUpdate(boxIndex);
 
-      final resp = await _api!.requestFirmwareVersion();
-      _api!.validateFirmwareVersion(resp);
+      final resp = await box.api.requestFirmwareVersion();
+      box.api.validateFirmwareVersion(resp);
 
       final v = resp.stm32FirmwareVersion2;
-      _firmwareVersion = 'v${v.major}.${v.minor}.${v.revision} (${v.branch})';
-      _connectionStatus = "Connected";
-      _logToMain("Connected: $_firmwareVersion");
+      box.firmwareVersion = 'v${v.major}.${v.minor}.${v.revision} (${v.branch})';
+      box.connectionStatus = "Connected";
+      _logToMain(boxIndex, "Connected: ${box.firmwareVersion}");
 
-      _resetNotificationWatchdog();
-      _sendStateUpdate();
-      _updateNotificationDetails(null);
+      _resetNotificationWatchdog(boxIndex);
+      _sendStateUpdate(boxIndex);
+      _updateNotificationDetails();
     } catch (e) {
-      _connectionStatus = "Error: $e";
-      _logToMain("Connection failed: $e");
-      _disconnect();
+      box.connectionStatus = "Error: $e";
+      _logToMain(boxIndex, "Connection failed: $e");
+      _disconnect(boxIndex);
     }
   }
 
-  void _disconnect() {
-    _notificationWatchdog?.cancel();
-    _notificationWatchdog = null;
-    _isLoopRunning = false;
-    _isSlowConnection = false;
-    _connectionStatus = "Disconnected";
-    _threePhaseLoop?.stop().catchError((e) => null);
-    _fourPhaseLoop?.stop().catchError((e) => null);
-    _api?.disconnect();
-    _sendStateUpdate();
-    _updateNotificationDetails(null);
+  void _disconnect(int boxIndex) {
+    final box = _boxes[boxIndex]!;
+    box.notificationWatchdog?.cancel();
+    box.notificationWatchdog = null;
+    box.isLoopRunning = false;
+    box.isSlowConnection = false;
+    box.connectionStatus = "Disconnected";
+    box.threePhaseLoop.stop().catchError((e) => null);
+    box.fourPhaseLoop.stop().catchError((e) => null);
+    box.api.disconnect();
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
   }
 
-  Future<void> _toggleLoop() async {
-    if (_api == null || !_api!.isConnected) return;
+  Future<void> _toggleLoop(int boxIndex) async {
+    final box = _boxes[boxIndex]!;
+    if (!box.api.isConnected) return;
 
-    if (_isLoopRunning) {
-      await _stopStimulation();
+    if (box.isLoopRunning) {
+      await _stopStimulation(boxIndex);
     } else {
-      await _startStimulation();
+      await _startStimulation(boxIndex);
     }
-    _sendStateUpdate();
-    _updateNotificationDetails(null);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
   }
 
-  Future<void> _startStimulation() async {
+  Future<void> _startStimulation(int boxIndex) async {
+    final box = _boxes[boxIndex]!;
     try {
-      if (_deviceMode == DeviceMode.fourPhase) {
-        await _fourPhaseLoop?.start();
+      if (box.deviceMode == DeviceMode.fourPhase) {
+        await box.fourPhaseLoop.start();
       } else {
-        await _threePhaseLoop?.start();
+        await box.threePhaseLoop.start();
       }
-      _isLoopRunning = true;
-      _logToMain("Stimulation started.");
+      box.isLoopRunning = true;
+      _logToMain(boxIndex, "Stimulation started.");
     } catch (e) {
-      _logToMain("Failed to start stimulation: $e");
-      _isLoopRunning = false;
+      _logToMain(boxIndex, "Failed to start stimulation: $e");
+      box.isLoopRunning = false;
     }
   }
 
-  Future<void> _stopStimulation() async {
+  Future<void> _stopStimulation(int boxIndex) async {
+    final box = _boxes[boxIndex]!;
     try {
-      if (_deviceMode == DeviceMode.fourPhase) {
-        await _fourPhaseLoop?.stop();
+      if (box.deviceMode == DeviceMode.fourPhase) {
+        await box.fourPhaseLoop.stop();
       } else {
-        await _threePhaseLoop?.stop();
+        await box.threePhaseLoop.stop();
       }
-      _isLoopRunning = false;
-      _isSlowConnection = false;
-      _logToMain("Stimulation stopped.");
+      box.isLoopRunning = false;
+      box.isSlowConnection = false;
+      _logToMain(boxIndex, "Stimulation stopped.");
     } catch (e) {
-      _logToMain("Failed to stop stimulation: $e");
+      _logToMain(boxIndex, "Failed to stop stimulation: $e");
     }
   }
 
-  void _resetNotificationWatchdog() {
-    _notificationWatchdog?.cancel();
-    if (_api != null && _api!.isConnected) {
-      _notificationWatchdog = Timer(const Duration(seconds: 30), () {
-        _logToMain("Watchdog: Device stopped responding.");
-        _disconnect();
+  void _resetNotificationWatchdog(int boxIndex) {
+    final box = _boxes[boxIndex]!;
+    box.notificationWatchdog?.cancel();
+    if (box.api.isConnected) {
+      box.notificationWatchdog = Timer(const Duration(seconds: 30), () {
+        _logToMain(boxIndex, "Watchdog: Device stopped responding.");
+        _disconnect(boxIndex);
       });
     }
   }
 
-  void _handleNotification(Notification n) {
-    _resetNotificationWatchdog();
+  void _handleNotification(int boxIndex, Notification n) {
+    final box = _boxes[boxIndex]!;
+    _resetNotificationWatchdog(boxIndex);
 
     final data = <String, dynamic>{
       'type': 'notification',
+      'boxIndex': boxIndex,
     };
 
     if (n.hasNotificationSkinResistance()) {
@@ -378,21 +428,21 @@ class FocStimTaskHandler extends TaskHandler {
 
     if (n.hasNotificationDeviceVolume()) {
       data['boxVolume'] = n.notificationDeviceVolume.volume;
-      _isPotLocked = n.notificationDeviceVolume.locked;
-      data['isPotLocked'] = _isPotLocked;
+      box.isPotLocked = n.notificationDeviceVolume.locked;
+      data['isPotLocked'] = box.isPotLocked;
     }
 
     if (n.hasNotificationButtonPress()) {
       final bp = n.notificationButtonPress;
       final firmwareTs = bp.timestampMs != 0 ? bp.timestampMs : null;
       if (bp.state == ButtonState.BUTTON_DOWN) {
-        _buttonEventTimestampMs = firmwareTs;
-        _buttonEventDateTime = firmwareTs == null ? DateTime.now() : null;
+        box.buttonEventTimestampMs = firmwareTs;
+        box.buttonEventDateTime = firmwareTs == null ? DateTime.now() : null;
       } else if (bp.state == ButtonState.BUTTON_UP) {
-        final downFirmwareTs = _buttonEventTimestampMs;
-        final downDateTime = _buttonEventDateTime;
-        _buttonEventTimestampMs = firmwareTs;
-        _buttonEventDateTime = firmwareTs == null ? DateTime.now() : null;
+        final downFirmwareTs = box.buttonEventTimestampMs;
+        final downDateTime = box.buttonEventDateTime;
+        box.buttonEventTimestampMs = firmwareTs;
+        box.buttonEventDateTime = firmwareTs == null ? DateTime.now() : null;
 
         int? ms;
         if (firmwareTs != null && downFirmwareTs != null) {
@@ -405,7 +455,7 @@ class FocStimTaskHandler extends TaskHandler {
           final action = ms >= _deviceBehavior.longPressMillis
               ? _deviceBehavior.longPressAction
               : _deviceBehavior.shortPressAction;
-          _executeButtonAction(action);
+          _executeButtonAction(boxIndex, action);
         }
       }
     }
@@ -415,65 +465,43 @@ class FocStimTaskHandler extends TaskHandler {
       data['debugMessage'] = msg;
     }
 
-    // Cache telemetry (excluding 'type')
-    final cacheData = Map<String, dynamic>.from(data)..remove('type');
-    _lastTelemetry.addAll(cacheData);
+    // Cache telemetry (excluding 'type' and 'boxIndex')
+    final cacheData = Map<String, dynamic>.from(data)..remove('type')..remove('boxIndex');
+    box.lastTelemetry.addAll(cacheData);
 
     FlutterForegroundTask.sendDataToMain(data);
-    _updateNotificationDetails(n);
+    _updateNotificationDetails();
   }
 
-  void _updateNotificationDetails(Notification? n) {
-    final now = DateTime.now();
-    final isStateChange = _lastIsLoopRunningState != _isLoopRunning;
-
-    // Throttle notifications unless state changed or 2 seconds passed
-    if (!isStateChange && now.difference(_lastNotificationUpdateTime).inSeconds < 2) {
-      return;
-    }
-
-    _lastIsLoopRunningState = _isLoopRunning;
-    _lastNotificationUpdateTime = now;
-
-    if (_connectionStatus != "Connected") {
-      FlutterForegroundTask.updateService(
-        notificationTitle: "FOC Companion - $_connectionStatus",
-        notificationText: _connectionStatus == "Connecting..."
-            ? "Establishing link..."
-            : "Disconnected from device.",
-        notificationButtons: [
-          const NotificationButton(id: 'disconnect', text: 'Dismiss'),
-        ],
-      );
-      return;
-    }
-
-    String stateStr = _isLoopRunning ? "Playing" : "Connected";
-    String detailsStr = "";
-
-    if (_isLoopRunning) {
-      String patternName = "";
-      if (_deviceMode == DeviceMode.fourPhase) {
-        patternName = _fourPhaseLoop?.pattern.name ?? "4-Phase";
-      } else {
-        patternName = _threePhaseLoop?.pattern.name ?? "3-Phase";
+  void _updateNotificationDetails() {
+    List<String> statuses = [];
+    bool isAnyRunning = false;
+    for (int i = 0; i < 2; i++) {
+      final box = _boxes[i]!;
+      String status = "Box ${i + 1}: ${box.connectionStatus}";
+      if (box.connectionStatus == "Connected") {
+        if (box.isLoopRunning) {
+          status += " (Playing)";
+          isAnyRunning = true;
+        } else {
+          status += " (Idle)";
+        }
+        if (box.lastTelemetry.containsKey('batterySoc')) {
+          final soc = (box.lastTelemetry['batterySoc'] * 100).toInt();
+          status += " $soc%";
+        }
       }
-      detailsStr = "Stimulating: $patternName";
-    } else {
-      detailsStr = "Connected | Idle";
+      statuses.add(status);
     }
 
-    if (n != null && n.hasNotificationBattery()) {
-      final soc = (n.notificationBattery.batterySoc * 100).toInt();
-      detailsStr += " | Battery: $soc%";
-    }
+    String overallText = statuses.join(" | ");
 
     FlutterForegroundTask.updateService(
-      notificationTitle: "FOC Companion - $stateStr",
-      notificationText: detailsStr,
-      notificationButtons: _isLoopRunning
+      notificationTitle: isAnyRunning ? "FOC Companion - Playing" : "FOC Companion",
+      notificationText: overallText,
+      notificationButtons: isAnyRunning
           ? [
-              const NotificationButton(id: 'stop_stimulation', text: 'Stop'),
+              const NotificationButton(id: 'stop_stimulation', text: 'Stop All'),
             ]
           : [
               const NotificationButton(id: 'disconnect', text: 'Disconnect'),
@@ -481,70 +509,77 @@ class FocStimTaskHandler extends TaskHandler {
     );
   }
 
-  void _executeButtonAction(ButtonAction action) {
-    _logToMain("Button action: $action");
+  void _executeButtonAction(int boxIndex, ButtonAction action) {
+    _logToMain(boxIndex, "Button action: $action");
     switch (action) {
       case ButtonAction.nothing:
         break;
       case ButtonAction.togglePlayPause:
-        _toggleLoop();
+        _toggleLoop(boxIndex);
         break;
       case ButtonAction.toggleVolumeLock:
-        _togglePotLock();
+        _togglePotLock(boxIndex);
         break;
     }
   }
 
-  Future<void> _togglePotLock() async {
-    if (_api == null || !_api!.isConnected) return;
+  Future<void> _togglePotLock(int boxIndex) async {
+    final box = _boxes[boxIndex]!;
+    if (!box.api.isConnected) return;
     try {
-      await _api!.lockDeviceVolume(!_isPotLocked);
+      await box.api.lockDeviceVolume(!box.isPotLocked);
     } catch (e) {
-      _logToMain("Failed to toggle pot lock: $e");
+      _logToMain(boxIndex, "Failed to toggle pot lock: $e");
     }
   }
 
-  void _sendStateUpdate() {
+  void _sendStateUpdate(int boxIndex) {
+    final box = _boxes[boxIndex]!;
     FlutterForegroundTask.sendDataToMain({
       'type': 'stateUpdate',
-      'connectionStatus': _connectionStatus,
-      'firmwareVersion': _firmwareVersion,
-      'isLoopRunning': _isLoopRunning,
-      'isSlowConnection': _isSlowConnection,
-      'isPotLocked': _isPotLocked,
+      'boxIndex': boxIndex,
+      'connectionStatus': box.connectionStatus,
+      'firmwareVersion': box.firmwareVersion,
+      'isLoopRunning': box.isLoopRunning,
+      'isSlowConnection': box.isSlowConnection,
+      'isPotLocked': box.isPotLocked,
     });
   }
 
-  void _logToMain(String message) {
+  void _logToMain(int boxIndex, String message) {
     FlutterForegroundTask.sendDataToMain({
       'type': 'log',
+      'boxIndex': boxIndex,
       'message': message,
     });
   }
 
-  void _handleSlowConnection(bool slow) {
-    if (_isSlowConnection == slow) return;
-    _isSlowConnection = slow;
-    _sendStateUpdate();
+  void _handleSlowConnection(int boxIndex, bool slow) {
+    final box = _boxes[boxIndex]!;
+    if (box.isSlowConnection == slow) return;
+    box.isSlowConnection = slow;
+    _sendStateUpdate(boxIndex);
   }
 
-  void _handleLoopTimeout(String error) {
-    _logToMain("[TIMEOUT_ERROR] $error");
-    _isLoopRunning = false;
-    _isSlowConnection = false;
-    _connectionStatus = "Timeout: $error";
-    _api?.stopSignal().catchError((e) => null);
-    _sendStateUpdate();
-    _updateNotificationDetails(null);
+  void _handleLoopTimeout(int boxIndex, String error) {
+    final box = _boxes[boxIndex]!;
+    _logToMain(boxIndex, "[TIMEOUT_ERROR] $error");
+    box.isLoopRunning = false;
+    box.isSlowConnection = false;
+    box.connectionStatus = "Timeout: $error";
+    box.api.stopSignal().catchError((e) => null);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
   }
 
-  void _handleDisconnect() {
-    _disconnect();
+  void _handleDisconnect(int boxIndex) {
+    _disconnect(boxIndex);
   }
 
-  void _handleError(String err) {
-    _connectionStatus = "Error: $err";
-    _logToMain("Socket error: $err");
-    _disconnect();
+  void _handleError(int boxIndex, String err) {
+    final box = _boxes[boxIndex]!;
+    box.connectionStatus = "Error: $err";
+    _logToMain(boxIndex, "Socket error: $err");
+    _disconnect(boxIndex);
   }
 }

@@ -21,6 +21,35 @@ class ControlScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: SegmentedButton<int>(
+                      segments: const [
+                        ButtonSegment(value: 0, label: Text("Box 1"), icon: Icon(Icons.looks_one)),
+                        ButtonSegment(value: 1, label: Text("Box 2"), icon: Icon(Icons.looks_two)),
+                      ],
+                      selected: {device.settings.activeUiBoxIndex},
+                      onSelectionChanged: (s) => device.settings.setActiveUiBoxIndex(s.first),
+                      showSelectedIcon: false,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(
+                      device.settings.linkDevicesEnabled ? Icons.link : Icons.link_off,
+                      color: device.settings.linkDevicesEnabled
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
+                    tooltip: device.settings.linkDevicesEnabled ? 'Devices Linked' : 'Devices Independent',
+                    onPressed: () {
+                      device.settings.setLinkDevicesEnabled(!device.settings.linkDevicesEnabled);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               if (!isConnected) ...[
                 _ConnectionCard(device: device),
                 const SizedBox(height: 16),

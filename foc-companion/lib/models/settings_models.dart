@@ -291,3 +291,61 @@ class FunscriptLocation {
 
   FunscriptLocation();
 }
+
+// ──────────────────────────────────────────────
+// Box profile (grouping connection, device, pulse and cockpit configurations)
+// ──────────────────────────────────────────────
+
+class BoxProfile {
+  String name;
+  bool isEnabled;
+  FocStimSettings connection;
+  DeviceSettings device;
+  PulseSettings pulse;
+  CockpitSettings cockpit;
+  CockpitSettings cockpit4Phase;
+
+  BoxProfile({
+    required this.name,
+    this.isEnabled = true,
+    FocStimSettings? connection,
+    DeviceSettings? device,
+    PulseSettings? pulse,
+    CockpitSettings? cockpit,
+    CockpitSettings? cockpit4Phase,
+  })  : connection = connection ?? FocStimSettings(),
+        device = device ?? DeviceSettings(),
+        pulse = pulse ?? PulseSettings(),
+        cockpit = cockpit ?? CockpitSettings(),
+        cockpit4Phase = cockpit4Phase ?? CockpitSettings();
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'isEnabled': isEnabled,
+        'connection': connection.toJson(),
+        'device': device.toJson(),
+        'pulse': pulse.toJson(),
+        'cockpit': cockpit.toJson(),
+        'cockpit4Phase': cockpit4Phase.toJson(),
+      };
+
+  BoxProfile.fromJson(Map<String, dynamic> json)
+      : name = json['name'] ?? "Box",
+        isEnabled = json['isEnabled'] ?? true,
+        connection = json['connection'] != null
+            ? FocStimSettings.fromJson(Map<String, dynamic>.from(json['connection']))
+            : FocStimSettings(),
+        device = json['device'] != null
+            ? DeviceSettings.fromJson(Map<String, dynamic>.from(json['device']))
+            : DeviceSettings(),
+        pulse = json['pulse'] != null
+            ? PulseSettings.fromJson(Map<String, dynamic>.from(json['pulse']))
+            : PulseSettings(),
+        cockpit = json['cockpit'] != null
+            ? CockpitSettings.fromJson(Map<String, dynamic>.from(json['cockpit']))
+            : CockpitSettings(),
+        cockpit4Phase = json['cockpit4Phase'] != null
+            ? CockpitSettings.fromJson(Map<String, dynamic>.from(json['cockpit4Phase']))
+            : CockpitSettings();
+}
+

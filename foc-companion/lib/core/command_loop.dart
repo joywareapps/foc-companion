@@ -28,6 +28,10 @@ const _kSlowThreshold = 3;
 class FourPhaseCommandLoop {
   final FocStimApiService _api;
   final SettingsProvider _settings;
+  int boxIndex = 0;
+
+  DeviceSettings get _device => _settings.boxes[boxIndex].device;
+  PulseSettings get _pulse => _settings.boxes[boxIndex].pulse;
 
   /// Active pattern — swappable while running.
   FourphasePattern pattern = FourphasePatternRegistry.all[0];
@@ -124,7 +128,7 @@ class FourPhaseCommandLoop {
     final double elapsed = now - _startTime;
     final double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
     final double currentAmp =
-        volume * _settings.device.waveformAmplitude * ramp;
+        volume * _device.waveformAmplitude * ramp;
 
     final norm = _pulseFreqMod.update(dt, velocity); // [-1,1] when active, 0 when off
     final modCfg = _pulseFreqMod.config;
@@ -133,7 +137,7 @@ class FourPhaseCommandLoop {
     final modFreq = freqModActive
         ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
             .clamp(1.0, 300.0)
-        : _settings.pulse.pulseFrequency;
+        : _pulse.pulseFrequency;
     // Width uses a phase-shifted sample of the same oscillator.
     final modWidth = widthModActive
         ? (modCfg.minWidth +
@@ -143,7 +147,7 @@ class FourPhaseCommandLoop {
                           1) /
                     2)
             .clamp(3.0, 15.0)
-        : _settings.pulse.pulseWidth;
+        : _pulse.pulseWidth;
 
     // Collect futures for changed axes only (or all axes on full sync).
     final futs = <Future<Response>>[];
@@ -168,16 +172,16 @@ class FourPhaseCommandLoop {
     send(AxisType.AXIS_ELECTRODE_4_POWER, pos.d);
     // Settings — delta-sent; only transmitted when value changes or on full sync.
     send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmp);
-    send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _settings.pulse.carrierFrequency);
+    send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _pulse.carrierFrequency);
     send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
     send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, modWidth);
-    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _settings.pulse.pulseRiseTime);
+    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _pulse.pulseRiseTime);
     send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
-        _settings.pulse.pulseIntervalRandom / 100.0);
-    send(AxisType.AXIS_CALIBRATION_4_A, _settings.device.calibration4A);
-    send(AxisType.AXIS_CALIBRATION_4_B, _settings.device.calibration4B);
-    send(AxisType.AXIS_CALIBRATION_4_C, _settings.device.calibration4C);
-    send(AxisType.AXIS_CALIBRATION_4_D, _settings.device.calibration4D);
+        _pulse.pulseIntervalRandom / 100.0);
+    send(AxisType.AXIS_CALIBRATION_4_A, _device.calibration4A);
+    send(AxisType.AXIS_CALIBRATION_4_B, _device.calibration4B);
+    send(AxisType.AXIS_CALIBRATION_4_C, _device.calibration4C);
+    send(AxisType.AXIS_CALIBRATION_4_D, _device.calibration4D);
 
     try {
       // eagerError: false — wait for all futures so their exceptions are
@@ -208,8 +212,8 @@ class FourPhaseCommandLoop {
           ..interval = 0));
     }
 
-    var p = _settings.pulse;
-    var d = _settings.device;
+    var p = _pulse;
+    var d = _device;
 
     await send(AxisType.AXIS_ELECTRODE_1_POWER, 0);
     await send(AxisType.AXIS_ELECTRODE_2_POWER, 0);
@@ -236,6 +240,10 @@ class FourPhaseCommandLoop {
 class CommandLoop {
   final FocStimApiService _api;
   final SettingsProvider _settings;
+  int boxIndex = 0;
+
+  DeviceSettings get _device => _settings.boxes[boxIndex].device;
+  PulseSettings get _pulse => _settings.boxes[boxIndex].pulse;
 
   /// Active pattern — can be swapped while running.
   ThreephasePattern pattern = CirclePattern();
@@ -334,7 +342,7 @@ class CommandLoop {
     final double elapsed = now - _startTime;
     final double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
     final double currentAmp =
-        volume * _settings.device.waveformAmplitude * ramp;
+        volume * _device.waveformAmplitude * ramp;
 
     final norm = _pulseFreqMod.update(dt, velocity); // [-1,1] when active, 0 when off
     final modCfg = _pulseFreqMod.config;
@@ -343,7 +351,7 @@ class CommandLoop {
     final modFreq = freqModActive
         ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
             .clamp(1.0, 300.0)
-        : _settings.pulse.pulseFrequency;
+        : _pulse.pulseFrequency;
     // Width uses a phase-shifted sample of the same oscillator.
     final modWidth = widthModActive
         ? (modCfg.minWidth +
@@ -353,7 +361,7 @@ class CommandLoop {
                           1) /
                     2)
             .clamp(3.0, 15.0)
-        : _settings.pulse.pulseWidth;
+        : _pulse.pulseWidth;
 
     // Collect futures for changed axes only (or all axes on full sync).
     final futs = <Future<Response>>[];
@@ -376,15 +384,15 @@ class CommandLoop {
     send(AxisType.AXIS_POSITION_BETA, pos.y);
     // Settings — delta-sent; only transmitted when value changes or on full sync.
     send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmp);
-    send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _settings.pulse.carrierFrequency);
+    send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _pulse.carrierFrequency);
     send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
     send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, modWidth);
-    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _settings.pulse.pulseRiseTime);
+    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _pulse.pulseRiseTime);
     send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
-        _settings.pulse.pulseIntervalRandom / 100.0);
-    send(AxisType.AXIS_CALIBRATION_3_CENTER, _settings.device.calibration3Center);
-    send(AxisType.AXIS_CALIBRATION_3_UP, _settings.device.calibration3Up);
-    send(AxisType.AXIS_CALIBRATION_3_LEFT, _settings.device.calibration3Left);
+        _pulse.pulseIntervalRandom / 100.0);
+    send(AxisType.AXIS_CALIBRATION_3_CENTER, _device.calibration3Center);
+    send(AxisType.AXIS_CALIBRATION_3_UP, _device.calibration3Up);
+    send(AxisType.AXIS_CALIBRATION_3_LEFT, _device.calibration3Left);
 
     try {
       await Future.wait(futs, eagerError: false);
@@ -414,8 +422,8 @@ class CommandLoop {
           ..interval = 0));
     }
 
-    var p = _settings.pulse;
-    var d = _settings.device;
+    var p = _pulse;
+    var d = _device;
 
     await send(AxisType.AXIS_POSITION_ALPHA, 0);
     await send(AxisType.AXIS_POSITION_BETA, 0);

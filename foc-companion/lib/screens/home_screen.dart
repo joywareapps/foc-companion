@@ -124,41 +124,65 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            toolbarHeight: isConnected ? 64 : kToolbarHeight,
-            title: isConnected
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+            toolbarHeight: 64,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(2, (i) {
+                final box = device.boxes[i];
+                final isBoxConnected = box.connectionStatus == "Connected";
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 1),
+                  child: Row(
                     children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (device.isSlowConnection)
-                            const Padding(
-                              padding: EdgeInsets.only(right: 4),
-                              child: Icon(
-                                Icons.warning_amber_rounded,
-                                color: Colors.amber,
-                                size: 16,
-                              ),
-                            ),
-                          Flexible(
-                            child: Text(
-                              device.connectionStatus,
-                              style: Theme.of(context).textTheme.titleSmall,
-                              overflow: TextOverflow.ellipsis,
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isBoxConnected
+                              ? Colors.green
+                              : (box.connectionStatus.contains("Error") || box.connectionStatus.contains("Timeout")
+                                  ? Colors.red
+                                  : (box.connectionStatus == "Disconnected" ? Colors.grey : Colors.orange)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "Box ${i + 1}: ",
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      if (isBoxConnected) ...[
+                        Text(
+                          "Temp: ${box.temperature} · Bat: ${box.batteryVoltage}",
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        if (box.batterySoc != null)
+                          Text(
+                            " (${(box.batterySoc! > 1.0 ? box.batterySoc! : box.batterySoc! * 100).toStringAsFixed(0)}%)",
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        if (box.isSlowConnection)
+                          const Padding(
+                            padding: EdgeInsets.only(left: 4),
+                            child: Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.amber,
+                              size: 12,
                             ),
                           ),
-                        ],
-                      ),
-                      Text(
-                        "Temp: ${device.temperature}  ·  Bat: ${device.batteryVoltage}"
-                        "${device.batterySoc != null ? ' (${(device.batterySoc! > 1.0 ? device.batterySoc! : device.batterySoc! * 100).toStringAsFixed(0)}%)' : ''}",
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
+                      ] else ...[
+                        Text(
+                          box.connectionStatus,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                        ),
+                      ],
                     ],
-                  )
-                : Text(device.connectionStatus),
+                  ),
+                );
+              }),
+            ),
             actions: isConnected
                 ? [
                     IconButton(
@@ -174,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.power_off),
-                      tooltip: 'Disconnect',
+                      tooltip: 'Disconnect Focused Box',
                       style: IconButton.styleFrom(foregroundColor: Colors.red),
                       onPressed: () {
                         setState(() => _showCalibration = false);

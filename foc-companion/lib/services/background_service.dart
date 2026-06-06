@@ -114,6 +114,10 @@ class FocStimTaskHandler extends TaskHandler {
   // Cache telemetry data to resend on requestState
   final Map<String, dynamic> _lastTelemetry = {};
 
+  // Throttling notification updates
+  DateTime _lastNotificationUpdateTime = DateTime.fromMillisecondsSinceEpoch(0);
+  bool? _lastIsLoopRunningState;
+
   static double _calcImpedance(double r, double x) =>
       math.sqrt(r * r + x * x);
 
@@ -420,6 +424,17 @@ class FocStimTaskHandler extends TaskHandler {
   }
 
   void _updateNotificationDetails(Notification? n) {
+    final now = DateTime.now();
+    final isStateChange = _lastIsLoopRunningState != _isLoopRunning;
+
+    // Throttle notifications unless state changed or 2 seconds passed
+    if (!isStateChange && now.difference(_lastNotificationUpdateTime).inSeconds < 2) {
+      return;
+    }
+
+    _lastIsLoopRunningState = _isLoopRunning;
+    _lastNotificationUpdateTime = now;
+
     if (_connectionStatus != "Connected") {
       FlutterForegroundTask.updateService(
         notificationTitle: "FOC Companion - $_connectionStatus",

@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foc_companion/models/settings_models.dart';
+import 'package:foc_companion/utils/calibration_utils.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class SettingsProvider with ChangeNotifier {
@@ -18,7 +20,10 @@ class SettingsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
 
     final deviceJson = prefs.getString('device_settings');
-    if (deviceJson != null) device = DeviceSettings.fromJson(jsonDecode(deviceJson));
+    if (deviceJson != null) {
+      device = DeviceSettings.fromJson(jsonDecode(deviceJson));
+      syncFromUdLr();
+    }
 
     final pulseJson = prefs.getString('pulse_settings');
     if (pulseJson != null) pulse = PulseSettings.fromJson(jsonDecode(pulseJson));
@@ -67,16 +72,56 @@ class SettingsProvider with ChangeNotifier {
 
   // ── Calibration ──
 
+  void syncFromUdLr() {
+    final abc = CalibrationUtils.udLrToIntensityRatio(device.calibration3Up, device.calibration3Left);
+    device.calibration3A = abc[0] > 0.0 ? (math.log(abc[0]) / math.ln10) * 10.0 : -20.0;
+    device.calibration3B = abc[1] > 0.0 ? (math.log(abc[1]) / math.ln10) * 10.0 : -20.0;
+    device.calibration3C = abc[2] > 0.0 ? (math.log(abc[2]) / math.ln10) * 10.0 : -20.0;
+    device.calibration3A = device.calibration3A.clamp(-20.0, 0.0);
+    device.calibration3B = device.calibration3B.clamp(-20.0, 0.0);
+    device.calibration3C = device.calibration3C.clamp(-20.0, 0.0);
+  }
+
+  void updateCalibration3Modern(double a, double b, double c) {
+    device.calibration3A = a.clamp(-20.0, 0.0);
+    device.calibration3B = b.clamp(-20.0, 0.0);
+    device.calibration3C = c.clamp(-20.0, 0.0);
+    
+    // Convert to ratios
+    final double ratioA = math.pow(10.0, device.calibration3A / 10.0).toDouble();
+    final double ratioB = math.pow(10.0, device.calibration3B / 10.0).toDouble();
+    final double ratioC = math.pow(10.0, device.calibration3C / 10.0).toDouble();
+    
+    final udlr = CalibrationUtils.intensityRatioToUdLr(ratioA, ratioB, ratioC);
+    device.calibration3Up = udlr[0];
+    device.calibration3Left = udlr[1];
+    notifyListeners();
+  }
+
+  void updateCalibration3Classic(double up, double left) {
+    device.calibration3Up = up;
+    device.calibration3Left = left;
+    syncFromUdLr();
+    notifyListeners();
+  }
+
+  void setCalibration3Interface(String val) {
+    device.calibration3Interface = val;
+    notifyListeners();
+  }
+
   void resetCalibration() {
     final d = DeviceSettings();
     device
       ..calibration3Center = d.calibration3Center
       ..calibration3Up = d.calibration3Up
       ..calibration3Left = d.calibration3Left
+      ..calibration3Interface = d.calibration3Interface
       ..calibration4A = d.calibration4A
       ..calibration4B = d.calibration4B
       ..calibration4C = d.calibration4C
       ..calibration4D = d.calibration4D;
+    syncFromUdLr();
     notifyListeners();
   }
 
@@ -89,10 +134,12 @@ class SettingsProvider with ChangeNotifier {
       ..calibration3Center = saved.calibration3Center
       ..calibration3Up = saved.calibration3Up
       ..calibration3Left = saved.calibration3Left
+      ..calibration3Interface = saved.calibration3Interface
       ..calibration4A = saved.calibration4A
       ..calibration4B = saved.calibration4B
       ..calibration4C = saved.calibration4C
       ..calibration4D = saved.calibration4D;
+    syncFromUdLr();
     notifyListeners();
     return true;
   }

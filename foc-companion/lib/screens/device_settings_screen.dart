@@ -23,8 +23,30 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       padding: const EdgeInsets.all(16.0),
       children: [
         if (d.deviceMode == DeviceMode.threePhase) ...[
-          const Text("3-Phase Calibration",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("3-Phase Calibration",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              SizedBox(
+                width: 160,
+                child: DropdownButton<String>(
+                  value: d.calibration3Interface,
+                  isExpanded: true,
+                  underline: const SizedBox(),
+                  items: const [
+                    DropdownMenuItem(value: 'modern', child: Text('Modern (A/B/C)')),
+                    DropdownMenuItem(value: 'classic', child: Text('Classic (Up/Left)')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) {
+                      settings.setCalibration3Interface(v);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
           _buildSlider(
             label: "Center",
@@ -33,27 +55,57 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             max: 2,
             onChanged: (v) => setState(() => d.calibration3Center = v),
           ),
-          _buildSlider(
-            label: "Up",
-            value: d.calibration3Up,
-            min: -2,
-            max: 2,
-            onChanged: (v) => setState(() => d.calibration3Up = v),
-            color: Colors.red,
-          ),
-          _buildLeftRightSlider(
-            value: d.calibration3Left,
-            onChanged: (v) => setState(() => d.calibration3Left = v),
-          ),
-          if (device.impedanceA != null) ...[
-            const SizedBox(height: 8),
-            _ImpedanceRow(
-              channels: [
-                ('Ch A', device.impedanceA),
-                ('Ch B', device.impedanceB),
-                ('Ch C', device.impedanceC),
-              ],
+          if (d.calibration3Interface == 'modern') ...[
+            _buildSlider(
+              label: "Electrode A",
+              value: d.calibration3A,
+              min: -20,
+              max: 0,
+              onChanged: (v) => settings.updateCalibration3Modern(v, d.calibration3B, d.calibration3C),
+              color: Colors.red,
+              impedance: device.impedanceA,
             ),
+            _buildSlider(
+              label: "Electrode B",
+              value: d.calibration3B,
+              min: -20,
+              max: 0,
+              onChanged: (v) => settings.updateCalibration3Modern(d.calibration3A, v, d.calibration3C),
+              color: Colors.blue,
+              impedance: device.impedanceB,
+            ),
+            _buildSlider(
+              label: "Electrode C",
+              value: d.calibration3C,
+              min: -20,
+              max: 0,
+              onChanged: (v) => settings.updateCalibration3Modern(d.calibration3A, d.calibration3B, v),
+              color: Colors.amber,
+              impedance: device.impedanceC,
+            ),
+          ] else ...[
+            _buildSlider(
+              label: "Up",
+              value: d.calibration3Up,
+              min: -2,
+              max: 2,
+              onChanged: (v) => settings.updateCalibration3Classic(v, d.calibration3Left),
+              color: Colors.red,
+            ),
+            _buildLeftRightSlider(
+              value: d.calibration3Left,
+              onChanged: (v) => settings.updateCalibration3Classic(d.calibration3Up, v),
+            ),
+            if (device.impedanceA != null) ...[
+              const SizedBox(height: 8),
+              _ImpedanceRow(
+                channels: [
+                  ('Ch A', device.impedanceA),
+                  ('Ch B', device.impedanceB),
+                  ('Ch C', device.impedanceC),
+                ],
+              ),
+            ],
           ],
         ] else ...[
           const Text("4-Phase Calibration",

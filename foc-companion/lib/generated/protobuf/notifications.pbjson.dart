@@ -93,9 +93,9 @@ final $typed_data.Uint8List notificationCurrentsDescriptor = $convert.base64Deco
     'b3V0cHV0UG93ZXISKgoRb3V0cHV0X3Bvd2VyX3NraW4YCiABKAJSD291dHB1dFBvd2VyU2tpbh'
     'IZCghwZWFrX2NtZBgLIAEoAlIHcGVha0NtZA==');
 
-@$core.Deprecated('Use notificationModelEstimationDescriptor instead')
-const NotificationModelEstimation$json = {
-  '1': 'NotificationModelEstimation',
+@$core.Deprecated('Use notificationOutputResistanceDescriptor instead')
+const NotificationOutputResistance$json = {
+  '1': 'NotificationOutputResistance',
   '2': [
     {'1': 'resistance_a', '3': 1, '4': 1, '5': 2, '10': 'resistanceA'},
     {'1': 'reluctance_a', '3': 2, '4': 1, '5': 2, '10': 'reluctanceA'},
@@ -105,19 +105,41 @@ const NotificationModelEstimation$json = {
     {'1': 'reluctance_c', '3': 6, '4': 1, '5': 2, '10': 'reluctanceC'},
     {'1': 'resistance_d', '3': 7, '4': 1, '5': 2, '10': 'resistanceD'},
     {'1': 'reluctance_d', '3': 8, '4': 1, '5': 2, '10': 'reluctanceD'},
-    {'1': 'constant', '3': 20, '4': 1, '5': 2, '10': 'constant'},
   ],
 };
 
-/// Descriptor for `NotificationModelEstimation`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List notificationModelEstimationDescriptor = $convert.base64Decode(
-    'ChtOb3RpZmljYXRpb25Nb2RlbEVzdGltYXRpb24SIQoMcmVzaXN0YW5jZV9hGAEgASgCUgtyZX'
-    'Npc3RhbmNlQRIhCgxyZWx1Y3RhbmNlX2EYAiABKAJSC3JlbHVjdGFuY2VBEiEKDHJlc2lzdGFu'
-    'Y2VfYhgDIAEoAlILcmVzaXN0YW5jZUISIQoMcmVsdWN0YW5jZV9iGAQgASgCUgtyZWx1Y3Rhbm'
-    'NlQhIhCgxyZXNpc3RhbmNlX2MYBSABKAJSC3Jlc2lzdGFuY2VDEiEKDHJlbHVjdGFuY2VfYxgG'
-    'IAEoAlILcmVsdWN0YW5jZUMSIQoMcmVzaXN0YW5jZV9kGAcgASgCUgtyZXNpc3RhbmNlRBIhCg'
-    'xyZWx1Y3RhbmNlX2QYCCABKAJSC3JlbHVjdGFuY2VEEhoKCGNvbnN0YW50GBQgASgCUghjb25z'
-    'dGFudA==');
+/// Descriptor for `NotificationOutputResistance`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List notificationOutputResistanceDescriptor = $convert.base64Decode(
+    'ChxOb3RpZmljYXRpb25PdXRwdXRSZXNpc3RhbmNlEiEKDHJlc2lzdGFuY2VfYRgBIAEoAlILcm'
+    'VzaXN0YW5jZUESIQoMcmVsdWN0YW5jZV9hGAIgASgCUgtyZWx1Y3RhbmNlQRIhCgxyZXNpc3Rh'
+    'bmNlX2IYAyABKAJSC3Jlc2lzdGFuY2VCEiEKDHJlbHVjdGFuY2VfYhgEIAEoAlILcmVsdWN0YW'
+    '5jZUISIQoMcmVzaXN0YW5jZV9jGAUgASgCUgtyZXNpc3RhbmNlQxIhCgxyZWx1Y3RhbmNlX2MY'
+    'BiABKAJSC3JlbHVjdGFuY2VDEiEKDHJlc2lzdGFuY2VfZBgHIAEoAlILcmVzaXN0YW5jZUQSIQ'
+    'oMcmVsdWN0YW5jZV9kGAggASgCUgtyZWx1Y3RhbmNlRA==');
+
+@$core.Deprecated('Use notificationSkinResistanceDescriptor instead')
+const NotificationSkinResistance$json = {
+  '1': 'NotificationSkinResistance',
+  '2': [
+    {'1': 'resistance_a', '3': 1, '4': 1, '5': 2, '10': 'resistanceA'},
+    {'1': 'reluctance_a', '3': 2, '4': 1, '5': 2, '10': 'reluctanceA'},
+    {'1': 'resistance_b', '3': 3, '4': 1, '5': 2, '10': 'resistanceB'},
+    {'1': 'reluctance_b', '3': 4, '4': 1, '5': 2, '10': 'reluctanceB'},
+    {'1': 'resistance_c', '3': 5, '4': 1, '5': 2, '10': 'resistanceC'},
+    {'1': 'reluctance_c', '3': 6, '4': 1, '5': 2, '10': 'reluctanceC'},
+    {'1': 'resistance_d', '3': 7, '4': 1, '5': 2, '10': 'resistanceD'},
+    {'1': 'reluctance_d', '3': 8, '4': 1, '5': 2, '10': 'reluctanceD'},
+  ],
+};
+
+/// Descriptor for `NotificationSkinResistance`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List notificationSkinResistanceDescriptor = $convert.base64Decode(
+    'ChpOb3RpZmljYXRpb25Ta2luUmVzaXN0YW5jZRIhCgxyZXNpc3RhbmNlX2EYASABKAJSC3Jlc2'
+    'lzdGFuY2VBEiEKDHJlbHVjdGFuY2VfYRgCIAEoAlILcmVsdWN0YW5jZUESIQoMcmVzaXN0YW5j'
+    'ZV9iGAMgASgCUgtyZXNpc3RhbmNlQhIhCgxyZWx1Y3RhbmNlX2IYBCABKAJSC3JlbHVjdGFuY2'
+    'VCEiEKDHJlc2lzdGFuY2VfYxgFIAEoAlILcmVzaXN0YW5jZUMSIQoMcmVsdWN0YW5jZV9jGAYg'
+    'ASgCUgtyZWx1Y3RhbmNlQxIhCgxyZXNpc3RhbmNlX2QYByABKAJSC3Jlc2lzdGFuY2VEEiEKDH'
+    'JlbHVjdGFuY2VfZBgIIAEoAlILcmVsdWN0YW5jZUQ=');
 
 @$core.Deprecated('Use systemStatsESC1Descriptor instead')
 const SystemStatsESC1$json = {

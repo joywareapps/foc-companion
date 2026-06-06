@@ -367,8 +367,8 @@ class NotificationCurrents extends $pb.GeneratedMessage {
   void clearPeakCmd() => $_clearField(11);
 }
 
-class NotificationModelEstimation extends $pb.GeneratedMessage {
-  factory NotificationModelEstimation({
+class NotificationOutputResistance extends $pb.GeneratedMessage {
+  factory NotificationOutputResistance({
     $core.double? resistanceA,
     $core.double? reluctanceA,
     $core.double? resistanceB,
@@ -377,7 +377,6 @@ class NotificationModelEstimation extends $pb.GeneratedMessage {
     $core.double? reluctanceC,
     $core.double? resistanceD,
     $core.double? reluctanceD,
-    $core.double? constant,
   }) {
     final result = create();
     if (resistanceA != null) result.resistanceA = resistanceA;
@@ -388,21 +387,20 @@ class NotificationModelEstimation extends $pb.GeneratedMessage {
     if (reluctanceC != null) result.reluctanceC = reluctanceC;
     if (resistanceD != null) result.resistanceD = resistanceD;
     if (reluctanceD != null) result.reluctanceD = reluctanceD;
-    if (constant != null) result.constant = constant;
     return result;
   }
 
-  NotificationModelEstimation._();
+  NotificationOutputResistance._();
 
-  factory NotificationModelEstimation.fromBuffer($core.List<$core.int> data,
+  factory NotificationOutputResistance.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory NotificationModelEstimation.fromJson($core.String json,
+  factory NotificationOutputResistance.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'NotificationModelEstimation',
+      _omitMessageNames ? '' : 'NotificationOutputResistance',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
       createEmptyInstance: create)
     ..aD(1, _omitFieldNames ? '' : 'resistanceA', fieldType: $pb.PbFieldType.OF)
@@ -413,31 +411,34 @@ class NotificationModelEstimation extends $pb.GeneratedMessage {
     ..aD(6, _omitFieldNames ? '' : 'reluctanceC', fieldType: $pb.PbFieldType.OF)
     ..aD(7, _omitFieldNames ? '' : 'resistanceD', fieldType: $pb.PbFieldType.OF)
     ..aD(8, _omitFieldNames ? '' : 'reluctanceD', fieldType: $pb.PbFieldType.OF)
-    ..aD(20, _omitFieldNames ? '' : 'constant', fieldType: $pb.PbFieldType.OF)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  NotificationModelEstimation clone() => deepCopy();
+  NotificationOutputResistance clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  NotificationModelEstimation copyWith(
-          void Function(NotificationModelEstimation) updates) =>
+  NotificationOutputResistance copyWith(
+          void Function(NotificationOutputResistance) updates) =>
       super.copyWith(
-              (message) => updates(message as NotificationModelEstimation))
-          as NotificationModelEstimation;
+              (message) => updates(message as NotificationOutputResistance))
+          as NotificationOutputResistance;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static NotificationModelEstimation create() =>
-      NotificationModelEstimation._();
+  static NotificationOutputResistance create() =>
+      NotificationOutputResistance._();
   @$core.override
-  NotificationModelEstimation createEmptyInstance() => create();
+  NotificationOutputResistance createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static NotificationModelEstimation getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<NotificationModelEstimation>(create);
-  static NotificationModelEstimation? _defaultInstance;
+  static NotificationOutputResistance getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<NotificationOutputResistance>(create);
+  static NotificationOutputResistance? _defaultInstance;
 
+  /// estimated resistance of the entire system, including driver Rdson,
+  /// low-pass filters, and the skin resistance. Generally useful for
+  /// debugging purposes.
+  /// At the current carrier frequency
   @$pb.TagNumber(1)
   $core.double get resistanceA => $_getN(0);
   @$pb.TagNumber(1)
@@ -509,15 +510,149 @@ class NotificationModelEstimation extends $pb.GeneratedMessage {
   $core.bool hasReluctanceD() => $_has(7);
   @$pb.TagNumber(8)
   void clearReluctanceD() => $_clearField(8);
+}
 
-  @$pb.TagNumber(20)
-  $core.double get constant => $_getN(8);
-  @$pb.TagNumber(20)
-  set constant($core.double value) => $_setFloat(8, value);
-  @$pb.TagNumber(20)
-  $core.bool hasConstant() => $_has(8);
-  @$pb.TagNumber(20)
-  void clearConstant() => $_clearField(20);
+class NotificationSkinResistance extends $pb.GeneratedMessage {
+  factory NotificationSkinResistance({
+    $core.double? resistanceA,
+    $core.double? reluctanceA,
+    $core.double? resistanceB,
+    $core.double? reluctanceB,
+    $core.double? resistanceC,
+    $core.double? reluctanceC,
+    $core.double? resistanceD,
+    $core.double? reluctanceD,
+  }) {
+    final result = create();
+    if (resistanceA != null) result.resistanceA = resistanceA;
+    if (reluctanceA != null) result.reluctanceA = reluctanceA;
+    if (resistanceB != null) result.resistanceB = resistanceB;
+    if (reluctanceB != null) result.reluctanceB = reluctanceB;
+    if (resistanceC != null) result.resistanceC = resistanceC;
+    if (reluctanceC != null) result.reluctanceC = reluctanceC;
+    if (resistanceD != null) result.resistanceD = resistanceD;
+    if (reluctanceD != null) result.reluctanceD = reluctanceD;
+    return result;
+  }
+
+  NotificationSkinResistance._();
+
+  factory NotificationSkinResistance.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory NotificationSkinResistance.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'NotificationSkinResistance',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'focstim_rpc'),
+      createEmptyInstance: create)
+    ..aD(1, _omitFieldNames ? '' : 'resistanceA', fieldType: $pb.PbFieldType.OF)
+    ..aD(2, _omitFieldNames ? '' : 'reluctanceA', fieldType: $pb.PbFieldType.OF)
+    ..aD(3, _omitFieldNames ? '' : 'resistanceB', fieldType: $pb.PbFieldType.OF)
+    ..aD(4, _omitFieldNames ? '' : 'reluctanceB', fieldType: $pb.PbFieldType.OF)
+    ..aD(5, _omitFieldNames ? '' : 'resistanceC', fieldType: $pb.PbFieldType.OF)
+    ..aD(6, _omitFieldNames ? '' : 'reluctanceC', fieldType: $pb.PbFieldType.OF)
+    ..aD(7, _omitFieldNames ? '' : 'resistanceD', fieldType: $pb.PbFieldType.OF)
+    ..aD(8, _omitFieldNames ? '' : 'reluctanceD', fieldType: $pb.PbFieldType.OF)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationSkinResistance clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  NotificationSkinResistance copyWith(
+          void Function(NotificationSkinResistance) updates) =>
+      super.copyWith(
+              (message) => updates(message as NotificationSkinResistance))
+          as NotificationSkinResistance;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static NotificationSkinResistance create() => NotificationSkinResistance._();
+  @$core.override
+  NotificationSkinResistance createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static NotificationSkinResistance getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<NotificationSkinResistance>(create);
+  static NotificationSkinResistance? _defaultInstance;
+
+  /// best-guess estimate of the skin resistance for display to user.
+  /// At the current carrier frequency.
+  /// Quite inaccurate on V1 due to nonstandard components.
+  @$pb.TagNumber(1)
+  $core.double get resistanceA => $_getN(0);
+  @$pb.TagNumber(1)
+  set resistanceA($core.double value) => $_setFloat(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasResistanceA() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearResistanceA() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get reluctanceA => $_getN(1);
+  @$pb.TagNumber(2)
+  set reluctanceA($core.double value) => $_setFloat(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasReluctanceA() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearReluctanceA() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.double get resistanceB => $_getN(2);
+  @$pb.TagNumber(3)
+  set resistanceB($core.double value) => $_setFloat(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasResistanceB() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearResistanceB() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.double get reluctanceB => $_getN(3);
+  @$pb.TagNumber(4)
+  set reluctanceB($core.double value) => $_setFloat(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasReluctanceB() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearReluctanceB() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.double get resistanceC => $_getN(4);
+  @$pb.TagNumber(5)
+  set resistanceC($core.double value) => $_setFloat(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasResistanceC() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearResistanceC() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.double get reluctanceC => $_getN(5);
+  @$pb.TagNumber(6)
+  set reluctanceC($core.double value) => $_setFloat(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasReluctanceC() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearReluctanceC() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.double get resistanceD => $_getN(6);
+  @$pb.TagNumber(7)
+  set resistanceD($core.double value) => $_setFloat(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasResistanceD() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearResistanceD() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.double get reluctanceD => $_getN(7);
+  @$pb.TagNumber(8)
+  set reluctanceD($core.double value) => $_setFloat(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasReluctanceD() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearReluctanceD() => $_clearField(8);
 }
 
 class SystemStatsESC1 extends $pb.GeneratedMessage {

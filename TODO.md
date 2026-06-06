@@ -32,7 +32,7 @@ See [DONE.md](DONE.md) for a detailed history of completed phases and implemente
 
 ### Task 07: Firmware Version Compatibility Check 🔧
 - **Priority:** MEDIUM
-- **Status:** 🟡 Not Started
+- **Status:** ✅ Completed (2026-06-06)
 - **Summary:**
   - Implement firmware version validation on app startup/connection.
   - **Requirement:** Validate firmware version is at least 1.1.x but less than 2.0.0.

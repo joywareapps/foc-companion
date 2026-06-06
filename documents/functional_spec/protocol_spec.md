@@ -54,6 +54,7 @@ The following RPC functions are defined:
 | `RequestTimestampGet` | `ResponseTimestampGet` | Get the device's current internal and synchronized timestamps. |
 | `RequestWifiParametersSet`| `ResponseWifiParametersSet` | Set the Wi-Fi SSID and password. |
 | `RequestWifiIPGet` | `ResponseWifiIPGet` | Get the device's Wi-Fi IP address. |
+| `RequestLockDeviceVolume` | `ResponseLockDeviceVolume` | Lock or unlock the physical device volume knob. |
 | `RequestDebugStm32DeepSleep`| `ResponseDebugStm32DeepSleep` | (Debug) Put the STM32 into a deep sleep state. |
 | `RequestDebugEnterBootloader`| (none) | (Debug) Cause the device to enter its bootloader. |
 
@@ -104,6 +105,9 @@ The following RPC functions are defined:
 * **ResponseWifiIPGet**:
     * `ip`: `uint32`
 
+*   **RequestLockDeviceVolume**:
+    * `lock`: `bool`
+
 ---
 
 ## 3. Notifications
@@ -126,10 +130,18 @@ Notifications are sent asynchronously from the device to the client.
     *   `output_power`: `float` (Output stage power in Watts)
     *   `output_power_skin`: `float` (Power delivered to the skin in Watts)
     *   `peak_cmd`: `float`
-*   **NotificationModelEstimation**: Reports the estimated electrical properties of the load.
-    *   `resistance_a`...`d`: `float`
-    *   `reluctance_a`...`d`: `float`
-    *   `constant`: `float`
+*   **NotificationOutputResistance**: Reports the estimated electrical resistance of the entire system (including driver, filters, and skin).
+    *   `resistance_a`...`d`: `float` (Resistive component in Ohms)
+    *   `reluctance_a`...`d`: `float` (Reactive component in Ohms)
+*   **NotificationSkinResistance**: Reports the best-guess estimate of the skin resistance (used in UI contact badges).
+    *   `resistance_a`...`d`: `float` (Resistive component in Ohms)
+    *   `reluctance_a`...`d`: `float` (Reactive component in Ohms)
+*   **NotificationDeviceVolume**: Reports the current physical volume knob level and lock status.
+    *   `volume`: `float` (0.0 to 1.0)
+    *   `locked`: `bool` (Lock status of the knob)
+*   **NotificationButtonPress**: Reports hardware button press events.
+    *   `state`: `ButtonState` (BUTTON_DOWN, BUTTON_UP, etc.)
+    *   `timestamp_ms`: `uint32` (Milliseconds elapsed on STM32)
 *   **NotificationSystemStats**: Reports system statistics like temperature and voltage.
     * `esc1`: `SystemStatsESC1`
     * `focstimv3`: `SystemStatsFocstimV3`

@@ -5,7 +5,7 @@ echo Generating Dart Protobuf files...
 if not exist "foc-companion\lib\generated\protobuf" mkdir "foc-companion\lib\generated\protobuf"
 
 :: Define paths
-set PROTO_SRC=proto\focstim
+set PROTO_SRC=foc-companion\proto
 set OUTPUT_DIR=foc-companion\lib\generated\protobuf
 
 :: Run protoc

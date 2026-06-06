@@ -342,8 +342,8 @@ class DeviceProvider with ChangeNotifier {
       }
     }
 
-    if (n.hasNotificationModelEstimation()) {
-      final e = n.notificationModelEstimation;
+    if (n.hasNotificationSkinResistance()) {
+      final e = n.notificationSkinResistance;
       impedanceA = _calcImpedance(e.resistanceA, e.reluctanceA);
       impedanceB = _calcImpedance(e.resistanceB, e.reluctanceB);
       impedanceC = _calcImpedance(e.resistanceC, e.reluctanceC);

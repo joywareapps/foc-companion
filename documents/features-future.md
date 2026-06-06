@@ -50,9 +50,9 @@ Enhanced volume management based on desktop features.
 
 ---
 
-## 4. Hardware Calibration UI (Nice-to-Have)
+## 4. Hardware Calibration UI (Completed)
 
-Visual interface for calibrating FOC-Stim 3-phase and 4-phase outputs.
+Visual interface for calibrating FOC-Stim 3-phase and 4-phase outputs. Fully implemented (Phase 4) and polished in the Control tab / App Bar overlay (Phase 6).
 
 **Settings:**
 - 3-Phase: Center, Up, Left

@@ -23,10 +23,10 @@ See [DONE.md](DONE.md) for a detailed history of completed phases and implemente
 
 ### Task 06: Background Execution 🔄
 - **Priority:** MEDIUM
-- **Status:** 🟡 Planning
+- **Status:** ✅ Completed (2026-06-06)
 - **Prompt:** `todo/06-background-execution.md`
 - **Summary:** 
-  - Implement Android Foreground Service to keep 60Hz loop alive when app is minimized.
+  - Implement Android Foreground Service to keep 30Hz loop alive when app is minimized.
   - Configure persistent notification for active stimulation.
   - Implement WakeLocks and WiFi locks to prevent connection drops.
 

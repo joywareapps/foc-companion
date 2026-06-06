@@ -3,9 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/screens/home_screen.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  FlutterForegroundTask.initCommunicationPort();
   
   final settingsProvider = SettingsProvider();
   await settingsProvider.loadSettings();

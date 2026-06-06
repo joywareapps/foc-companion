@@ -33,6 +33,7 @@ dependencies:
   google_fonts: ^6.1.0
   share_plus: ^10.1.4
   wakelock_plus: ^1.2.8
+  flutter_foreground_task: ^8.8.0
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:foc_companion/services/app_logger.dart';
 import 'package:foc_companion/services/funscript_bundle_loader.dart';
+import 'package:foc_companion/screens/funscript_player_screen.dart';
 
 /// Library browser for imported funscript bundles.
 class FunscriptLibraryScreen extends StatefulWidget {
@@ -133,11 +134,7 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
   void _navigateToPlayer(Map<String, dynamic> meta) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const Scaffold(
-          body: Center(
-            child: Text('Player placeholder — Phase D'),
-          ),
-        ),
+        builder: (context) => FunscriptPlayerScreen(meta: meta),
       ),
     );
   }

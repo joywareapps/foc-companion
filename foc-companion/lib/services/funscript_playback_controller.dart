@@ -29,6 +29,10 @@ class FunscriptPlaybackController extends ChangeNotifier {
   bool get loop => _loop;
   Map<String, double> get currentValues => Map.unmodifiable(_currentValues);
 
+  /// Whether the loaded bundle has position axes (alpha/beta).
+  bool get hasPosition =>
+      _bundle?.hasAlpha == true || _bundle?.hasBeta == true;
+
   /// Load a bundle for playback and reset position.
   void load(FunscriptBundle bundle) {
     _bundle = bundle;

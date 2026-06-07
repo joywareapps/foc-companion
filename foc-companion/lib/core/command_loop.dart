@@ -5,6 +5,7 @@ import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/patterns.dart';
 import 'package:foc_companion/core/modulation.dart';
 import 'package:foc_companion/models/settings_models.dart';
+import 'package:foc_companion/services/funscript_playback_controller.dart';
 import 'package:foc_companion/generated/protobuf/constants.pbenum.dart';
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
 import 'package:foc_companion/generated/protobuf/messages.pb.dart';
@@ -255,6 +256,9 @@ class CommandLoop {
   /// threephase_algorithm: AXIS_WAVEFORM_AMPLITUDE_AMPS = volume × maxAmp).
   double volume = 1.0;
 
+  /// Funscript playback controller. When playing, overrides pattern values.
+  FunscriptPlaybackController? funscriptController;
+
   /// Called with `true` when ticks are being skipped (connection slow),
   /// `false` when throughput recovers.
   void Function(bool)? onSlowConnection;
@@ -337,31 +341,73 @@ class CommandLoop {
     // Force a full re-sync every ~1 s to recover from any dropped packets.
     final bool forceSync = (now - _lastSyncWallTime) >= 1.0;
 
-    final pos = pattern.update(dt * velocity);
+    // ── Funscript tick (advances playback position) ──
+    funscriptController?.tick();
+
+    // ── Determine source: funscript overrides pattern per-axis ──
+    final bool useFunscript =
+        funscriptController?.state == PlaybackState.playing;
+
+    final pos = useFunscript
+        ? PatternPosition(
+            funscriptController!.getDeviceValue('alpha', min: -1.0, max: 1.0) ??
+                pattern.update(dt * velocity).x,
+            funscriptController!.getDeviceValue('beta', min: -1.0, max: 1.0) ??
+                pattern.update(dt * velocity).y,
+          )
+        : pattern.update(dt * velocity);
 
     final double elapsed = now - _startTime;
     final double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
-    final double currentAmp =
-        volume * _device.waveformAmplitude * ramp;
+    final double currentAmp = useFunscript
+        ? (funscriptController!.getDeviceValue('volume', min: 0.0, max: 1.0) ??
+                volume) *
+            _device.waveformAmplitude *
+            ramp
+        : volume * _device.waveformAmplitude * ramp;
 
-    final norm = _pulseFreqMod.update(dt, velocity); // [-1,1] when active, 0 when off
+    // Pulse modulation still applies unless funscript overrides the axis.
+    final norm = _pulseFreqMod.update(dt, velocity);
     final modCfg = _pulseFreqMod.config;
     final freqModActive = modCfg.mode == 'freq' || modCfg.mode == 'both';
     final widthModActive = modCfg.mode == 'width' || modCfg.mode == 'both';
-    final modFreq = freqModActive
-        ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
-            .clamp(1.0, 300.0)
-        : _pulse.pulseFrequency;
-    // Width uses a phase-shifted sample of the same oscillator.
-    final modWidth = widthModActive
-        ? (modCfg.minWidth +
-                (modCfg.maxWidth - modCfg.minWidth) *
-                    (_pulseFreqMod.valueAtPhaseDeg(
-                              modCfg.phaseShiftDeg.toDouble()) +
-                          1) /
-                    2)
-            .clamp(3.0, 15.0)
-        : _pulse.pulseWidth;
+
+    final double freq = useFunscript
+        ? (funscriptController!.getDeviceValue('frequency',
+                min: _device.minFrequency.toDouble(),
+                max: _device.maxFrequency.toDouble()) ??
+            _pulse.carrierFrequency)
+        : _pulse.carrierFrequency;
+
+    final double modFreq = useFunscript
+        ? freq
+        : (freqModActive
+            ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
+                .clamp(1.0, 300.0)
+            : _pulse.pulseFrequency);
+
+    final double modWidth = useFunscript
+        ? (funscriptController!.getDeviceValue('pulse_width', min: 3.0, max: 15.0) ??
+            _pulse.pulseWidth)
+        : (widthModActive
+            ? (modCfg.minWidth +
+                    (modCfg.maxWidth - modCfg.minWidth) *
+                        (_pulseFreqMod.valueAtPhaseDeg(
+                                  modCfg.phaseShiftDeg.toDouble()) +
+                              1) /
+                            2)
+                .clamp(3.0, 15.0)
+            : _pulse.pulseWidth);
+
+    final double pulseRiseTime = useFunscript
+        ? (funscriptController!.getDeviceValue('pulse_rise_time', min: 2.0, max: 20.0) ??
+            _pulse.pulseRiseTime)
+        : _pulse.pulseRiseTime;
+
+    final double pulseIntervalRandom = useFunscript
+        ? (funscriptController!.getDeviceValue('pulse_interval_random', min: 0.0, max: 1.0) ??
+            _pulse.pulseIntervalRandom / 100.0)
+        : _pulse.pulseIntervalRandom / 100.0;
 
     // Collect futures for changed axes only (or all axes on full sync).
     final futs = <Future<Response>>[];
@@ -384,12 +430,11 @@ class CommandLoop {
     send(AxisType.AXIS_POSITION_BETA, pos.y);
     // Settings — delta-sent; only transmitted when value changes or on full sync.
     send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, currentAmp);
-    send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _pulse.carrierFrequency);
+    send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, freq);
     send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
     send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, modWidth);
-    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _pulse.pulseRiseTime);
-    send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
-        _pulse.pulseIntervalRandom / 100.0);
+    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, pulseRiseTime);
+    send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT, pulseIntervalRandom);
     send(AxisType.AXIS_CALIBRATION_3_CENTER, _device.calibration3Center);
     send(AxisType.AXIS_CALIBRATION_3_UP, _device.calibration3Up);
     send(AxisType.AXIS_CALIBRATION_3_LEFT, _device.calibration3Left);

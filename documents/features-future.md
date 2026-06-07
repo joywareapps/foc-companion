@@ -6,7 +6,12 @@ This document tracks features that are either "parked" (deferred for later), "ni
 
 The Media Sync feature allows synchronizing stimulation with external media players (like HereSphere).
 
-**Status:** Parked. Core logic exists but needs porting and stabilization in Flutter.
+**Status:** Active. Dual-box support implemented (Phase 5, 2026-06-07). Next: Media Sync feature (see TODO.md).
+
+**Completed Phases:**
+1. ✅ MVP Core — TCP/Protobuf, connection, patterns, device status
+2. ✅ Phase 4 — Settings infrastructure, device/pulse settings UI, CommandLoop integration
+3. ✅ Phase 5 — Dual-box Android Foreground Service (two simultaneous FOC-Stim devices)
 
 **Target Players:**
 - HereSphere (TCP Socket)
@@ -52,7 +57,7 @@ Enhanced volume management based on desktop features.
 
 ## 4. Hardware Calibration UI (Completed)
 
-Visual interface for calibrating FOC-Stim 3-phase and 4-phase outputs. Fully implemented (Phase 4) and polished in the Control tab / App Bar overlay (Phase 6).
+Visual interface for calibrating FOC-Stim 3-phase and 4-phase outputs. Fully implemented (Phase 4) and polished in the Control tab / App Bar overlay (Phase 6). Now supports per-box calibration via BoxProfile model.
 
 **Settings:**
 - 3-Phase: Center, Up, Left

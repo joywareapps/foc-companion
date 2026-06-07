@@ -1,8 +1,8 @@
 # FOC Companion Mobile - Implementation Status & Specifications
 
-**Document Version:** 2.0
-**Last Updated:** 2025-12-25
-**Status:** Active Development - MVP Complete
+**Document Version:** 3.0
+**Last Updated:** 2026-06-07
+**Status:** Active Development — Dual-Box Support Implemented
 
 ---
 
@@ -243,7 +243,35 @@ AXIS_WAVEFORM_AMPLITUDE_AMPS = deviceSettings.waveformAmplitude
 
 ---
 
-## 5. Pending Features with Specifications
+## 5. Completed: Phase 5 — Dual-Box Support (2026-06-07)
+
+Commit: `1f91d87` — "Implement dual-box Android Foreground Service and fix infinite recursion on API disconnect"
+
+### What Changed
+- **`BoxProfile` model** — groups per-box connection (IP/port), device settings, pulse settings, cockpit (3-phase + 4-phase) into a single profile
+- **`BoxStatus`** — tracks per-box connection status, firmware, battery, temperature, impedance, loop state, pot lock, volume
+- **`ActiveBoxState`** in background service — two independent state machines, each with its own `FocStimApiService`, `CommandLoop`, and `FourPhaseCommandLoop`
+- **Background service** refactored from single connection to `Map<int, ActiveBoxState>` — connect/disconnect/stop/start all accept `boxIndex`
+- **`DeviceProvider`** maintains `boxes[0]` and `boxes[1]` with backward-compatible getters on `activeBoxStatus` (determined by `settings.activeUiBoxIndex`)
+- **Settings sync** iterates both boxes; incoming telemetry tagged with `boxIndex`
+- **UI**: Home screen updated for dual-box display; Settings screen refactored with per-box tabs/sections
+- **Bug fix**: Infinite recursion on API disconnect resolved
+
+### Files Changed (10 core files)
+- `lib/models/settings_models.dart` — BoxProfile class
+- `lib/providers/device_provider.dart` — BoxStatus + dual-box getters
+- `lib/providers/settings_provider.dart` — dual settings management
+- `lib/screens/home_screen.dart` — dual-box UI
+- `lib/screens/settings_screen.dart` — per-box settings
+- `lib/screens/control_screen.dart` — control updates
+- `lib/services/background_service.dart` — ActiveBoxState refactor
+- `lib/core/command_loop.dart` — boxIndex support
+- `lib/services/focstim_api_service.dart` — minor
+- `android/app/src/main/AndroidManifest.xml` — foreground service permissions
+
+---
+
+## 6. Pending Features with Specifications
 
 ### Phase 4.4: Pulse Settings UI (Priority 2)
 
@@ -443,12 +471,20 @@ From `src/generated/protobuf/constants_pb.ts`:
 - ✅ Compact UI optimizations
 - ✅ Real device communication working
 
-### What's Missing
-- Nothing! All protocol features implemented ✅
+### What's Implemented
+- ✅ All single-box protocol features
+- ✅ Dual-box Android Foreground Service (Phase 5, 2026-06-07)
+- ✅ BoxProfile model — per-box connection, device, pulse, cockpit settings
+- ✅ Background service manages 2 independent `ActiveBoxState` instances
+- ✅ Per-box telemetry, firmware, battery, impedance tracking
+- ✅ UI box switching (home screen + settings)
+- ✅ Fixed infinite recursion on API disconnect
 
 ### Priority Next Steps
-1. ✅ ~~Create Pulse Settings UI with duty cycle display (Phase 4.4)~~ - COMPLETED
-2. ✅ ~~Add missing calibration parameters to CommandLoop (Phase 4.7)~~ - COMPLETED
-3. ✅ ~~Add pulse interval random to CommandLoop (Phase 4.4)~~ - COMPLETED
-4. ✅ ~~Add amplitude ramp from 0 to target over 5 seconds (Phase 4.8)~~ - COMPLETED
-5. Test all settings changes with real device (Phase 4.7)
+1. ~~Create Pulse Settings UI with duty cycle display (Phase 4.4)~~ ✅
+2. ~~Add missing calibration parameters to CommandLoop (Phase 4.7)~~ ✅
+3. ~~Add pulse interval random to CommandLoop (Phase 4.4)~~ ✅
+4. ~~Add amplitude ramp from 0 to target over 5 seconds (Phase 4.8)~~ ✅
+5. ~~Dual-box support (Phase 5)~~ ✅
+6. Test dual-box with two real devices
+7. Media Sync feature (see TODO.md)

@@ -8,6 +8,7 @@ import 'package:foc_companion/screens/device_settings_screen.dart';
 import 'package:foc_companion/screens/pulse_settings_screen.dart';
 // import 'package:foc_companion/screens/media_sync_screen.dart';  // hidden — re-enable with Media tab
 import 'package:foc_companion/screens/settings_screen.dart';
+import 'package:foc_companion/screens/funscript_library_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,11 +21,11 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _showCalibration = false;
 
-  static const List<Widget> _pages = <Widget>[
-    ControlScreen(),
-    PulseSettingsScreen(),
-    // MediaSyncScreen(),  // hidden for now — re-enable by restoring this line and its NavigationDestination
-    SettingsScreen(),
+  static List<Widget> _pages(BuildContext context) => <Widget>[
+    const ControlScreen(),
+    const PulseSettingsScreen(),
+    const FunscriptLibraryScreen(),
+    const SettingsScreen(),
   ];
 
   void _showDiagnosticDialog(BuildContext context, DeviceProvider device) {
@@ -210,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           body: isConnected && _showCalibration
               ? const DeviceSettingsScreen()
-              : _pages.elementAt(_selectedIndex),
+              : _pages(context).elementAt(_selectedIndex),
           bottomNavigationBar: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -236,7 +237,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icon(Icons.electric_bolt),
                     label: 'Pulse',
                   ),
-                  // NavigationDestination(icon: Icon(Icons.sync), label: 'Media'),  // hidden
+                  NavigationDestination(
+                    icon: Icon(Icons.library_music_outlined),
+                    label: 'Library',
+                  ),
                   NavigationDestination(
                     icon: Icon(Icons.settings),
                     label: 'Settings',

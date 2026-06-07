@@ -5,7 +5,6 @@ import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/patterns.dart';
 import 'package:foc_companion/core/modulation.dart';
 import 'package:foc_companion/models/settings_models.dart';
-import 'package:foc_companion/services/funscript_playback_controller.dart';
 import 'package:foc_companion/generated/protobuf/constants.pbenum.dart';
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
 import 'package:foc_companion/generated/protobuf/messages.pb.dart';
@@ -256,8 +255,11 @@ class CommandLoop {
   /// threephase_algorithm: AXIS_WAVEFORM_AMPLITUDE_AMPS = volume × maxAmp).
   double volume = 1.0;
 
-  /// Funscript playback controller. When playing, overrides pattern values.
-  FunscriptPlaybackController? funscriptController;
+  /// Funscript data source. When not null and active, overrides pattern values.
+  /// The CommandLoop reads [funscriptActive] and [funscriptValues] each tick.
+  /// Set by the background service when funscript playback is active.
+  bool? Function()? isFunscriptActive;
+  Map<String, double> Function()? getFunscriptValues;
 
   /// Called with `true` when ticks are being skipped (connection slow),
   /// `false` when throughput recovers.
@@ -341,27 +343,35 @@ class CommandLoop {
     // Force a full re-sync every ~1 s to recover from any dropped packets.
     final bool forceSync = (now - _lastSyncWallTime) >= 1.0;
 
-    // ── Funscript tick (advances playback position) ──
-    funscriptController?.tick();
+    // ── Funscript data source (values updated from foreground) ──
+    final bool useFunscript = isFunscriptActive?.call() ?? false;
+    final Map<String, double> fsValues = useFunscript
+        ? (getFunscriptValues?.call() ?? <String, double>{})
+        : <String, double>{};
 
-    // ── Determine source: funscript overrides pattern per-axis ──
-    final bool useFunscript =
-        funscriptController?.state == PlaybackState.playing;
+    /// Get normalized funscript value for axis, or null if not available.
+    double? fsVal(String axis) => fsValues[axis];
 
-    final pos = useFunscript
+    /// Get device-mapped funscript value, or null.
+    double? fsDevice(String axis, {double min = 0.0, double max = 1.0}) {
+      final v = fsVal(axis);
+      if (v == null) return null;
+      return min + v * (max - min);
+    }
+
+    final bool hasPosition = fsVal('alpha') != null || fsVal('beta') != null;
+
+    final pos = useFunscript && hasPosition
         ? PatternPosition(
-            funscriptController!.getDeviceValue('alpha', min: -1.0, max: 1.0) ??
-                pattern.update(dt * velocity).x,
-            funscriptController!.getDeviceValue('beta', min: -1.0, max: 1.0) ??
-                pattern.update(dt * velocity).y,
+            fsDevice('alpha', min: -1.0, max: 1.0) ?? pattern.update(dt * velocity).x,
+            fsDevice('beta', min: -1.0, max: 1.0) ?? pattern.update(dt * velocity).y,
           )
         : pattern.update(dt * velocity);
 
     final double elapsed = now - _startTime;
     final double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
     final double currentAmp = useFunscript
-        ? (funscriptController!.getDeviceValue('volume', min: 0.0, max: 1.0) ??
-                volume) *
+        ? (fsDevice('volume', min: 0.0, max: 1.0) ?? volume) *
             _device.waveformAmplitude *
             ramp
         : volume * _device.waveformAmplitude * ramp;
@@ -373,7 +383,7 @@ class CommandLoop {
     final widthModActive = modCfg.mode == 'width' || modCfg.mode == 'both';
 
     final double freq = useFunscript
-        ? (funscriptController!.getDeviceValue('frequency',
+        ? (fsDevice('frequency',
                 min: _device.minFrequency.toDouble(),
                 max: _device.maxFrequency.toDouble()) ??
             _pulse.carrierFrequency)
@@ -387,8 +397,7 @@ class CommandLoop {
             : _pulse.pulseFrequency);
 
     final double modWidth = useFunscript
-        ? (funscriptController!.getDeviceValue('pulse_width', min: 3.0, max: 15.0) ??
-            _pulse.pulseWidth)
+        ? (fsDevice('pulse_width', min: 3.0, max: 15.0) ?? _pulse.pulseWidth)
         : (widthModActive
             ? (modCfg.minWidth +
                     (modCfg.maxWidth - modCfg.minWidth) *
@@ -400,12 +409,11 @@ class CommandLoop {
             : _pulse.pulseWidth);
 
     final double pulseRiseTime = useFunscript
-        ? (funscriptController!.getDeviceValue('pulse_rise_time', min: 2.0, max: 20.0) ??
-            _pulse.pulseRiseTime)
+        ? (fsDevice('pulse_rise_time', min: 2.0, max: 20.0) ?? _pulse.pulseRiseTime)
         : _pulse.pulseRiseTime;
 
     final double pulseIntervalRandom = useFunscript
-        ? (funscriptController!.getDeviceValue('pulse_interval_random', min: 0.0, max: 1.0) ??
+        ? (fsDevice('pulse_interval_random', min: 0.0, max: 1.0) ??
             _pulse.pulseIntervalRandom / 100.0)
         : _pulse.pulseIntervalRandom / 100.0;
 

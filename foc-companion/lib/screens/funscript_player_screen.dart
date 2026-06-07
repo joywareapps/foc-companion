@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:foc_companion/services/background_service.dart';
+
 import 'package:foc_companion/services/funscript_bundle_loader.dart';
 import 'package:foc_companion/services/funscript_playback_controller.dart';
 import 'package:foc_companion/services/app_logger.dart';
@@ -39,6 +41,10 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   void dispose() {
     _tickTimer?.cancel();
     _controller.stop();
+    BackgroundServiceManager.sendCommand('setFunscriptMode', {
+      'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
+      'active': false,
+    });
     _controller.dispose();
     super.dispose();
   }
@@ -67,7 +73,13 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   void _startTickTimer() {
     _tickTimer?.cancel();
     _tickTimer = Timer.periodic(const Duration(milliseconds: 33), (_) {
-      _controller.tick();
+      if (_controller.tick()) {
+        // Send current values to background service for device output
+        BackgroundServiceManager.sendCommand('updateFunscriptValues', {
+          'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
+          'values': _controller.currentValues,
+        });
+      }
     });
   }
 
@@ -78,16 +90,28 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
 
   void _play() {
     _controller.play();
+    BackgroundServiceManager.sendCommand('setFunscriptMode', {
+      'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
+      'active': true,
+    });
     _startTickTimer();
   }
 
   void _pause() {
     _controller.pause();
+    BackgroundServiceManager.sendCommand('setFunscriptMode', {
+      'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
+      'active': false,
+    });
     _stopTickTimer();
   }
 
   void _stop() {
     _controller.stop();
+    BackgroundServiceManager.sendCommand('setFunscriptMode', {
+      'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
+      'active': false,
+    });
     _stopTickTimer();
   }
 

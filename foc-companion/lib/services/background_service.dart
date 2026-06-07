@@ -101,6 +101,10 @@ class ActiveBoxState {
   bool isPotLocked = false;
   DeviceMode deviceMode = DeviceMode.threePhase;
 
+  /// Funscript playback state (updated from foreground via commands).
+  bool funscriptActive = false;
+  Map<String, double> funscriptValues = {};  // axis suffix → normalized 0.0-1.0
+
   int? buttonEventTimestampMs;
   DateTime? buttonEventDateTime;
   Timer? notificationWatchdog;
@@ -111,6 +115,8 @@ class ActiveBoxState {
 
   ActiveBoxState(this.index, SettingsProvider settings) {
     threePhaseLoop = CommandLoop(api, settings)..boxIndex = index;
+    threePhaseLoop.isFunscriptActive = () => funscriptActive;
+    threePhaseLoop.getFunscriptValues = () => funscriptValues;
     fourPhaseLoop = FourPhaseCommandLoop(api, settings)..boxIndex = index;
   }
 }
@@ -285,6 +291,26 @@ class FocStimTaskHandler extends TaskHandler {
           }
           if (data.containsKey('deviceBehavior')) {
             _deviceBehavior = DeviceBehaviorSettings.fromJson(Map<String, dynamic>.from(data['deviceBehavior']));
+          }
+          break;
+        case 'setFunscriptMode':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          final box = _boxes[boxIndex];
+          if (box != null) {
+            box.funscriptActive = data['active'] as bool? ?? false;
+            if (!box.funscriptActive) box.funscriptValues.clear();
+          }
+          break;
+        case 'updateFunscriptValues':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          final box = _boxes[boxIndex];
+          if (box != null && box.funscriptActive) {
+            final values = data['values'] as Map?;
+            if (values != null) {
+              box.funscriptValues = Map<String, double>.from(
+                values.map((k, v) => MapEntry(k as String, (v as num).toDouble())),
+              );
+            }
           }
           break;
       }

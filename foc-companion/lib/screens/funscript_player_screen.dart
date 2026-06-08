@@ -42,10 +42,14 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   void dispose() {
     _tickTimer?.cancel();
     _controller.stop();
-    // Stop funscript playback and command loop on device
-    BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
-      'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
-    });
+    
+    // Attempt to stop on both boxes just in case they were linked
+    for (int i = 0; i < 2; i++) {
+      BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
+        'boxIndex': i,
+      });
+    }
+    
     _controller.dispose();
     super.dispose();
   }
@@ -75,13 +79,52 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     _tickTimer?.cancel();
     _tickTimer = Timer.periodic(const Duration(milliseconds: 33), (_) {
       if (_controller.tick()) {
-        // Send current values to background service for device output
-        BackgroundServiceManager.sendCommand('updateFunscriptValues', {
-          'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
-          'values': _controller.currentValues,
-        });
+        final device = context.read<DeviceProvider>();
+        final linked = device.settings.linkDevicesEnabled;
+        final activeBox = _boxIndex;
+
+        final allValues = _controller.currentValues;
+
+        if (linked) {
+          // Send to both
+          BackgroundServiceManager.sendCommand('updateFunscriptValues', {
+            'boxIndex': 0,
+            'values': _filterAxes(allValues, prostate: false),
+          });
+          BackgroundServiceManager.sendCommand('updateFunscriptValues', {
+            'boxIndex': 1,
+            'values': _filterAxes(allValues, prostate: true),
+          });
+        } else {
+          // Send to single target box
+          BackgroundServiceManager.sendCommand('updateFunscriptValues', {
+            'boxIndex': activeBox,
+            'values': _filterAxes(allValues, prostate: activeBox == 1),
+          });
+        }
       }
     });
+  }
+
+  /// Maps axis variants to standard names. If prostate is true, prefers {axis}-prostate.
+  Map<String, double> _filterAxes(Map<String, double> allValues, {required bool prostate}) {
+    final result = <String, double>{};
+    // Base axes are those that don't end in -prostate
+    final baseAxes = allValues.keys.where((k) => !k.endsWith('-prostate')).toList();
+
+    for (final axis in baseAxes) {
+      if (prostate) {
+        final pKey = '$axis-prostate';
+        if (allValues.containsKey(pKey)) {
+          result[axis] = allValues[pKey]!;
+        } else {
+          result[axis] = allValues[axis]!;
+        }
+      } else {
+        result[axis] = allValues[axis]!;
+      }
+    }
+    return result;
   }
 
   void _stopTickTimer() {
@@ -90,7 +133,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   }
 
   bool _getIsConnected(BuildContext context, {required bool listen}) {
-    final device = listen 
+    final device = listen
         ? Provider.of<DeviceProvider>(context)
         : Provider.of<DeviceProvider>(context, listen: false);
     return device.api.isConnected;
@@ -101,28 +144,41 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   void _play() {
     if (!_getIsConnected(context, listen: false)) return;
     _controller.play();
-    // Start funscript mode + command loop on device
-    BackgroundServiceManager.sendCommand('startFunscriptPlayback', {
-      'boxIndex': _boxIndex,
-    });
+
+    final device = context.read<DeviceProvider>();
+    final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
+
+    for (final idx in targets) {
+      BackgroundServiceManager.sendCommand('startFunscriptPlayback', {
+        'boxIndex': idx,
+      });
+    }
     _startTickTimer();
   }
 
   void _pause() {
     _controller.pause();
-    // Pause funscript values but keep loop running (pattern resumes)
-    BackgroundServiceManager.sendCommand('pauseFunscriptPlayback', {
-      'boxIndex': _boxIndex,
-    });
+    final device = context.read<DeviceProvider>();
+    final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
+
+    for (final idx in targets) {
+      BackgroundServiceManager.sendCommand('pauseFunscriptPlayback', {
+        'boxIndex': idx,
+      });
+    }
     _stopTickTimer();
   }
 
   void _stop() {
     _controller.stop();
-    // Stop funscript mode and command loop entirely
-    BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
-      'boxIndex': _boxIndex,
-    });
+    final device = context.read<DeviceProvider>();
+    final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
+
+    for (final idx in targets) {
+      BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
+        'boxIndex': idx,
+      });
+    }
     _stopTickTimer();
   }
 

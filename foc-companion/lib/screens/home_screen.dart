@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
@@ -9,6 +11,7 @@ import 'package:foc_companion/screens/pulse_settings_screen.dart';
 // import 'package:foc_companion/screens/media_sync_screen.dart';  // hidden — re-enable with Media tab
 import 'package:foc_companion/screens/settings_screen.dart';
 import 'package:foc_companion/screens/funscript_library_screen.dart';
+import 'package:foc_companion/services/shared_file_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,6 +23,34 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _showCalibration = false;
+  StreamSubscription<Uri>? _sharedFileSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Check for a pending shared file (cold start) — peek only, don't consume.
+    // The Library screen will consume it.
+    if (SharedFileService.pendingUri != null) {
+      _selectedIndex = 2; // Library tab
+    }
+
+    // Listen for shared files while running (hot resume)
+    _sharedFileSub = SharedFileService.stream.listen((_) {
+      if (mounted) {
+        setState(() {
+          _selectedIndex = 2; // Library tab
+          _showCalibration = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sharedFileSub?.cancel();
+    super.dispose();
+  }
 
   static List<Widget> _pages(BuildContext context) => <Widget>[
     const ControlScreen(),

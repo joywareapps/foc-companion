@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:provider/provider.dart';
 import 'package:foc_companion/services/app_logger.dart';
 import 'package:foc_companion/services/funscript_bundle_loader.dart';
+import 'package:foc_companion/services/shared_file_service.dart';
+import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/screens/funscript_player_screen.dart';
 
 /// Library browser for imported funscript bundles.
@@ -18,11 +23,30 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
   List<Map<String, dynamic>> _bundles = [];
   bool _isLoading = true;
   String _libraryDir = '';
+  StreamSubscription<Uri>? _sharedFileSub;
 
   @override
   void initState() {
     super.initState();
     _initLibrary();
+
+    // Handle pending shared file from cold start
+    final pending = SharedFileService.consumePending();
+    if (pending != null) {
+      // Import after the library dir is initialised
+      _initLibrary().then((_) => _importFromUri(pending));
+    }
+
+    // Auto-import .focb files shared while app is running (hot resume)
+    _sharedFileSub = SharedFileService.stream.listen((uri) {
+      _importFromUri(uri);
+    });
+  }
+
+  @override
+  void dispose() {
+    _sharedFileSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _initLibrary() async {
@@ -52,13 +76,20 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
   Future<void> _importBundle() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['focb'],
+        type: FileType.any,
       );
 
       if (result == null || result.files.isEmpty) return;
 
       final file = result.files.first;
+      if (!file.name.toLowerCase().endsWith('.focb')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please select a .focb file')),
+          );
+        }
+        return;
+      }
       if (file.path == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -86,6 +117,38 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
       }
     } catch (e) {
       AppLogger.instance.e('FunscriptLibraryScreen: import failed', error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Import failed: $e')),
+        );
+      }
+    }
+  }
+
+  /// Import a .focb file from a URI (e.g. shared from another app).
+  Future<void> _importFromUri(Uri uri) async {
+    if (_libraryDir.isEmpty) {
+      // Library not initialised yet – wait for _initLibrary.
+      await _initLibrary();
+    }
+
+    try {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Importing bundle…')),
+      );
+
+      await FunscriptBundleLoader.importFromUri(uri, _libraryDir);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bundle imported successfully')),
+        );
+        await _loadBundles();
+      }
+    } catch (e) {
+      AppLogger.instance.e('FunscriptLibraryScreen: shared-file import failed', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Import failed: $e')),
@@ -131,7 +194,52 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
     }
   }
 
+  Future<void> _renameBundle(String bundleId, String currentName) async {
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return _RenameDialog(currentName: currentName);
+      },
+    );
+
+    if (!mounted) return;
+    if (newName == null || newName.isEmpty || newName == currentName) return;
+
+    try {
+      await FunscriptBundleLoader.rename(bundleId, newName, _libraryDir);
+      if (!mounted) return;
+      await _loadBundles();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Renamed to "$newName"')),
+        );
+      }
+    } catch (e) {
+      AppLogger.instance.e('FunscriptLibraryScreen: rename failed', error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Rename failed: $e')),
+        );
+      }
+    }
+  }
+
   void _navigateToPlayer(Map<String, dynamic> meta) {
+    final device = context.read<DeviceProvider>();
+    if (!device.api.isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Connect a device first to play funscripts')),
+      );
+      return;
+    }
+    if (device.isLoopRunning) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Stop pattern playback first before playing funscripts')),
+      );
+      return;
+    }
+    // Attach boxIndex so the player knows which device to target
+    meta['boxIndex'] = device.settings.activeUiBoxIndex;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => FunscriptPlayerScreen(meta: meta),
@@ -228,6 +336,7 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
     final durationMs = meta['durationMs'] as int? ?? 0;
     final axes = (meta['axes'] as List<dynamic>?)?.cast<String>() ?? [];
     final importDate = meta['importDate'] as String? ?? '';
+    final sourceFile = meta['sourceFile'] as String? ?? '';
 
     return Dismissible(
       key: ValueKey(id),
@@ -316,9 +425,30 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
                           ],
                         ],
                       ),
+                      if (sourceFile.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Row(
+                            children: [
+                              Icon(Icons.attach_file, size: 12, color: Colors.grey[500]),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  sourceFile,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(color: Colors.grey[500]),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       if (importDate.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             'Imported ${_formatDate(importDate)}',
                             style: Theme.of(context)
@@ -331,6 +461,11 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
                   ),
                 ),
                 IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Rename',
+                  onPressed: () => _renameBundle(id, name),
+                ),
+                IconButton(
                   icon: const Icon(Icons.play_arrow),
                   tooltip: 'Play',
                   color: Colors.green,
@@ -341,6 +476,63 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Standalone rename dialog with its own TextEditingController lifecycle.
+class _RenameDialog extends StatefulWidget {
+  final String currentName;
+  const _RenameDialog({required this.currentName});
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.currentName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Rename Bundle'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          labelText: 'Name',
+          border: OutlineInputBorder(),
+        ),
+        onSubmitted: (value) {
+          final trimmed = value.trim();
+          if (trimmed.isNotEmpty) Navigator.pop(context, trimmed);
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final trimmed = _controller.text.trim();
+            if (trimmed.isNotEmpty) Navigator.pop(context, trimmed);
+          },
+          child: const Text('Rename'),
+        ),
+      ],
     );
   }
 }

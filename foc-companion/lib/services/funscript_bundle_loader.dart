@@ -103,6 +103,7 @@ class FunscriptBundleLoader {
       'durationMs': durationMs,
       'sourceFile': zipFileName,
       'axes': axes.keys.toList(),
+      'waveformAxis': axes.containsKey('volume') ? 'volume' : (axes.containsKey('alpha') ? 'alpha' : axes.keys.first),
     };
     await File('$bundleDir/meta.json').writeAsString(jsonEncode(meta));
 
@@ -132,20 +133,24 @@ class FunscriptBundleLoader {
     final metaJson = jsonDecode(await metaFile.readAsString()) as Map<String, dynamic>;
     final axisNames = (metaJson['axes'] as List<dynamic>).cast<String>();
 
+    // Map filename stem (axis) to content
+    final axisFiles = <String, String>{};
+    final dir = Directory(bundleDir);
+    await for (final entity in dir.list(recursive: true)) {
+      if (entity is File && entity.path.toLowerCase().endsWith('.funscript')) {
+        final detected = detectAxisSuffix(entity.path.split('/').last);
+        if (detected != null) {
+          axisFiles[detected] = await entity.readAsString();
+        }
+      }
+    }
+
     // Re-parse all funscripts from extracted files
     final axes = <String, Funscript>{};
     for (final axisName in axisNames) {
-      // Find the funscript file for this axis
-      final dir = Directory(bundleDir);
-      await for (final entity in dir.list(recursive: true)) {
-        if (entity is File && entity.path.toLowerCase().endsWith('.funscript')) {
-          final detected = detectAxisSuffix(entity.path.split('/').last);
-          if (detected == axisName) {
-            final content = await entity.readAsString();
-            axes[axisName] = FunscriptParser.parse(content);
-            break;
-          }
-        }
+      final content = axisFiles[axisName];
+      if (content != null) {
+        axes[axisName] = FunscriptParser.parse(content);
       }
     }
 
@@ -182,6 +187,34 @@ class FunscriptBundleLoader {
       }
     }
     return results;
+  }
+
+  /// Rename a bundle (updates meta.json only).
+  static Future<void> rename(String bundleId, String newName, String libraryDir) async {
+    final bundleDir = '$libraryDir/$bundleId';
+    final metaFile = File('$bundleDir/meta.json');
+    if (!metaFile.existsSync()) {
+      throw FileSystemException('Bundle meta.json not found', bundleDir);
+    }
+
+    final meta = jsonDecode(await metaFile.readAsString()) as Map<String, dynamic>;
+    meta['name'] = newName;
+    await metaFile.writeAsString(jsonEncode(meta));
+    AppLogger.instance.i('FunscriptBundleLoader: renamed bundle $bundleId to "$newName"');
+  }
+
+  /// Update the preferred waveform axis for a bundle (updates meta.json only).
+  static Future<void> updateWaveformAxis(String bundleId, String axis, String libraryDir) async {
+    final bundleDir = '$libraryDir/$bundleId';
+    final metaFile = File('$bundleDir/meta.json');
+    if (!metaFile.existsSync()) {
+      throw FileSystemException('Bundle meta.json not found', bundleDir);
+    }
+
+    final meta = jsonDecode(await metaFile.readAsString()) as Map<String, dynamic>;
+    meta['waveformAxis'] = axis;
+    await metaFile.writeAsString(jsonEncode(meta));
+    AppLogger.instance.i('FunscriptBundleLoader: updated waveform axis for $bundleId to "$axis"');
   }
 
   /// Delete a bundle from the library.

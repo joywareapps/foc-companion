@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:foc_companion/services/background_service.dart';
-
+import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/services/funscript_bundle_loader.dart';
 import 'package:foc_companion/services/funscript_playback_controller.dart';
 import 'package:foc_companion/services/app_logger.dart';
@@ -41,9 +42,9 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   void dispose() {
     _tickTimer?.cancel();
     _controller.stop();
-    BackgroundServiceManager.sendCommand('setFunscriptMode', {
+    // Stop funscript playback and command loop on device
+    BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
       'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
-      'active': false,
     });
     _controller.dispose();
     super.dispose();
@@ -88,29 +89,39 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     _tickTimer = null;
   }
 
+  bool _getIsConnected(BuildContext context, {required bool listen}) {
+    final device = listen 
+        ? Provider.of<DeviceProvider>(context)
+        : Provider.of<DeviceProvider>(context, listen: false);
+    return device.api.isConnected;
+  }
+
+  int get _boxIndex => widget.meta['boxIndex'] as int? ?? 0;
+
   void _play() {
+    if (!_getIsConnected(context, listen: false)) return;
     _controller.play();
-    BackgroundServiceManager.sendCommand('setFunscriptMode', {
-      'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
-      'active': true,
+    // Start funscript mode + command loop on device
+    BackgroundServiceManager.sendCommand('startFunscriptPlayback', {
+      'boxIndex': _boxIndex,
     });
     _startTickTimer();
   }
 
   void _pause() {
     _controller.pause();
-    BackgroundServiceManager.sendCommand('setFunscriptMode', {
-      'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
-      'active': false,
+    // Pause funscript values but keep loop running (pattern resumes)
+    BackgroundServiceManager.sendCommand('pauseFunscriptPlayback', {
+      'boxIndex': _boxIndex,
     });
     _stopTickTimer();
   }
 
   void _stop() {
     _controller.stop();
-    BackgroundServiceManager.sendCommand('setFunscriptMode', {
-      'boxIndex': widget.meta['boxIndex'] as int? ?? 0,
-      'active': false,
+    // Stop funscript mode and command loop entirely
+    BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
+      'boxIndex': _boxIndex,
     });
     _stopTickTimer();
   }
@@ -238,6 +249,26 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
               'Duration: ${_formatTime(_bundle?.durationMs ?? 0)}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            if (_bundle?.sourceFile.isNotEmpty == true) ...[
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  Icon(Icons.attach_file, size: 14, color: Colors.grey[500]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      _bundle!.sourceFile,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.grey[500]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (axes.isNotEmpty) ...[
               const SizedBox(height: 8),
               Wrap(
@@ -346,62 +377,150 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   Widget _buildTransportControls() {
     final state = _controller.state;
     final isPlaying = state == PlaybackState.playing;
+    final isConnected = _getIsConnected(context, listen: true);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        // Skip back 10s
-        IconButton(
-          icon: const Icon(Icons.replay_10),
-          tooltip: 'Back 10s',
-          onPressed: () => _controller.seek(
-              (_controller.positionMs - 10000).clamp(0, _controller.durationMs)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Skip back 10s
+            IconButton(
+              icon: const Icon(Icons.replay_10),
+              tooltip: 'Back 10s',
+              onPressed: () => _controller.seek(
+                  (_controller.positionMs - 10000).clamp(0, _controller.durationMs)),
+            ),
+            const SizedBox(width: 16),
+            // Loop toggle
+            IconButton(
+              icon: Icon(Icons.repeat,
+                  color: _controller.loop ? Theme.of(context).colorScheme.primary : null),
+              tooltip: 'Loop',
+              onPressed: () => _controller.setLoop(!_controller.loop),
+            ),
+            const SizedBox(width: 16),
+            // Play / Pause
+            FloatingActionButton.large(
+              onPressed: isPlaying ? _pause : (isConnected ? _play : null),
+              backgroundColor:
+                  isPlaying ? Theme.of(context).colorScheme.secondary : null,
+              child: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 32),
+            ),
+            const SizedBox(width: 16),
+            // Stop
+            IconButton(
+              icon: const Icon(Icons.stop),
+              tooltip: 'Stop',
+              onPressed: _stop,
+            ),
+            const SizedBox(width: 16),
+            // Skip forward 10s
+            IconButton(
+              icon: const Icon(Icons.forward_10),
+              tooltip: 'Forward 10s',
+              onPressed: () => _controller.seek(
+                  (_controller.positionMs + 10000).clamp(0, _controller.durationMs)),
+            ),
+          ],
         ),
-        const SizedBox(width: 16),
-        // Loop toggle
-        IconButton(
-          icon: Icon(Icons.repeat,
-              color: _controller.loop ? Theme.of(context).colorScheme.primary : null),
-          tooltip: 'Loop',
-          onPressed: () => _controller.setLoop(!_controller.loop),
-        ),
-        const SizedBox(width: 16),
-        // Play / Pause
-        FloatingActionButton.large(
-          onPressed: isPlaying ? _pause : _play,
-          backgroundColor:
-              isPlaying ? Theme.of(context).colorScheme.secondary : null,
-          child: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 32),
-        ),
-        const SizedBox(width: 16),
-        // Stop
-        IconButton(
-          icon: const Icon(Icons.stop),
-          tooltip: 'Stop',
-          onPressed: _stop,
-        ),
-        const SizedBox(width: 16),
-        // Skip forward 10s
-        IconButton(
-          icon: const Icon(Icons.forward_10),
-          tooltip: 'Forward 10s',
-          onPressed: () => _controller.seek(
-              (_controller.positionMs + 10000).clamp(0, _controller.durationMs)),
-        ),
+        if (!isConnected)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Connect a device to play',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.orange),
+            ),
+          ),
       ],
     );
   }
 
   Widget _buildWaveformPreview() {
-    // Show a simplified waveform of the alpha axis (most common)
-    final alphaScript = _bundle?.axes['alpha'];
-    if (alphaScript == null || alphaScript.actions.isEmpty) {
-      // Try beta as fallback
-      final betaScript = _bundle?.axes['beta'];
-      if (betaScript == null || betaScript.actions.isEmpty) return const SizedBox.shrink();
-      return _buildWaveformForScript(betaScript, 'Beta');
+    // Use the configured waveform axis (default: volume, then alpha, then first available)
+    final axes = _bundle?.axes ?? {};
+    if (axes.isEmpty) return const SizedBox.shrink();
+
+    final savedAxis = widget.meta['waveformAxis'] as String? ?? 'volume';
+    String selectedAxis = axes.containsKey(savedAxis) ? savedAxis : axes.keys.first;
+
+    final script = axes[selectedAxis];
+    if (script == null || script.actions.isEmpty) {
+      // Try other axes as fallback
+      for (final entry in axes.entries) {
+        if (entry.value.actions.isNotEmpty) {
+          selectedAxis = entry.key;
+          break;
+        }
+      }
     }
-    return _buildWaveformForScript(alphaScript, 'Alpha');
+
+    final currentScript = axes[selectedAxis];
+    if (currentScript == null || currentScript.actions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildWaveformForScript(currentScript, _axisDisplayName(selectedAxis)),
+        if (axes.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: axes.keys.map((axis) {
+                final isSelected = axis == selectedAxis;
+                return ChoiceChip(
+                  label: Text(axis, style: const TextStyle(fontSize: 11)),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    // Update meta and rebuild
+                    setState(() {
+                      widget.meta['waveformAxis'] = axis;
+                    });
+                    // Persist the change
+                    _saveWaveformAxis(axis);
+                  },
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                );
+              }).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _axisDisplayName(String axis) {
+    switch (axis) {
+      case 'alpha': return 'Alpha';
+      case 'beta': return 'Beta';
+      case 'volume': return 'Volume';
+      case 'frequency': return 'Frequency';
+      case 'pulse_frequency': return 'Pulse Freq';
+      case 'pulse_width': return 'Pulse Width';
+      case 'pulse_rise_time': return 'Pulse Rise';
+      case 'pulse_interval_random': return 'Pulse Interval';
+      default: return axis[0].toUpperCase() + axis.substring(1);
+    }
+  }
+
+  Future<void> _saveWaveformAxis(String axis) async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final libraryDir = '${appDir.path}/funscript_library';
+      await FunscriptBundleLoader.updateWaveformAxis(
+        widget.meta['id'] as String,
+        axis,
+        libraryDir,
+      );
+    } catch (e) {
+      AppLogger.instance.e('FunscriptPlayerScreen: failed to save waveform axis', error: e);
+    }
   }
 
   Widget _buildWaveformForScript(dynamic script, String label) {

@@ -293,6 +293,18 @@ class FocStimTaskHandler extends TaskHandler {
             _deviceBehavior = DeviceBehaviorSettings.fromJson(Map<String, dynamic>.from(data['deviceBehavior']));
           }
           break;
+        case 'startFunscriptPlayback':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          _startFunscriptPlayback(boxIndex);
+          break;
+        case 'stopFunscriptPlayback':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          _stopFunscriptPlayback(boxIndex);
+          break;
+        case 'pauseFunscriptPlayback':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          _pauseFunscriptPlayback(boxIndex);
+          break;
         case 'setFunscriptMode':
           final int boxIndex = data['boxIndex'] as int? ?? 0;
           final box = _boxes[boxIndex];
@@ -557,6 +569,54 @@ class FocStimTaskHandler extends TaskHandler {
     } catch (e) {
       _logToMain(boxIndex, "Failed to toggle pot lock: $e");
     }
+  }
+
+  // ── Funscript playback ──────────────────────────────────────────────
+
+  /// Start funscript playback: enable funscript mode and start the command loop.
+  void _startFunscriptPlayback(int boxIndex) async {
+    final box = _boxes[boxIndex];
+    if (box == null || !box.api.isConnected) return;
+
+    // Stop any running pattern first
+    if (box.isLoopRunning) {
+      await _stopStimulation(boxIndex);
+    }
+
+    // Enable funscript mode
+    box.funscriptActive = true;
+    box.funscriptValues.clear();
+
+    // Start the command loop — it will read funscript values each tick
+    await _startStimulation(boxIndex);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
+    _logToMain(boxIndex, "Funscript playback started.");
+  }
+
+  /// Stop funscript playback: disable funscript mode and stop the command loop.
+  void _stopFunscriptPlayback(int boxIndex) async {
+    final box = _boxes[boxIndex];
+    if (box == null) return;
+
+    box.funscriptActive = false;
+    box.funscriptValues.clear();
+
+    await _stopStimulation(boxIndex);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
+    _logToMain(boxIndex, "Funscript playback stopped.");
+  }
+
+  /// Pause funscript playback: keep the loop running but stop sending funscript values.
+  void _pauseFunscriptPlayback(int boxIndex) async {
+    final box = _boxes[boxIndex];
+    if (box == null) return;
+
+    // Keep the loop running but clear funscript override so pattern resumes
+    box.funscriptActive = false;
+    box.funscriptValues.clear();
+    _logToMain(boxIndex, "Funscript playback paused.");
   }
 
   void _sendStateUpdate(int boxIndex) {

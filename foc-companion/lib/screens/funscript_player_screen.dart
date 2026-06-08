@@ -146,7 +146,27 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     _controller.play();
 
     final device = context.read<DeviceProvider>();
-    final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
+    final linked = device.settings.linkDevicesEnabled;
+    final targets = linked ? [0, 1] : [_boxIndex];
+
+    // When linking, ensure both boxes start from the same state:
+    // stop both and set volume to the lower of the two (or 0).
+    if (linked) {
+      for (int i = 0; i < 2; i++) {
+        BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
+          'boxIndex': i,
+        });
+      }
+      final vol0 = device.boxes[0].boxVolume;
+      final vol1 = device.boxes[1].boxVolume;
+      final safeVolume = vol0 < vol1 ? vol0 : vol1;
+      for (int i = 0; i < 2; i++) {
+        BackgroundServiceManager.sendCommand('setVolume', {
+          'boxIndex': i,
+          'volume': safeVolume,
+        });
+      }
+    }
 
     for (final idx in targets) {
       BackgroundServiceManager.sendCommand('startFunscriptPlayback', {

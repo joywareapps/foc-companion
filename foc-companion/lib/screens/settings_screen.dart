@@ -5,6 +5,7 @@ import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/app_logger.dart';
+import 'package:foc_companion/screens/media_sync_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -63,6 +64,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           isConnected: isConnected,
           isPlaying: isPlaying,
           boxIndex: settings.activeUiBoxIndex,
+        ),
+
+        const SizedBox(height: 24),
+
+        // ── Video Sync ──────────────────────────────
+        const Text("Video Sync",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.movie_outlined),
+          title: const Text("Video Player Sync"),
+          subtitle: const Text("Sync funscript playback with HereSphere or MPC-HC"),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MediaSyncScreen()),
+            );
+          },
         ),
 
         const SizedBox(height: 24),

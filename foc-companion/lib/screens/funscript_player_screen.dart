@@ -8,7 +8,10 @@ import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/services/funscript_bundle_loader.dart';
 import 'package:foc_companion/services/funscript_playback_controller.dart';
 import 'package:foc_companion/services/app_logger.dart';
+import 'package:foc_companion/services/video_sync_controller.dart';
 import 'package:foc_companion/models/funscript_bundle.dart';
+import 'package:foc_companion/models/settings_models.dart';
+import 'package:foc_companion/providers/settings_provider.dart';
 
 /// Full-screen funscript player with transport controls and live axis display.
 ///
@@ -31,6 +34,8 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   bool _isLoading = true;
   String? _error;
   Timer? _tickTimer;
+  VideoSyncController? _videoSync;
+  bool _syncConnecting = false;
 
   @override
   void initState() {
@@ -42,6 +47,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   void dispose() {
     _tickTimer?.cancel();
     _controller.stop();
+    _videoSync?.dispose();
     
     // Attempt to stop on both boxes just in case they were linked
     for (int i = 0; i < 2; i++) {
@@ -284,7 +290,11 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
 
                 // ── Transport controls ──
                 _buildTransportControls(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
+
+                // ── Sync status indicator ──
+                _buildSyncIndicator(),
+                const SizedBox(height: 12),
 
                 // ── Waveform preview ──
                 if (_bundle != null) _buildWaveformPreview(),
@@ -498,6 +508,9 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
               onPressed: () => _controller.seek(
                   (_controller.positionMs + 10000).clamp(0, _controller.durationMs)),
             ),
+            const SizedBox(width: 16),
+            // Video sync toggle
+            _buildSyncButton(),
           ],
         ),
         if (!isConnected)
@@ -597,6 +610,127 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     } catch (e) {
       AppLogger.instance.e('FunscriptPlayerScreen: failed to save waveform axis', error: e);
     }
+  }
+
+  // ── Video Sync ────────────────────────────────────────────────
+
+  Widget _buildSyncButton() {
+    final isLinked = _videoSync?.isLinked ?? false;
+    final syncState = _videoSync?.syncState ?? SyncState.idle;
+    final isBeyond = _videoSync?.isVideoBeyondScript ?? false;
+
+    Color color;
+    IconData icon;
+    String tooltip;
+
+    if (_syncConnecting) {
+      color = Theme.of(context).colorScheme.primary;
+      icon = Icons.sync;
+      tooltip = 'Connecting…';
+    } else if (isLinked && syncState == SyncState.error) {
+      color = Theme.of(context).colorScheme.error;
+      icon = Icons.link_off;
+      tooltip = 'Sync error — tap to retry';
+    } else if (isLinked && isBeyond) {
+      color = Colors.amber;
+      icon = Icons.link;
+      tooltip = 'Video beyond script — tap to unlink';
+    } else if (isLinked) {
+      color = Theme.of(context).colorScheme.primary;
+      icon = Icons.link;
+      tooltip = 'Unlink video sync';
+    } else {
+      color = Theme.of(context).disabledColor;
+      icon = Icons.link_off;
+      tooltip = 'Link video sync';
+    }
+
+    return IconButton(
+      icon: Icon(icon, color: color),
+      tooltip: tooltip,
+      onPressed: () => _toggleVideoSync(),
+    );
+  }
+
+  Future<void> _toggleVideoSync() async {
+    if (_videoSync != null && _videoSync!.isLinked) {
+      _videoSync!.unlink();
+      _videoSync!.dispose();
+      _videoSync = null;
+      setState(() {});
+      return;
+    }
+
+    // Read active player from settings
+    final settings = context.read<SettingsProvider>();
+    final m = settings.mediaSync;
+
+    if (m.activePlayer == VideoPlayerType.none) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(const SnackBar(
+            content: Text(
+                'No video player configured. Set up in Settings → Video Sync.'),
+          ));
+      }
+      return;
+    }
+
+    setState(() => _syncConnecting = true);
+
+    _videoSync = VideoSyncController(funscriptController: _controller);
+    _videoSync!.addListener(() {
+      if (mounted) setState(() => _syncConnecting = false);
+    });
+
+    try {
+      await _videoSync!.link(
+        m.activePlayer,
+        heresphereIp: m.hereSphereIp,
+        herespherePort: m.hereSpherePort,
+        mpcHcIp: m.mpcHcIp,
+        mpcHcPort: m.mpcHcPort,
+      );
+    } catch (e) {
+      AppLogger.instance.e('VideoSync: link failed', error: e);
+      if (mounted) {
+        setState(() => _syncConnecting = false);
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text('Sync failed: $e')));
+      }
+    }
+  }
+
+  Widget _buildSyncIndicator() {
+    final isLinked = _videoSync?.isLinked ?? false;
+    final isBeyond = _videoSync?.isVideoBeyondScript ?? false;
+
+    if (!isLinked || !isBeyond) return const SizedBox.shrink();
+
+    final videoTime = _formatTime(_videoSync!.playerStatus.currentTimeMs.toInt());
+    final scriptTime = _formatTime(_controller.durationMs);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.warning_amber, size: 16, color: Colors.amber),
+          const SizedBox(width: 8),
+          Text(
+            'Video at $videoTime — script ended at $scriptTime',
+            style: const TextStyle(fontSize: 12, color: Colors.amber),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildWaveformForScript(dynamic script, String label) {

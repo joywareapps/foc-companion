@@ -76,24 +76,29 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
   Future<void> _importBundle() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.any,
+        type: FileType.custom,
+        allowedExtensions: ['focb', 'zip'],
       );
 
       if (result == null || result.files.isEmpty) return;
 
       final file = result.files.first;
-      if (!file.name.toLowerCase().endsWith('.focb')) {
+      final path = file.path;
+      if (path == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select a .focb file')),
+            const SnackBar(content: Text('Cannot access selected file')),
           );
         }
         return;
       }
-      if (file.path == null) {
+
+      // Quick validation check
+      final isValid = await FunscriptBundleLoader.isValidBundle(path);
+      if (!isValid) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cannot access selected file')),
+            const SnackBar(content: Text('Invalid bundle: no .funscript files found inside')),
           );
         }
         return;
@@ -104,7 +109,7 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
       );
 
       await FunscriptBundleLoader.importFromUri(
-        Uri.file(file.path!),
+        Uri.file(path),
         _libraryDir,
       );
 

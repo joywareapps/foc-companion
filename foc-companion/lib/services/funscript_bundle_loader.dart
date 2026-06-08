@@ -64,7 +64,7 @@ class FunscriptBundleLoader {
 
     // Bundle name = zip filename stem
     final zipFileName = path.split('/').last;
-    final name = zipFileName.replaceAll(RegExp(r'\.focb$', caseSensitive: false), '');
+    final name = zipFileName.replaceAll(RegExp(r'\.(focb|zip)$', caseSensitive: false), '');
 
     // Parse each funscript
     final axes = <String, Funscript>{};
@@ -117,6 +117,22 @@ class FunscriptBundleLoader {
       sourceFile: zipFileName,
       axes: axes,
     );
+  }
+
+  /// Quickly check if a zip file contains any .funscript files.
+  static Future<bool> isValidBundle(String path) async {
+    try {
+      final bytes = await File(path).readAsBytes();
+      final archive = ZipDecoder().decodeBytes(bytes);
+      for (final entry in archive) {
+        if (entry.isFile && entry.name.toLowerCase().endsWith('.funscript')) {
+          return true;
+        }
+      }
+    } catch (e) {
+      AppLogger.instance.e('FunscriptBundleLoader: validation failed for $path', error: e);
+    }
+    return false;
   }
 
   /// Load a previously imported bundle from the library (re-parses funscripts).

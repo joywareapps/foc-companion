@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
@@ -8,6 +10,8 @@ import 'package:foc_companion/screens/device_settings_screen.dart';
 import 'package:foc_companion/screens/pulse_settings_screen.dart';
 // import 'package:foc_companion/screens/media_sync_screen.dart';  // hidden — re-enable with Media tab
 import 'package:foc_companion/screens/settings_screen.dart';
+import 'package:foc_companion/screens/funscript_library_screen.dart';
+import 'package:foc_companion/services/shared_file_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,12 +23,40 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _showCalibration = false;
+  StreamSubscription<Uri>? _sharedFileSub;
 
-  static const List<Widget> _pages = <Widget>[
-    ControlScreen(),
-    PulseSettingsScreen(),
-    // MediaSyncScreen(),  // hidden for now — re-enable by restoring this line and its NavigationDestination
-    SettingsScreen(),
+  @override
+  void initState() {
+    super.initState();
+
+    // Check for a pending shared file (cold start) — peek only, don't consume.
+    // The Library screen will consume it.
+    if (SharedFileService.pendingUri != null) {
+      _selectedIndex = 2; // Library tab
+    }
+
+    // Listen for shared files while running (hot resume)
+    _sharedFileSub = SharedFileService.stream.listen((_) {
+      if (mounted) {
+        setState(() {
+          _selectedIndex = 2; // Library tab
+          _showCalibration = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sharedFileSub?.cancel();
+    super.dispose();
+  }
+
+  static List<Widget> _pages(BuildContext context) => <Widget>[
+    const ControlScreen(),
+    const PulseSettingsScreen(),
+    const FunscriptLibraryScreen(),
+    const SettingsScreen(),
   ];
 
   void _showDiagnosticDialog(BuildContext context, DeviceProvider device) {
@@ -210,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           body: isConnected && _showCalibration
               ? const DeviceSettingsScreen()
-              : _pages.elementAt(_selectedIndex),
+              : _pages(context).elementAt(_selectedIndex),
           bottomNavigationBar: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -236,7 +268,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icon(Icons.electric_bolt),
                     label: 'Pulse',
                   ),
-                  // NavigationDestination(icon: Icon(Icons.sync), label: 'Media'),  // hidden
+                  NavigationDestination(
+                    icon: Icon(Icons.library_music_outlined),
+                    label: 'Library',
+                  ),
                   NavigationDestination(
                     icon: Icon(Icons.settings),
                     label: 'Settings',

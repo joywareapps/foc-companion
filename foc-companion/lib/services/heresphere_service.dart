@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:foc_companion/services/app_logger.dart';
+import 'package:foc_companion/services/video_player_status.dart';
 
 final _log = AppLogger.instance;
 
@@ -41,6 +42,17 @@ class HereSphereService {
   final StreamController<HereSphereStatus> _statusController =
       StreamController<HereSphereStatus>.broadcast();
   Stream<HereSphereStatus> get statusStream => _statusController.stream;
+
+  /// Convenience stream that maps HereSphereStatus → VideoPlayerStatus.
+  Stream<VideoPlayerStatus> get videoPlayerStatusStream =>
+      statusStream.map((s) => VideoPlayerStatus(
+            connected: true,
+            isPlaying: s.playerState == 0,
+            currentTimeMs: s.currentTime,
+            durationMs: 0, // HereSphere doesn't report video duration
+            filePath: s.path,
+            playbackSpeed: s.playbackSpeed,
+          ));
 
   void configure(String ip, int port) {
     _ip = ip;

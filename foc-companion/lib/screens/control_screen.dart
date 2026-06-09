@@ -5,6 +5,7 @@ import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/patterns.dart';
 import 'package:foc_companion/widgets/gradient_slider_track.dart';
+import 'package:foc_companion/services/background_service.dart';
 
 class ControlScreen extends StatelessWidget {
   const ControlScreen({super.key});
@@ -44,7 +45,29 @@ class ControlScreen extends StatelessWidget {
                     ),
                     tooltip: device.settings.linkDevicesEnabled ? 'Devices Linked' : 'Devices Independent',
                     onPressed: () {
-                      device.settings.setLinkDevicesEnabled(!device.settings.linkDevicesEnabled);
+                      final enabling = !device.settings.linkDevicesEnabled;
+                      device.settings.setLinkDevicesEnabled(enabling);
+
+                      if (enabling) {
+                        // Stop any running loops so both boxes start in sync
+                        for (int i = 0; i < 2; i++) {
+                          if (device.boxes[i].isLoopRunning) {
+                            BackgroundServiceManager.sendCommand('toggleLoop', {
+                              'boxIndex': i,
+                            });
+                          }
+                        }
+                        // Set volume to the lower of the two boxes
+                        final vol0 = device.boxes[0].boxVolume;
+                        final vol1 = device.boxes[1].boxVolume;
+                        final safeVolume = vol0 < vol1 ? vol0 : vol1;
+                        for (int i = 0; i < 2; i++) {
+                          BackgroundServiceManager.sendCommand('setVolume', {
+                            'boxIndex': i,
+                            'volume': safeVolume,
+                          });
+                        }
+                      }
                     },
                   ),
                 ],

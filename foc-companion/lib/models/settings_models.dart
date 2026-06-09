@@ -1,5 +1,7 @@
 enum DeviceMode { threePhase, fourPhase }
 
+enum VideoPlayerType { none, heresphere, mpcHc }
+
 enum ButtonAction { nothing, togglePlayPause, toggleVolumeLock }
 
 class DeviceBehaviorSettings {
@@ -248,11 +250,19 @@ class MediaSyncSettings {
   int hereSpherePort = 23554;
   List<FunscriptLocation> funscriptLocations = [];
 
+  // Video sync settings
+  VideoPlayerType activePlayer = VideoPlayerType.none;
+  String mpcHcIp = "";
+  int mpcHcPort = 13579;
+
   Map<String, dynamic> toJson() => {
     'hereSphereEnabled': hereSphereEnabled,
     'hereSphereIp': hereSphereIp,
     'hereSpherePort': hereSpherePort,
     'funscriptLocations': funscriptLocations.map((e) => e.toJson()).toList(),
+    'activePlayer': activePlayer.name,
+    'mpcHcIp': mpcHcIp,
+    'mpcHcPort': mpcHcPort,
   };
 
   MediaSyncSettings.fromJson(Map<String, dynamic> json) {
@@ -264,6 +274,12 @@ class MediaSyncSettings {
           .map((e) => FunscriptLocation.fromJson(e))
           .toList();
     }
+    activePlayer = VideoPlayerType.values.firstWhere(
+      (e) => e.name == json['activePlayer'],
+      orElse: () => VideoPlayerType.none,
+    );
+    mpcHcIp = json['mpcHcIp'] ?? "";
+    mpcHcPort = json['mpcHcPort'] ?? 13579;
   }
 
   MediaSyncSettings();

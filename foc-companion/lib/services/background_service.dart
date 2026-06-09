@@ -101,6 +101,10 @@ class ActiveBoxState {
   bool isPotLocked = false;
   DeviceMode deviceMode = DeviceMode.threePhase;
 
+  /// Funscript playback state (updated from foreground via commands).
+  bool funscriptActive = false;
+  Map<String, double> funscriptValues = {};  // axis suffix → normalized 0.0-1.0
+
   int? buttonEventTimestampMs;
   DateTime? buttonEventDateTime;
   Timer? notificationWatchdog;
@@ -111,6 +115,8 @@ class ActiveBoxState {
 
   ActiveBoxState(this.index, SettingsProvider settings) {
     threePhaseLoop = CommandLoop(api, settings)..boxIndex = index;
+    threePhaseLoop.isFunscriptActive = () => funscriptActive;
+    threePhaseLoop.getFunscriptValues = () => funscriptValues;
     fourPhaseLoop = FourPhaseCommandLoop(api, settings)..boxIndex = index;
   }
 }
@@ -285,6 +291,38 @@ class FocStimTaskHandler extends TaskHandler {
           }
           if (data.containsKey('deviceBehavior')) {
             _deviceBehavior = DeviceBehaviorSettings.fromJson(Map<String, dynamic>.from(data['deviceBehavior']));
+          }
+          break;
+        case 'startFunscriptPlayback':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          _startFunscriptPlayback(boxIndex);
+          break;
+        case 'stopFunscriptPlayback':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          _stopFunscriptPlayback(boxIndex);
+          break;
+        case 'pauseFunscriptPlayback':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          _pauseFunscriptPlayback(boxIndex);
+          break;
+        case 'setFunscriptMode':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          final box = _boxes[boxIndex];
+          if (box != null) {
+            box.funscriptActive = data['active'] as bool? ?? false;
+            if (!box.funscriptActive) box.funscriptValues.clear();
+          }
+          break;
+        case 'updateFunscriptValues':
+          final int boxIndex = data['boxIndex'] as int? ?? 0;
+          final box = _boxes[boxIndex];
+          if (box != null && box.funscriptActive) {
+            final values = data['values'] as Map?;
+            if (values != null) {
+              box.funscriptValues = Map<String, double>.from(
+                values.map((k, v) => MapEntry(k as String, (v as num).toDouble())),
+              );
+            }
           }
           break;
       }
@@ -531,6 +569,54 @@ class FocStimTaskHandler extends TaskHandler {
     } catch (e) {
       _logToMain(boxIndex, "Failed to toggle pot lock: $e");
     }
+  }
+
+  // ── Funscript playback ──────────────────────────────────────────────
+
+  /// Start funscript playback: enable funscript mode and start the command loop.
+  void _startFunscriptPlayback(int boxIndex) async {
+    final box = _boxes[boxIndex];
+    if (box == null || !box.api.isConnected) return;
+
+    // Stop any running pattern first
+    if (box.isLoopRunning) {
+      await _stopStimulation(boxIndex);
+    }
+
+    // Enable funscript mode
+    box.funscriptActive = true;
+    box.funscriptValues.clear();
+
+    // Start the command loop — it will read funscript values each tick
+    await _startStimulation(boxIndex);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
+    _logToMain(boxIndex, "Funscript playback started.");
+  }
+
+  /// Stop funscript playback: disable funscript mode and stop the command loop.
+  void _stopFunscriptPlayback(int boxIndex) async {
+    final box = _boxes[boxIndex];
+    if (box == null) return;
+
+    box.funscriptActive = false;
+    box.funscriptValues.clear();
+
+    await _stopStimulation(boxIndex);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
+    _logToMain(boxIndex, "Funscript playback stopped.");
+  }
+
+  /// Pause funscript playback: keep the loop running but stop sending funscript values.
+  void _pauseFunscriptPlayback(int boxIndex) async {
+    final box = _boxes[boxIndex];
+    if (box == null) return;
+
+    // Keep the loop running but clear funscript override so pattern resumes
+    box.funscriptActive = false;
+    box.funscriptValues.clear();
+    _logToMain(boxIndex, "Funscript playback paused.");
   }
 
   void _sendStateUpdate(int boxIndex) {

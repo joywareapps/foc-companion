@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
@@ -38,7 +39,7 @@ class BoxStatus {
   BoxStatus(this.index);
 }
 
-class DeviceProvider with ChangeNotifier {
+class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
   late final BackgroundApiCompatibility api = BackgroundApiCompatibility(this);
   SettingsProvider settings;
 
@@ -68,20 +69,41 @@ class DeviceProvider with ChangeNotifier {
   String? lastErrorMessage;
   static const int _kMaxLogRows = 1000;
   Timer? _logInactivityTimer;
+  Timer? _periodicSyncTimer;
 
   /// Master volume (0–1). Not persisted — resets to 0.1 on app restart/connect.
   double volume = 0.1;
 
   DeviceProvider(this.settings) {
+    WidgetsBinding.instance.addObserver(this);
     FlutterForegroundTask.addTaskDataCallback(_handleBackgroundMessage);
     checkExistingConnection();
+    _startPeriodicSync();
+  }
+
+  void _startPeriodicSync() {
+    _periodicSyncTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      if (await FlutterForegroundTask.isRunningService) {
+        BackgroundServiceManager.sendCommand('requestState');
+      }
+    });
   }
 
   @override
   void dispose() {
+    _periodicSyncTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     FlutterForegroundTask.removeTaskDataCallback(_handleBackgroundMessage);
     _logInactivityTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // "Heal" state mismatches by requesting fresh state from background service when app reopens
+      checkExistingConnection();
+    }
   }
 
   Future<void> checkExistingConnection() async {

@@ -12,6 +12,7 @@ import 'package:foc_companion/services/app_logger.dart';
 import 'package:foc_companion/models/funscript_bundle.dart';
 import 'package:foc_companion/services/heresphere_service.dart';
 import 'package:foc_companion/services/mpc_hc_service.dart';
+import 'package:foc_companion/services/media_sync_orchestrator.dart';
 
 /// Full-screen funscript player with transport controls and live axis display.
 ///
@@ -40,6 +41,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   StreamSubscription? _playerSub;
   HereSphereService? _hereSphereService;
   MpcHcService? _mpcHcService;
+  MediaSyncOrchestrator? _orchestrator;
 
   String get _videoPlayerName {
     return context.read<SettingsProvider>().mediaSync.selectedPlayer;
@@ -48,6 +50,14 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   @override
   void initState() {
     super.initState();
+    final settings = context.read<SettingsProvider>();
+    _orchestrator = MediaSyncOrchestrator(
+      settings: settings,
+      playbackController: _controller,
+      onBundleLoaded: (bundle) {
+        if (mounted) setState(() => _bundle = bundle);
+      },
+    );
     _loadBundle();
   }
 
@@ -170,12 +180,19 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
       });
       _playerSub = _hereSphereService!.statusStream.listen((status) {
         if (mounted) {
+          final fullPath = status.path;
+          final filename = fullPath.split('/').last.split('\\').last;
+          
+          if (filename.isNotEmpty) {
+            _orchestrator?.onFilenameChanged(filename);
+          }
+
           setState(() {
-            var filename = status.path.split('/').last.split('\\').last;
-            if (filename.contains('.')) {
-              filename = filename.substring(0, filename.lastIndexOf('.'));
+            var displayFilename = filename;
+            if (displayFilename.contains('.')) {
+              displayFilename = displayFilename.substring(0, displayFilename.lastIndexOf('.'));
             }
-            _externalFilename = filename;
+            _externalFilename = displayFilename;
           });
           _syncController(status.currentTime * 1000, status.playerState == 0);
         }
@@ -186,6 +203,10 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
       _mpcHcService!.startPolling();
       _playerSub = _mpcHcService!.statusStream.listen((status) {
         if (mounted) {
+          if (status.filename.isNotEmpty) {
+            _orchestrator?.onFilenameChanged(status.filename);
+          }
+
           setState(() {
             _externalFilename = status.filename;
           });

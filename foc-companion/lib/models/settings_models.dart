@@ -251,6 +251,8 @@ class MediaSyncSettings {
   
   String mpcHcIp = "";
   int mpcHcPort = 13579;
+
+  bool autoloadEnabled = false;
   
   List<FunscriptLocation> funscriptLocations = [];
 
@@ -260,6 +262,7 @@ class MediaSyncSettings {
     'hereSpherePort': hereSpherePort,
     'mpcHcIp': mpcHcIp,
     'mpcHcPort': mpcHcPort,
+    'autoloadEnabled': autoloadEnabled,
     'funscriptLocations': funscriptLocations.map((e) => e.toJson()).toList(),
   };
 
@@ -272,6 +275,8 @@ class MediaSyncSettings {
     
     mpcHcIp = json['mpcHcIp'] ?? (json['selectedPlayer'] == "MPC-HC" ? json['playerIp'] : null) ?? "";
     mpcHcPort = json['mpcHcPort'] ?? (json['selectedPlayer'] == "MPC-HC" ? json['playerPort'] : null) ?? 13579;
+
+    autoloadEnabled = json['autoloadEnabled'] ?? false;
 
     if (json['funscriptLocations'] != null) {
       funscriptLocations = (json['funscriptLocations'] as List)
@@ -286,14 +291,26 @@ class MediaSyncSettings {
 class FunscriptLocation {
   String id = DateTime.now().millisecondsSinceEpoch.toString();
   String name = "";
-  String type = "local";
+  String type = "local"; // 'local' or 'smb'
   String localPath = "";
+
+  // SMB fields
+  String smbHost = "";
+  String smbShare = "";
+  String smbDomain = "WORKGROUP";
+  String smbUsername = "";
+  String smbPassword = "";
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
     'type': type,
     'localPath': localPath,
+    'smbHost': smbHost,
+    'smbShare': smbShare,
+    'smbDomain': smbDomain,
+    'smbUsername': smbUsername,
+    'smbPassword': smbPassword,
   };
 
   FunscriptLocation.fromJson(Map<String, dynamic> json) {
@@ -301,6 +318,11 @@ class FunscriptLocation {
     name = json['name'] ?? "";
     type = json['type'] ?? "local";
     localPath = json['localPath'] ?? "";
+    smbHost = json['smbHost'] ?? "";
+    smbShare = json['smbShare'] ?? "";
+    smbDomain = json['smbDomain'] ?? "WORKGROUP";
+    smbUsername = json['smbUsername'] ?? "";
+    smbPassword = json['smbPassword'] ?? "";
   }
 
   FunscriptLocation();

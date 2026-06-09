@@ -33,7 +33,7 @@ class FunscriptBundleLoader {
     await sourceFile.copy(tempPath);
 
     try {
-      return await _importFromPath(tempPath, libraryDir);
+      return await importFromPath(tempPath, libraryDir);
     } finally {
       // Clean up temp file
       try {
@@ -43,7 +43,7 @@ class FunscriptBundleLoader {
   }
 
   /// Import a .focb file from a local file path.
-  static Future<FunscriptBundle> _importFromPath(
+  static Future<FunscriptBundle> importFromPath(
     String path,
     String libraryDir,
   ) async {

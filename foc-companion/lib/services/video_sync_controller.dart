@@ -176,7 +176,10 @@ class VideoSyncController extends ChangeNotifier {
 
     // 4. Within range — sync
     _syncState = SyncState.syncing;
-    _funscriptController.seek(status.currentTimeMs.toInt());
+    final drift = (status.currentTimeMs.toInt() - _funscriptController.positionMs).abs();
+    if (drift > 500 || _funscriptController.state != PlaybackState.playing) {
+      _funscriptController.seek(status.currentTimeMs.toInt());
+    }
     if (_funscriptController.state != PlaybackState.playing) {
       _funscriptController.play();
     }

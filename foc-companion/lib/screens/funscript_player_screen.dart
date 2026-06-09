@@ -36,15 +36,35 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   Timer? _tickTimer;
   VideoSyncController? _videoSync;
   bool _syncConnecting = false;
+  PlaybackState _lastPlaybackState = PlaybackState.stopped;
 
   @override
   void initState() {
     super.initState();
+    _controller.addListener(_onControllerChanged);
     _loadBundle();
+  }
+
+  void _onControllerChanged() {
+    final state = _controller.state;
+    if (state != _lastPlaybackState) {
+      _lastPlaybackState = state;
+      if (state == PlaybackState.playing) {
+        _syncDevicePlay();
+        _startTickTimer();
+      } else if (state == PlaybackState.paused) {
+        _syncDevicePause();
+        _stopTickTimer();
+      } else if (state == PlaybackState.stopped) {
+        _syncDeviceStop();
+        _stopTickTimer();
+      }
+    }
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_onControllerChanged);
     _tickTimer?.cancel();
     _controller.stop();
     _videoSync?.dispose();
@@ -147,9 +167,9 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
 
   int get _boxIndex => widget.meta['boxIndex'] as int? ?? 0;
 
-  void _play() {
+  void _syncDevicePlay() {
+    if (!mounted) return;
     if (!_getIsConnected(context, listen: false)) return;
-    _controller.play();
 
     final device = context.read<DeviceProvider>();
     final linked = device.settings.linkDevicesEnabled;
@@ -179,11 +199,10 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         'boxIndex': idx,
       });
     }
-    _startTickTimer();
   }
 
-  void _pause() {
-    _controller.pause();
+  void _syncDevicePause() {
+    if (!mounted) return;
     final device = context.read<DeviceProvider>();
     final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
 
@@ -192,11 +211,10 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         'boxIndex': idx,
       });
     }
-    _stopTickTimer();
   }
 
-  void _stop() {
-    _controller.stop();
+  void _syncDeviceStop() {
+    if (!mounted) return;
     final device = context.read<DeviceProvider>();
     final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
 
@@ -205,7 +223,18 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         'boxIndex': idx,
       });
     }
-    _stopTickTimer();
+  }
+
+  void _play() {
+    _controller.play();
+  }
+
+  void _pause() {
+    _controller.pause();
+  }
+
+  void _stop() {
+    _controller.stop();
   }
 
   void _seekTo(double progress) {
@@ -439,12 +468,6 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     return Slider(
       value: progress.clamp(0.0, 1.0),
       onChanged: (v) => _seekTo(v),
-      onChangeEnd: (_) {
-        if (_controller.state == PlaybackState.playing) {
-          _controller.play(); // Reset tick timer after seek
-          _startTickTimer();
-        }
-      },
     );
   }
 
@@ -467,51 +490,55 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
 
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Skip back 10s
-            IconButton(
-              icon: const Icon(Icons.replay_10),
-              tooltip: 'Back 10s',
-              onPressed: () => _controller.seek(
-                  (_controller.positionMs - 10000).clamp(0, _controller.durationMs)),
-            ),
-            const SizedBox(width: 16),
-            // Loop toggle
-            IconButton(
-              icon: Icon(Icons.repeat,
-                  color: _controller.loop ? Theme.of(context).colorScheme.primary : null),
-              tooltip: 'Loop',
-              onPressed: () => _controller.setLoop(!_controller.loop),
-            ),
-            const SizedBox(width: 16),
-            // Play / Pause
-            FloatingActionButton.large(
-              onPressed: isPlaying ? _pause : (isConnected ? _play : null),
-              backgroundColor:
-                  isPlaying ? Theme.of(context).colorScheme.secondary : null,
-              child: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 32),
-            ),
-            const SizedBox(width: 16),
-            // Stop
-            IconButton(
-              icon: const Icon(Icons.stop),
-              tooltip: 'Stop',
-              onPressed: _stop,
-            ),
-            const SizedBox(width: 16),
-            // Skip forward 10s
-            IconButton(
-              icon: const Icon(Icons.forward_10),
-              tooltip: 'Forward 10s',
-              onPressed: () => _controller.seek(
-                  (_controller.positionMs + 10000).clamp(0, _controller.durationMs)),
-            ),
-            const SizedBox(width: 16),
-            // Video sync toggle
-            _buildSyncButton(),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Skip back 10s
+              IconButton(
+                icon: const Icon(Icons.replay_10),
+                tooltip: 'Back 10s',
+                onPressed: () => _controller.seek(
+                    (_controller.positionMs - 10000).clamp(0, _controller.durationMs)),
+              ),
+              const SizedBox(width: 8),
+              // Loop toggle
+              IconButton(
+                icon: Icon(Icons.repeat,
+                    color: _controller.loop ? Theme.of(context).colorScheme.primary : null),
+                tooltip: 'Loop',
+                onPressed: () => _controller.setLoop(!_controller.loop),
+              ),
+              const SizedBox(width: 8),
+              // Play / Pause
+              FloatingActionButton.large(
+                onPressed: isPlaying ? _pause : (isConnected ? _play : null),
+                backgroundColor:
+                    isPlaying ? Theme.of(context).colorScheme.secondary : null,
+                child: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 32),
+              ),
+              const SizedBox(width: 8),
+              // Stop
+              IconButton(
+                icon: const Icon(Icons.stop),
+                tooltip: 'Stop',
+                onPressed: _stop,
+              ),
+              const SizedBox(width: 8),
+              // Skip forward 10s
+              IconButton(
+                icon: const Icon(Icons.forward_10),
+                tooltip: 'Forward 10s',
+                onPressed: () => _controller.seek(
+                    (_controller.positionMs + 10000).clamp(0, _controller.durationMs)),
+              ),
+              const SizedBox(width: 8),
+              // Video sync toggle
+              _buildSyncButton(),
+            ],
+          ),
         ),
         if (!isConnected)
           Padding(

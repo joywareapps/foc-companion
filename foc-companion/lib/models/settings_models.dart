@@ -243,22 +243,36 @@ class FocStimSettings {
 // ──────────────────────────────────────────────
 
 class MediaSyncSettings {
-  bool hereSphereEnabled = false;
+  String selectedPlayer = "HereSphere";
+  
+  // Per-player connection settings
   String hereSphereIp = "";
   int hereSpherePort = 23554;
+  
+  String mpcHcIp = "";
+  int mpcHcPort = 13579;
+  
   List<FunscriptLocation> funscriptLocations = [];
 
   Map<String, dynamic> toJson() => {
-    'hereSphereEnabled': hereSphereEnabled,
+    'selectedPlayer': selectedPlayer,
     'hereSphereIp': hereSphereIp,
     'hereSpherePort': hereSpherePort,
+    'mpcHcIp': mpcHcIp,
+    'mpcHcPort': mpcHcPort,
     'funscriptLocations': funscriptLocations.map((e) => e.toJson()).toList(),
   };
 
   MediaSyncSettings.fromJson(Map<String, dynamic> json) {
-    hereSphereEnabled = json['hereSphereEnabled'] ?? false;
-    hereSphereIp = json['hereSphereIp'] ?? "";
-    hereSpherePort = json['hereSpherePort'] ?? 23554;
+    selectedPlayer = json['selectedPlayer'] ?? (json['hereSphereEnabled'] == true ? "HereSphere" : "MPC-HC");
+    
+    // Migration from generic/old fields
+    hereSphereIp = json['hereSphereIp'] ?? json['playerIp'] ?? "";
+    hereSpherePort = json['hereSpherePort'] ?? (json['selectedPlayer'] == "HereSphere" ? json['playerPort'] : null) ?? 23554;
+    
+    mpcHcIp = json['mpcHcIp'] ?? (json['selectedPlayer'] == "MPC-HC" ? json['playerIp'] : null) ?? "";
+    mpcHcPort = json['mpcHcPort'] ?? (json['selectedPlayer'] == "MPC-HC" ? json['playerPort'] : null) ?? 13579;
+
     if (json['funscriptLocations'] != null) {
       funscriptLocations = (json['funscriptLocations'] as List)
           .map((e) => FunscriptLocation.fromJson(e))

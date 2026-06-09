@@ -5,6 +5,7 @@ import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/app_logger.dart';
+import 'package:foc_companion/screens/media_sync_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -52,6 +53,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle: const Text("Prevent the screen from sleeping while the app is open"),
           value: settings.keepScreenOn,
           onChanged: (v) => settings.setKeepScreenOn(v),
+          contentPadding: EdgeInsets.zero,
+        ),
+        const SizedBox(height: 8),
+        ListTile(
+          title: const Text("Video Player Sync"),
+          subtitle: const Text("Configure integration with HereSphere and other players"),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const MediaSyncScreen()),
+            );
+          },
           contentPadding: EdgeInsets.zero,
         ),
         const SizedBox(height: 16),

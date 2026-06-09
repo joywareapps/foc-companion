@@ -8,7 +8,7 @@ import 'package:foc_companion/core/patterns.dart';
 import 'package:foc_companion/screens/control_screen.dart';
 import 'package:foc_companion/screens/device_settings_screen.dart';
 import 'package:foc_companion/screens/pulse_settings_screen.dart';
-// import 'package:foc_companion/screens/media_sync_screen.dart';  // hidden — re-enable with Media tab
+import 'package:foc_companion/screens/media_sync_screen.dart';
 import 'package:foc_companion/screens/settings_screen.dart';
 import 'package:foc_companion/screens/funscript_library_screen.dart';
 import 'package:foc_companion/services/shared_file_service.dart';

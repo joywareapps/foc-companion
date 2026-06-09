@@ -408,23 +408,9 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
                           if (axes.isNotEmpty) ...[
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Wrap(
-                                spacing: 4,
-                                runSpacing: 2,
-                                children: axes
-                                    .map((a) => Chip(
-                                          label: Text(a,
-                                              style: const TextStyle(
-                                                  fontSize: 11)),
-                                          padding: EdgeInsets.zero,
-                                          materialTapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                          labelPadding:
-                                              const EdgeInsets.symmetric(
-                                                  horizontal: 6),
-                                          visualDensity: VisualDensity.compact,
-                                        ))
-                                    .toList(),
+                              child: Text(
+                                'Axes: ${axes.join(", ")}',
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ),
                           ],

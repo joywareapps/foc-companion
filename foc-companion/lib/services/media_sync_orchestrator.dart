@@ -28,8 +28,17 @@ class MediaSyncOrchestrator {
   Future<void> onFilenameChanged(String filename) async {
     if (!settings.mediaSync.autoloadEnabled) return;
 
+    // Robustly extract filename from URL or Path
+    String name = filename;
+    final uri = Uri.tryParse(name);
+    if (uri != null && uri.pathSegments.isNotEmpty) {
+      name = uri.pathSegments.last;
+    } else {
+      name = name.split('/').last.split('\\').last;
+    }
+
     // Normalize filename (remove extension if present)
-    String basename = filename;
+    String basename = name;
     if (basename.contains('.')) {
       basename = basename.substring(0, basename.lastIndexOf('.'));
     }
@@ -39,6 +48,26 @@ class MediaSyncOrchestrator {
 
     AppLogger.instance.i("MediaSyncOrchestrator: video changed to '$basename', searching for bundles...");
 
+    // 1. Check local library first
+    try {
+      final docDir = await getApplicationDocumentsDirectory();
+      final libraryDir = "${docDir.path}/funscript_library";
+      final existingBundles = await FunscriptBundleLoader.listAll(libraryDir);
+      
+      for (final meta in existingBundles) {
+        if (meta['name'] == basename) {
+          AppLogger.instance.i("MediaSyncOrchestrator: found '$basename' in local library, loading...");
+          final bundle = await FunscriptBundleLoader.loadFromLibrary(meta['id'] as String, libraryDir);
+          playbackController.load(bundle);
+          onBundleLoaded?.call(bundle);
+          return; // Success
+        }
+      }
+    } catch (e) {
+      AppLogger.instance.e("MediaSyncOrchestrator: error checking local library", error: e);
+    }
+
+    // 2. Check configured locations (Local folders and SMB)
     for (final loc in settings.mediaSync.funscriptLocations) {
       try {
         final bundles = await _fileSourceService.findBundles(loc, basename);

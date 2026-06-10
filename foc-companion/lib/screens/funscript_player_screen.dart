@@ -49,11 +49,20 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
 
     _videoSync = VideoSyncController(funscriptController: _controller);
     _videoSync!.onFileChanged = (path) {
-      final filename = path.split('/').last.split('\\').last;
+      // Robustly extract filename from URL or Path
+      final uri = Uri.tryParse(path);
+      String filename = (uri != null && uri.pathSegments.isNotEmpty) 
+          ? uri.pathSegments.last 
+          : path.split('/').last.split('\\').last;
+      
       _orchestrator?.onFilenameChanged(filename);
     };
 
-    _loadBundle();
+    _loadBundle().then((_) {
+      if (widget.meta == null && mounted) {
+        _toggleVideoSync();
+      }
+    });
   }
 
   @override
@@ -419,7 +428,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
             if (isLinked && status != null) ...[
               const SizedBox(height: 4),
               Text(
-                'Linked: ${status.filePath ?? "..."}',
+                'Linked: ${_getFilenameFromPath(status.filePath ?? "")}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[500],
                     ),
@@ -691,6 +700,15 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         ),
       ),
     );
+  }
+
+  String _getFilenameFromPath(String path) {
+    if (path.isEmpty) return "...";
+    final uri = Uri.tryParse(path);
+    if (uri != null && uri.pathSegments.isNotEmpty) {
+      return uri.pathSegments.last;
+    }
+    return path.split('/').last.split('\\').last;
   }
 }
 

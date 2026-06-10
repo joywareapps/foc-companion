@@ -65,18 +65,20 @@ jobs:
       - name: Generate Release Notes
         id: release_notes
         run: |
-          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | head -2 | tail -1)
+          git fetch --tags --force
+          CURRENT_TAG=${{ github.ref_name }}
+          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | grep -v "^${CURRENT_TAG}$" | head -1)
           if [ -z "$PREV_TAG" ]; then
             PREV_TAG=$(git rev-list --max-parents=0 HEAD)
           fi
-          CHANGES=$(git log --pretty=format:"- %s" "${PREV_TAG}..HEAD")
+          CHANGES=$(git log --pretty=format:"- %s" "${PREV_TAG}..${CURRENT_TAG}")
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "## What's New" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "$CHANGES" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "---" >> $GITHUB_OUTPUT
-          echo "**Full Changelog:** \`${PREV_TAG}\` → \`${{ github.ref_name }}\`" >> $GITHUB_OUTPUT
+          echo "**Full Changelog:** \`${PREV_TAG}\` → \`${CURRENT_TAG}\`" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release

@@ -156,7 +156,7 @@ class FocStimTaskHandler extends TaskHandler {
   }
 
   @override
-  Future<void> onDestroy(DateTime timestamp) async {
+  Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
     for (int i = 0; i < 2; i++) {
       _boxes[i]?.notificationWatchdog?.cancel();
       await _stopStimulation(i);

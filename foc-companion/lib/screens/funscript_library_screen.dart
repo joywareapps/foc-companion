@@ -75,7 +75,7 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
 
   Future<void> _importBundle() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['focb', 'zip'],
       );

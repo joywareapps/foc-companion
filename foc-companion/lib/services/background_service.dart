@@ -8,6 +8,7 @@ import 'package:foc_companion/core/patterns.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
+import 'package:foc_companion/generated/protobuf/notifications.pb.dart';
 import 'package:foc_companion/generated/protobuf/constants.pbenum.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,6 +44,18 @@ class ActiveBoxState {
   DateTime? buttonEventDateTime;
   Timer? notificationWatchdog;
   final Map<String, dynamic> lastTelemetry = {};
+
+  // Sensor AS5311 state
+  double sensorRaw = 0.0;
+  double sensorDecayed = 0.0;
+  double sensorVelocityLastPos = 0.0;
+  int sensorVelocityLastTime = 0; // timestampMs
+  int sensorLastMathUpdateMs = 0; // timestamp for exponential decay dt
+  double sensorHighpassOut = 0.0;
+  double sensorHighpassLastIn = 0.0;
+  int lastSensorUpdateMs = 0; // throttle UI updates
+  double sensorLastEmittedDecayed = 0.0;
+  double sensorLastEmittedRaw = 0.0;
 
   DateTime lastNotificationUpdateTime = DateTime.fromMillisecondsSinceEpoch(0);
   bool? lastIsLoopRunningState;
@@ -158,6 +171,12 @@ class FocStimServiceController {
         final portName = data['portName'] as String;
         _connectSerial(boxIndex, portName);
         break;
+      case 'setWifiCredentials':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final ssid = data['ssid'] as String? ?? '';
+        final password = data['password'] as String? ?? '';
+        _setWifiCredentials(boxIndex, ssid, password);
+        break;
       case 'disconnect':
         final int boxIndex = data['boxIndex'] as int? ?? 0;
         _disconnect(boxIndex);
@@ -243,6 +262,10 @@ class FocStimServiceController {
           if (data.containsKey('cockpit4Phase')) {
             box.cockpit4Phase = CockpitSettings.fromJson(
                 Map<String, dynamic>.from(data['cockpit4Phase']));
+          }
+          if (data.containsKey('as5311')) {
+            box.as5311 = As5311Settings.fromJson(
+                Map<String, dynamic>.from(data['as5311']));
           }
         }
         if (data.containsKey('deviceBehavior')) {
@@ -361,6 +384,20 @@ class FocStimServiceController {
       box.connectionStatus = "Error: $e";
       _logToMain(boxIndex, "Serial connection failed: $e");
       _disconnect(boxIndex);
+    }
+  }
+
+  Future<void> _setWifiCredentials(int boxIndex, String ssid, String password) async {
+    final box = _boxes[boxIndex];
+    if (box == null || !box.api.isConnected) {
+      _sendToMain({'type': 'wifiCredentialsResult', 'boxIndex': boxIndex, 'error': 'Not connected to device'});
+      return;
+    }
+    try {
+      await box.api.setWifiCredentials(ssid, password);
+      _sendToMain({'type': 'wifiCredentialsResult', 'boxIndex': boxIndex});
+    } catch (e) {
+      _sendToMain({'type': 'wifiCredentialsResult', 'boxIndex': boxIndex, 'error': e.toString()});
     }
   }
 
@@ -574,6 +611,10 @@ class FocStimServiceController {
       data['debugMessage'] = n.notificationDebugString.message;
     }
 
+    if (n.hasNotificationDebugAs5311()) {
+      _processAs5311Sensor(boxIndex, n.notificationDebugAs5311);
+    }
+
     final cacheData = Map<String, dynamic>.from(data)
       ..remove('type')
       ..remove('boxIndex');
@@ -682,6 +723,118 @@ class FocStimServiceController {
     _boxes[boxIndex]!.connectionStatus = "Error: $err";
     _logToMain(boxIndex, "Socket error: $err");
     _disconnect(boxIndex);
+  }
+
+  void _processAs5311Sensor(int boxIndex, NotificationDebugAS5311 msg) {
+    final box = _boxes[boxIndex]!;
+    final settings = _settings?.boxes[boxIndex].as5311;
+    if (settings == null || settings.mode == 'off') {
+      box.threePhaseLoop.sensorVolumeMultiplier = 1.0;
+      box.fourPhaseLoop.sensorVolumeMultiplier = 1.0;
+      return;
+    }
+
+    final config = settings.activeConfig;
+    final int nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    // Convert tracked steps to millimeters
+    // AS5311 pole pair is 2.0mm (2000um), represented by 4096 steps
+    final double position = msg.tracked * (2000.0 / 4096.0) / 1000.0;
+    double rawValue = 0.0;
+
+    if (settings.mode == 'absolute') {
+      rawValue = position; // Can be negative
+    } else if (settings.mode == 'velocity') {
+      if (box.sensorVelocityLastTime > 0) {
+        double dt = (nowMs - box.sensorVelocityLastTime) / 1000.0;
+        if (dt > 0.0) {
+          rawValue = (position - box.sensorVelocityLastPos) / dt; // Preserve direction
+        }
+      }
+      box.sensorVelocityLastPos = position;
+      box.sensorVelocityLastTime = nowMs;
+    } else if (settings.mode == 'highpass') {
+      double dtMath = 0.0;
+      if (box.sensorLastMathUpdateMs > 0) {
+        dtMath = (nowMs - box.sensorLastMathUpdateMs) / 1000.0;
+      }
+      
+      if (dtMath > 0.0 && dtMath < 1.0) {
+        // High-pass filter: y[i] = alpha * (y[i-1] + x[i] - x[i-1])
+        const double fc = 0.1;
+        const double rc = 1.0 / (2.0 * math.pi * fc);
+        double alphaHp = rc / (rc + dtMath);
+        
+        box.sensorHighpassOut = alphaHp * (box.sensorHighpassOut + position - box.sensorHighpassLastIn);
+      }
+      box.sensorHighpassLastIn = position;
+      rawValue = box.sensorHighpassOut;
+    }
+
+    if (config.useAbsolute) {
+      rawValue = rawValue.abs();
+    }
+
+    box.sensorRaw = rawValue;
+
+    // Apply exponential decay
+    double dtDecay = 0.0;
+    if (box.sensorLastMathUpdateMs > 0) {
+      dtDecay = (nowMs - box.sensorLastMathUpdateMs) / 1000.0;
+    }
+    box.sensorLastMathUpdateMs = nowMs;
+
+    double alpha = 1.0;
+    if (config.decayRate > 0.001) {
+      alpha = (dtDecay / config.decayRate).clamp(0.0, 1.0);
+    }
+    
+    // Instant attack, exponential release
+    if (rawValue > box.sensorDecayed) {
+      box.sensorDecayed = rawValue;
+    } else {
+      box.sensorDecayed = box.sensorDecayed * (1.0 - alpha) + rawValue * alpha;
+    }
+
+    // Map to multiplier
+    double multiplier = 0.0;
+    double tMin = config.threshold;
+    double tMax = config.threshold + config.range;
+    
+    if (tMax <= tMin) {
+      multiplier = box.sensorDecayed >= tMin ? 1.0 : 0.0;
+    } else {
+      multiplier = (box.sensorDecayed - tMin) / (tMax - tMin);
+      multiplier = multiplier.clamp(0.0, 1.0);
+    }
+
+    // Volume change ranges from -1.0 to 1.0.
+    double finalMultiplier = (1.0 + multiplier * config.volumeChange).clamp(0.0, 2.0);
+
+    // Route to targets
+    if (settings.targetBox == 0 || settings.targetBox == 2) {
+      _boxes[0]?.threePhaseLoop.sensorVolumeMultiplier = finalMultiplier;
+      _boxes[0]?.fourPhaseLoop.sensorVolumeMultiplier = finalMultiplier;
+    }
+    if (settings.targetBox == 1 || settings.targetBox == 2) {
+      _boxes[1]?.threePhaseLoop.sensorVolumeMultiplier = finalMultiplier;
+      _boxes[1]?.fourPhaseLoop.sensorVolumeMultiplier = finalMultiplier;
+    }
+
+    // Send telemetry to UI at ~30Hz
+    if (nowMs - box.lastSensorUpdateMs >= 33) {
+      box.lastSensorUpdateMs = nowMs;
+      box.sensorLastEmittedRaw = box.sensorRaw;
+      box.sensorLastEmittedDecayed = box.sensorDecayed;
+       
+      FlutterForegroundTask.sendDataToMain({
+        'type': 'sensorTelemetry',
+        'boxIndex': boxIndex,
+        'raw': box.sensorRaw,
+        'decayed': box.sensorDecayed,
+        'multiplier': finalMultiplier,
+      });
+    }
   }
 }
 

@@ -78,6 +78,9 @@ class FourPhaseCommandLoop {
   /// Volume (0–1). Sent to device as: volume × maxAmp.
   double volume = 1.0;
 
+  /// Sensor volume multiplier (0–1). Automatically updated by the background service's AS5311 handler.
+  double sensorVolumeMultiplier = 1.0;
+
   /// Called with `true` when ticks are being skipped (connection slow),
   /// `false` when throughput recovers.
   void Function(bool)? onSlowConnection;
@@ -166,7 +169,7 @@ class FourPhaseCommandLoop {
     final double elapsed = now - _startTime;
     final double ramp = (elapsed / 3.0).clamp(0.0, 1.0);
     final double currentAmp =
-        volume * _device.waveformAmplitude * ramp;
+        volume * sensorVolumeMultiplier * _device.waveformAmplitude * ramp;
 
     final norm = _pulseFreqMod.update(dt, velocity); // [-1,1] when active, 0 when off
     final modCfg = _pulseFreqMod.config;
@@ -308,6 +311,9 @@ class CommandLoop {
   /// threephase_algorithm: AXIS_WAVEFORM_AMPLITUDE_AMPS = volume × maxAmp).
   double volume = 1.0;
 
+  /// Sensor volume multiplier (0–1). Automatically updated by the background service's AS5311 handler.
+  double sensorVolumeMultiplier = 1.0;
+
   /// Funscript data source. When not null and active, overrides pattern values.
   /// The CommandLoop reads [funscriptActive] and [funscriptValues] each tick.
   /// Set by the background service when funscript playback is active.
@@ -427,9 +433,10 @@ class CommandLoop {
     final double ramp = (elapsed / 3.0).clamp(0.0, 1.0);
     final double currentAmp = useFunscript
         ? (fsDevice('volume', min: 0.0, max: 1.0) ?? volume) *
+            sensorVolumeMultiplier *
             _device.waveformAmplitude *
             ramp
-        : volume * _device.waveformAmplitude * ramp;
+        : volume * sensorVolumeMultiplier * _device.waveformAmplitude * ramp;
 
     // Convert intuitive axes to firmware units.
     final axes = pulseFirmwareAxes(

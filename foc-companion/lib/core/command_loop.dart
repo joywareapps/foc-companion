@@ -98,10 +98,12 @@ class FourPhaseCommandLoop {
     _timer?.cancel();
     _timer = null;
     _isRunning = false;
-    try {
-      await _api.stopSignal();
-    } catch (e) {
-      _log.e("FourPhaseCommandLoop: Error stopping signal", error: e);
+    if (_api.isConnected) {
+      try {
+        await _api.stopSignal();
+      } catch (e) {
+        _log.e("FourPhaseCommandLoop: Error stopping signal", error: e);
+      }
     }
     _log.i("FourPhaseCommandLoop: Stopped.");
   }
@@ -318,10 +320,12 @@ class CommandLoop {
     _timer?.cancel();
     _timer = null;
     _isRunning = false;
-    try {
-      await _api.stopSignal();
-    } catch (e) {
-      _log.e("CommandLoop: Error stopping signal", error: e);
+    if (_api.isConnected) {
+      try {
+        await _api.stopSignal();
+      } catch (e) {
+        _log.e("CommandLoop: Error stopping signal", error: e);
+      }
     }
     _log.i("CommandLoop: Stopped.");
   }

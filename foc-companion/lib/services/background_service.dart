@@ -124,6 +124,7 @@ class ActiveBoxState {
 class FocStimTaskHandler extends TaskHandler {
   final Map<int, ActiveBoxState> _boxes = {};
   SettingsProvider? _settings;
+  DateTime _lastGlobalNotificationUpdateTime = DateTime.fromMillisecondsSinceEpoch(0);
 
   // Cache settings behavior to handle buttons in background
   DeviceBehaviorSettings _deviceBehavior = DeviceBehaviorSettings();
@@ -507,8 +508,18 @@ class FocStimTaskHandler extends TaskHandler {
     final cacheData = Map<String, dynamic>.from(data)..remove('type')..remove('boxIndex');
     box.lastTelemetry.addAll(cacheData);
 
-    FlutterForegroundTask.sendDataToMain(data);
-    _updateNotificationDetails();
+    // ── Throttling: IPC telemetry to Main (10Hz) ──
+    final now = DateTime.now();
+    if (now.difference(box.lastNotificationUpdateTime).inMilliseconds >= 100) {
+      box.lastNotificationUpdateTime = now;
+      FlutterForegroundTask.sendDataToMain(data);
+    }
+
+    // ── Throttling: Foreground Notification (1Hz) ──
+    if (now.difference(_lastGlobalNotificationUpdateTime).inMilliseconds >= 1000) {
+      _lastGlobalNotificationUpdateTime = now;
+      _updateNotificationDetails();
+    }
   }
 
   void _updateNotificationDetails() {

@@ -9,6 +9,8 @@ import 'package:foc_companion/services/heresphere_service.dart';
 import 'package:foc_companion/services/mpc_hc_service.dart';
 import 'package:foc_companion/services/video_player_status.dart';
 
+import 'package:foc_companion/services/vlc_service.dart';
+
 final _log = AppLogger.instance;
 
 /// Sync state for the video ↔ funscript link.
@@ -21,6 +23,7 @@ class VideoSyncController extends ChangeNotifier {
 
   HereSphereService? _heresphereService;
   MpcHcService? _mpcHcService;
+  VlcService? _vlcService;
   StreamSubscription<VideoPlayerStatus>? _statusSubscription;
 
   SyncState _syncState = SyncState.idle;
@@ -55,6 +58,9 @@ class VideoSyncController extends ChangeNotifier {
     required int herespherePort,
     required String mpcHcIp,
     required int mpcHcPort,
+    required String vlcIp,
+    required int vlcPort,
+    required String vlcPassword,
   }) async {
     if (_isLinked) {
       _log.w('VideoSyncController: already linked to $_linkedPlayer, unlinking first');
@@ -80,6 +86,14 @@ class VideoSyncController extends ChangeNotifier {
           _statusSubscription =
               _mpcHcService!.statusStream.listen(_onPlayerStatus);
           await _mpcHcService!.startPolling();
+          break;
+
+        case VideoPlayerType.vlc:
+          _vlcService = VlcService();
+          _vlcService!.configure(vlcIp, vlcPort, vlcPassword);
+          _statusSubscription =
+              _vlcService!.statusStream.listen(_onPlayerStatus);
+          await _vlcService!.startPolling();
           break;
 
         case VideoPlayerType.none:
@@ -123,6 +137,8 @@ class VideoSyncController extends ChangeNotifier {
     _heresphereService = null;
     _mpcHcService?.dispose();
     _mpcHcService = null;
+    _vlcService?.dispose();
+    _vlcService = null;
   }
 
   void _onPlayerStatus(VideoPlayerStatus status) {

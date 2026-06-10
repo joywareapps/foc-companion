@@ -636,6 +636,9 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         herespherePort: m.hereSpherePort,
         mpcHcIp: m.mpcHcIp,
         mpcHcPort: m.mpcHcPort,
+        vlcIp: m.vlcIp,
+        vlcPort: m.vlcPort,
+        vlcPassword: m.vlcPassword,
       );
       
       // Ensure the device enters funscript mode

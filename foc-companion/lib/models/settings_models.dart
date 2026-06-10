@@ -1,6 +1,6 @@
 enum DeviceMode { threePhase, fourPhase }
 
-enum VideoPlayerType { none, heresphere, mpcHc }
+enum VideoPlayerType { none, heresphere, mpcHc, vlc }
 
 enum ButtonAction { nothing, togglePlayPause, toggleVolumeLock }
 
@@ -255,6 +255,10 @@ class MediaSyncSettings {
   String mpcHcIp = "";
   int mpcHcPort = 13579;
 
+  String vlcIp = "";
+  int vlcPort = 8080;
+  String vlcPassword = "";
+
   bool autoloadEnabled = false;
   
   List<FunscriptLocation> funscriptLocations = [];
@@ -266,6 +270,9 @@ class MediaSyncSettings {
     'hereSphereEnabled': hereSphereEnabled,
     'mpcHcIp': mpcHcIp,
     'mpcHcPort': mpcHcPort,
+    'vlcIp': vlcIp,
+    'vlcPort': vlcPort,
+    'vlcPassword': vlcPassword,
     'autoloadEnabled': autoloadEnabled,
     'funscriptLocations': funscriptLocations.map((e) => e.toJson()).toList(),
   };
@@ -282,6 +289,10 @@ class MediaSyncSettings {
     
     mpcHcIp = json['mpcHcIp'] ?? "";
     mpcHcPort = json['mpcHcPort'] ?? 13579;
+
+    vlcIp = json['vlcIp'] ?? "";
+    vlcPort = json['vlcPort'] ?? 8080;
+    vlcPassword = json['vlcPassword'] ?? "";
 
     autoloadEnabled = json['autoloadEnabled'] ?? false;
 

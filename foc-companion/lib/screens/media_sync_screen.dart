@@ -17,6 +17,9 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
   final TextEditingController _herespherePortController = TextEditingController();
   final TextEditingController _mpcHcIpController = TextEditingController();
   final TextEditingController _mpcHcPortController = TextEditingController();
+  final TextEditingController _vlcIpController = TextEditingController();
+  final TextEditingController _vlcPortController = TextEditingController();
+  final TextEditingController _vlcPasswordController = TextEditingController();
 
   @override
   void initState() {
@@ -36,6 +39,9 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
     _herespherePortController.text = m.hereSpherePort.toString();
     _mpcHcIpController.text = m.mpcHcIp;
     _mpcHcPortController.text = m.mpcHcPort.toString();
+    _vlcIpController.text = m.vlcIp;
+    _vlcPortController.text = m.vlcPort.toString();
+    _vlcPasswordController.text = m.vlcPassword;
   }
 
   @override
@@ -44,6 +50,9 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
     _herespherePortController.dispose();
     _mpcHcIpController.dispose();
     _mpcHcPortController.dispose();
+    _vlcIpController.dispose();
+    _vlcPortController.dispose();
+    _vlcPasswordController.dispose();
     super.dispose();
   }
 
@@ -79,6 +88,10 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
               DropdownMenuItem(
                 value: VideoPlayerType.mpcHc,
                 child: Text("MPC-HC / mpv"),
+              ),
+              DropdownMenuItem(
+                value: VideoPlayerType.vlc,
+                child: Text("VLC"),
               ),
             ],
             onChanged: (v) {
@@ -134,6 +147,42 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
               controller: _mpcHcPortController,
               keyboardType: TextInputType.number,
               onChanged: (v) => m.mpcHcPort = int.tryParse(v) ?? 13579,
+            ),
+          ],
+
+          // ── VLC Section ──
+          if (m.activePlayer == VideoPlayerType.vlc) ...[
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "VLC IP Address",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.wifi),
+              ),
+              controller: _vlcIpController,
+              onChanged: (v) => m.vlcIp = v,
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "VLC Port",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.router),
+                helperText: "Default: 8080",
+              ),
+              controller: _vlcPortController,
+              keyboardType: TextInputType.number,
+              onChanged: (v) => m.vlcPort = int.tryParse(v) ?? 8080,
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "VLC Password",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+              obscureText: true,
+              controller: _vlcPasswordController,
+              onChanged: (v) => m.vlcPassword = v,
             ),
           ],
 

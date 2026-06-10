@@ -35,6 +35,7 @@ dependencies:
   share_plus: ^10.1.4
   wakelock_plus: ^1.2.8
   flutter_foreground_task: ^9.2.2
+  xml: ^6.6.1
 
 dev_dependencies:
   flutter_test:

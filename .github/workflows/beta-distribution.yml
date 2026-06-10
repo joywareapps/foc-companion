@@ -62,15 +62,31 @@ jobs:
           name: foc-companion-release-apk
           path: foc-companion/build/app/outputs/flutter-apk/app-release.apk
 
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          git fetch --tags --force
+          CURRENT_TAG=${{ github.ref_name }}
+          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | grep -v "^${CURRENT_TAG}$" | head -1)
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          CHANGES=$(git log --pretty=format:"- %s" "${PREV_TAG}..${CURRENT_TAG}")
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "## What's New" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "$CHANGES" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "---" >> $GITHUB_OUTPUT
+          echo "**Full Changelog:** \`${PREV_TAG}\` → \`${CURRENT_TAG}\`" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: "Release ${{ github.ref_name }}"
-          body: |
-            Automated release for ${{ github.ref_name }}
-            
-            **Commit:** ${{ github.sha }}
+          body: ${{ steps.release_notes.outputs.notes }}
           files: foc-companion/build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

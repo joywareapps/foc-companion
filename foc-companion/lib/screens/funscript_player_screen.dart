@@ -171,9 +171,8 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   int get _boxIndex => widget.meta?['boxIndex'] as int? ?? 
       context.read<DeviceProvider>().settings.activeUiBoxIndex;
 
-  void _play() {
+  void _setupHardwarePlayback() {
     if (!_getIsConnected(context, listen: false)) return;
-    _controller.play();
 
     final device = context.read<DeviceProvider>();
     final linked = device.settings.linkDevicesEnabled;
@@ -201,6 +200,12 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         'boxIndex': idx,
       });
     }
+  }
+
+  void _play() {
+    if (!_getIsConnected(context, listen: false)) return;
+    _controller.play();
+    _setupHardwarePlayback();
     _startTickTimer();
   }
 
@@ -581,6 +586,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   Future<void> _toggleVideoSync() async {
     if (_videoSync != null && _videoSync!.isLinked) {
       _videoSync!.unlink();
+      _stop();
       setState(() {});
       return;
     }
@@ -605,6 +611,10 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         mpcHcIp: m.mpcHcIp,
         mpcHcPort: m.mpcHcPort,
       );
+      
+      // Ensure the device enters funscript mode
+      _setupHardwarePlayback();
+      
       // Start the hardware update loop now that we're linked
       _startTickTimer();
     } catch (e) {

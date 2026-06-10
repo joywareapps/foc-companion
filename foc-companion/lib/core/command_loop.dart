@@ -126,7 +126,7 @@ class FourPhaseCommandLoop {
     final pos = pattern.update(dt * velocity);
 
     final double elapsed = now - _startTime;
-    final double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
+    final double ramp = (elapsed / 3.0).clamp(0.0, 1.0);
     final double currentAmp =
         volume * _device.waveformAmplitude * ramp;
 
@@ -369,7 +369,7 @@ class CommandLoop {
         : pattern.update(dt * velocity);
 
     final double elapsed = now - _startTime;
-    final double ramp = (elapsed / 5.0).clamp(0.0, 1.0);
+    final double ramp = (elapsed / 3.0).clamp(0.0, 1.0);
     final double currentAmp = useFunscript
         ? (fsDevice('volume', min: 0.0, max: 1.0) ?? volume) *
             _device.waveformAmplitude *

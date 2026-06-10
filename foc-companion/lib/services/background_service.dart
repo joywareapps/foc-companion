@@ -608,14 +608,17 @@ class FocStimTaskHandler extends TaskHandler {
     _logToMain(boxIndex, "Funscript playback stopped.");
   }
 
-  /// Pause funscript playback: keep the loop running but stop sending funscript values.
+  /// Pause funscript playback: stop the command loop.
   void _pauseFunscriptPlayback(int boxIndex) async {
     final box = _boxes[boxIndex];
     if (box == null) return;
 
-    // Keep the loop running but clear funscript override so pattern resumes
     box.funscriptActive = false;
     box.funscriptValues.clear();
+
+    await _stopStimulation(boxIndex);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
     _logToMain(boxIndex, "Funscript playback paused.");
   }
 

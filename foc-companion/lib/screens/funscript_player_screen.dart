@@ -58,6 +58,8 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
       _orchestrator?.onFilenameChanged(filename);
     };
 
+    _controller.addListener(_syncHardwareWithController);
+
     _loadBundle().then((_) {
       if (widget.meta == null && mounted) {
         _toggleVideoSync();
@@ -170,6 +172,30 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
 
   int get _boxIndex => widget.meta?['boxIndex'] as int? ?? 
       context.read<DeviceProvider>().settings.activeUiBoxIndex;
+
+  void _syncHardwareWithController() {
+    if (!mounted) return;
+    final state = _controller.state;
+
+    if (state == PlaybackState.playing) {
+      _setupHardwarePlayback();
+      if (_tickTimer == null) _startTickTimer();
+    } else if (state == PlaybackState.paused) {
+      final device = context.read<DeviceProvider>();
+      final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
+      for (final idx in targets) {
+        BackgroundServiceManager.sendCommand('pauseFunscriptPlayback', {'boxIndex': idx});
+      }
+      _stopTickTimer();
+    } else if (state == PlaybackState.stopped) {
+      final device = context.read<DeviceProvider>();
+      final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
+      for (final idx in targets) {
+        BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {'boxIndex': idx});
+      }
+      _stopTickTimer();
+    }
+  }
 
   void _setupHardwarePlayback() {
     if (!_getIsConnected(context, listen: false)) return;

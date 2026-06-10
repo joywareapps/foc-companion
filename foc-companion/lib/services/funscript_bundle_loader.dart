@@ -66,6 +66,17 @@ class FunscriptBundleLoader {
     final zipFileName = path.split('/').last;
     final name = zipFileName.replaceAll(RegExp(r'\.(focb|zip)$', caseSensitive: false), '');
 
+    // Check if bundle with this name already exists to prevent duplicates
+    String id = _uuid.v4();
+    final existingBundles = await listAll(libraryDir);
+    for (final b in existingBundles) {
+      if (b['name'] == name) {
+        id = b['id'] as String;
+        AppLogger.instance.i('FunscriptBundleLoader: updating existing bundle "$name" ($id)');
+        break;
+      }
+    }
+
     // Parse each funscript
     final axes = <String, Funscript>{};
     for (final entry in funscriptEntries) {
@@ -82,16 +93,22 @@ class FunscriptBundleLoader {
       if (f.durationMs > durationMs) durationMs = f.durationMs;
     }
 
-    // Generate ID and create library directory
-    final id = _uuid.v4();
+    // Use established ID and create/overwrite library directory
     final bundleDir = '$libraryDir/$id';
+    if (await Directory(bundleDir).exists()) {
+      // Clear old content to ensure a clean overwrite
+      await Directory(bundleDir).delete(recursive: true);
+    }
     await Directory(bundleDir).create(recursive: true);
 
     // Extract zip contents into bundle directory
     for (final entry in archive) {
       if (!entry.isFile) continue;
       final filePath = '$bundleDir/${entry.name}';
-      await Directory(filePath.substring(0, filePath.lastIndexOf('/'))).create(recursive: true);
+      final parentDir = filePath.substring(0, filePath.lastIndexOf('/'));
+      if (parentDir != bundleDir) {
+        await Directory(parentDir).create(recursive: true);
+      }
       await File(filePath).writeAsBytes(entry.content as List<int>);
     }
 
@@ -107,7 +124,7 @@ class FunscriptBundleLoader {
     };
     await File('$bundleDir/meta.json').writeAsString(jsonEncode(meta));
 
-    AppLogger.instance.i('FunscriptBundleLoader: imported "$name" ($id) with ${axes.length} axes');
+    AppLogger.instance.i('FunscriptBundleLoader: ${existingBundles.any((b) => b['name'] == name) ? "Updated" : "Imported"} "$name" ($id) with ${axes.length} axes');
 
     return FunscriptBundle(
       id: id,

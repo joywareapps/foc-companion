@@ -1,5 +1,7 @@
 enum DeviceMode { threePhase, fourPhase }
 
+enum VideoPlayerType { none, heresphere, mpcHc }
+
 enum ButtonAction { nothing, togglePlayPause, toggleVolumeLock }
 
 class DeviceBehaviorSettings {
@@ -243,11 +245,12 @@ class FocStimSettings {
 // ──────────────────────────────────────────────
 
 class MediaSyncSettings {
-  String selectedPlayer = "HereSphere";
+  VideoPlayerType activePlayer = VideoPlayerType.none;
   
   // Per-player connection settings
   String hereSphereIp = "";
   int hereSpherePort = 23554;
+  bool hereSphereEnabled = true;
   
   String mpcHcIp = "";
   int mpcHcPort = 13579;
@@ -257,9 +260,10 @@ class MediaSyncSettings {
   List<FunscriptLocation> funscriptLocations = [];
 
   Map<String, dynamic> toJson() => {
-    'selectedPlayer': selectedPlayer,
+    'activePlayer': activePlayer.name,
     'hereSphereIp': hereSphereIp,
     'hereSpherePort': hereSpherePort,
+    'hereSphereEnabled': hereSphereEnabled,
     'mpcHcIp': mpcHcIp,
     'mpcHcPort': mpcHcPort,
     'autoloadEnabled': autoloadEnabled,
@@ -267,14 +271,17 @@ class MediaSyncSettings {
   };
 
   MediaSyncSettings.fromJson(Map<String, dynamic> json) {
-    selectedPlayer = json['selectedPlayer'] ?? (json['hereSphereEnabled'] == true ? "HereSphere" : "MPC-HC");
+    activePlayer = VideoPlayerType.values.firstWhere(
+      (e) => e.name == json['activePlayer'],
+      orElse: () => VideoPlayerType.none,
+    );
     
-    // Migration from generic/old fields
-    hereSphereIp = json['hereSphereIp'] ?? json['playerIp'] ?? "";
-    hereSpherePort = json['hereSpherePort'] ?? (json['selectedPlayer'] == "HereSphere" ? json['playerPort'] : null) ?? 23554;
+    hereSphereIp = json['hereSphereIp'] ?? "";
+    hereSpherePort = json['hereSpherePort'] ?? 23554;
+    hereSphereEnabled = json['hereSphereEnabled'] ?? true;
     
-    mpcHcIp = json['mpcHcIp'] ?? (json['selectedPlayer'] == "MPC-HC" ? json['playerIp'] : null) ?? "";
-    mpcHcPort = json['mpcHcPort'] ?? (json['selectedPlayer'] == "MPC-HC" ? json['playerPort'] : null) ?? 13579;
+    mpcHcIp = json['mpcHcIp'] ?? "";
+    mpcHcPort = json['mpcHcPort'] ?? 13579;
 
     autoloadEnabled = json['autoloadEnabled'] ?? false;
 
@@ -384,4 +391,3 @@ class BoxProfile {
             ? CockpitSettings.fromJson(Map<String, dynamic>.from(json['cockpit4Phase']))
             : CockpitSettings();
 }
-

@@ -11,6 +11,7 @@ import 'package:foc_companion/screens/pulse_settings_screen.dart';
 import 'package:foc_companion/screens/media_sync_screen.dart';
 import 'package:foc_companion/screens/settings_screen.dart';
 import 'package:foc_companion/screens/funscript_library_screen.dart';
+import 'package:foc_companion/screens/funscript_player_screen.dart';
 import 'package:foc_companion/services/shared_file_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -252,7 +253,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         onClose: () =>
                             setState(() => _showCalibration = false),
                       )
-                    : _PlayBar(device: device, is4Phase: is4Phase),
+                    : _PlayBar(
+                        device: device, 
+                        is4Phase: is4Phase,
+                        isLibraryTab: _selectedIndex == 2,
+                      ),
               NavigationBar(
                 selectedIndex: _selectedIndex,
                 onDestinationSelected: (i) => setState(() {
@@ -335,8 +340,13 @@ class _CalibrationCloseBar extends StatelessWidget {
 class _PlayBar extends StatelessWidget {
   final DeviceProvider device;
   final bool is4Phase;
+  final bool isLibraryTab;
 
-  const _PlayBar({required this.device, required this.is4Phase});
+  const _PlayBar({
+    required this.device,
+    required this.is4Phase,
+    this.isLibraryTab = false,
+  });
 
   String get _patternName {
     if (is4Phase) {
@@ -346,6 +356,20 @@ class _PlayBar extends StatelessWidget {
       final p = ThreephasePatternRegistry.all;
       return p[device.cockpit.patternIndex.clamp(0, p.length - 1)].name;
     }
+  }
+
+  void _navigateToEmptyPlayer(BuildContext context) {
+    if (!device.api.isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Connect a device first')),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => FunscriptPlayerScreen(meta: null),
+      ),
+    );
   }
 
   @override
@@ -452,6 +476,21 @@ class _PlayBar extends StatelessWidget {
       );
     } else {
       // ── Stopped: Start button ──
+      if (isLibraryTab) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: FilledButton.icon(
+            icon: const Icon(Icons.sync),
+            label: const Text('Link with Video Player'),
+            onPressed: () => _navigateToEmptyPlayer(context),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.blue,
+              minimumSize: const Size.fromHeight(44),
+            ),
+          ),
+        );
+      }
+
       return Padding(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         child: FilledButton.icon(

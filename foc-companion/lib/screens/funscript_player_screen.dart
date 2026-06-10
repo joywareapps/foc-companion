@@ -9,20 +9,16 @@ import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/services/funscript_bundle_loader.dart';
 import 'package:foc_companion/services/funscript_playback_controller.dart';
 import 'package:foc_companion/services/app_logger.dart';
+import 'package:foc_companion/services/video_sync_controller.dart';
 import 'package:foc_companion/models/funscript_bundle.dart';
-import 'package:foc_companion/services/heresphere_service.dart';
-import 'package:foc_companion/services/mpc_hc_service.dart';
+import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/media_sync_orchestrator.dart';
 
 /// Full-screen funscript player with transport controls and live axis display.
-///
-/// V1: Playback controller runs in foreground; sends commands to background
-/// service to toggle funscript mode. The background CommandLoop reads the
-/// shared controller's values each tick.
 class FunscriptPlayerScreen extends StatefulWidget {
-  final Map<String, dynamic> meta;
+  final Map<String, dynamic>? meta;
 
-  const FunscriptPlayerScreen({super.key, required this.meta});
+  const FunscriptPlayerScreen({super.key, this.meta});
 
   @override
   State<FunscriptPlayerScreen> createState() => _FunscriptPlayerScreenState();
@@ -30,27 +26,19 @@ class FunscriptPlayerScreen extends StatefulWidget {
 
 class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   FunscriptBundle? _bundle;
-  final FunscriptPlaybackController _controller =
-      FunscriptPlaybackController();
+  final FunscriptPlaybackController _controller = FunscriptPlaybackController();
   bool _isLoading = true;
   String? _error;
   Timer? _tickTimer;
-
-  bool _isVideoLinked = false;
-  String? _externalFilename;
-  StreamSubscription? _playerSub;
-  HereSphereService? _hereSphereService;
-  MpcHcService? _mpcHcService;
+  VideoSyncController? _videoSync;
+  bool _syncConnecting = false;
   MediaSyncOrchestrator? _orchestrator;
-
-  String get _videoPlayerName {
-    return context.read<SettingsProvider>().mediaSync.selectedPlayer;
-  }
 
   @override
   void initState() {
     super.initState();
     final settings = context.read<SettingsProvider>();
+    
     _orchestrator = MediaSyncOrchestrator(
       settings: settings,
       playbackController: _controller,
@@ -58,14 +46,21 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         if (mounted) setState(() => _bundle = bundle);
       },
     );
+
+    _videoSync = VideoSyncController(funscriptController: _controller);
+    _videoSync!.onFileChanged = (path) {
+      final filename = path.split('/').last.split('\\').last;
+      _orchestrator?.onFilenameChanged(filename);
+    };
+
     _loadBundle();
   }
 
   @override
   void dispose() {
-    _stopPlayerSync();
     _tickTimer?.cancel();
     _controller.stop();
+    _videoSync?.dispose();
     
     // Attempt to stop on both boxes just in case they were linked
     for (int i = 0; i < 2; i++) {
@@ -79,11 +74,16 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   }
 
   Future<void> _loadBundle() async {
+    if (widget.meta == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
     try {
       final appDir = await getApplicationDocumentsDirectory();
       final libraryDir = '${appDir.path}/funscript_library';
       final bundle = await FunscriptBundleLoader.loadFromLibrary(
-        widget.meta['id'] as String,
+        widget.meta!['id'] as String,
         libraryDir,
       );
       if (mounted) {
@@ -110,7 +110,6 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         final allValues = _controller.currentValues;
 
         if (linked) {
-          // Send to both
           BackgroundServiceManager.sendCommand('updateFunscriptValues', {
             'boxIndex': 0,
             'values': _filterAxes(allValues, prostate: false),
@@ -120,7 +119,6 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
             'values': _filterAxes(allValues, prostate: true),
           });
         } else {
-          // Send to single target box
           BackgroundServiceManager.sendCommand('updateFunscriptValues', {
             'boxIndex': activeBox,
             'values': _filterAxes(allValues, prostate: activeBox == 1),
@@ -130,10 +128,8 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     });
   }
 
-  /// Maps axis variants to standard names. If prostate is true, prefers {axis}-prostate.
   Map<String, double> _filterAxes(Map<String, double> allValues, {required bool prostate}) {
     final result = <String, double>{};
-    // Base axes are those that don't end in -prostate
     final baseAxes = allValues.keys.where((k) => !k.endsWith('-prostate')).toList();
 
     for (final axis in baseAxes) {
@@ -156,88 +152,6 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     _tickTimer = null;
   }
 
-  void _toggleLink() {
-    setState(() {
-      _isVideoLinked = !_isVideoLinked;
-      if (_isVideoLinked) {
-        _startPlayerSync();
-      } else {
-        _stopPlayerSync();
-      }
-    });
-  }
-
-  void _startPlayerSync() {
-    final settings = context.read<SettingsProvider>().mediaSync;
-    _playerSub?.cancel();
-    _externalFilename = null;
-
-    if (settings.selectedPlayer == "HereSphere") {
-      _hereSphereService ??= HereSphereService();
-      _hereSphereService!.configure(settings.hereSphereIp, settings.hereSpherePort);
-      _hereSphereService!.connect().catchError((e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-      });
-      _playerSub = _hereSphereService!.statusStream.listen((status) {
-        if (mounted) {
-          final fullPath = status.path;
-          final filename = fullPath.split('/').last.split('\\').last;
-          
-          if (filename.isNotEmpty) {
-            _orchestrator?.onFilenameChanged(filename);
-          }
-
-          setState(() {
-            var displayFilename = filename;
-            if (displayFilename.contains('.')) {
-              displayFilename = displayFilename.substring(0, displayFilename.lastIndexOf('.'));
-            }
-            _externalFilename = displayFilename;
-          });
-          _syncController(status.currentTime * 1000, status.playerState == 0);
-        }
-      });
-    } else {
-      _mpcHcService ??= MpcHcService();
-      _mpcHcService!.configure(settings.mpcHcIp, settings.mpcHcPort);
-      _mpcHcService!.startPolling();
-      _playerSub = _mpcHcService!.statusStream.listen((status) {
-        if (mounted) {
-          if (status.filename.isNotEmpty) {
-            _orchestrator?.onFilenameChanged(status.filename);
-          }
-
-          setState(() {
-            _externalFilename = status.filename;
-          });
-          _syncController(status.positionMs.toDouble(), status.state == 2);
-        }
-      });
-    }
-  }
-
-  void _stopPlayerSync() {
-    _playerSub?.cancel();
-    _playerSub = null;
-    _hereSphereService?.disconnect();
-    _mpcHcService?.stopPolling();
-    _externalFilename = null;
-  }
-
-  void _syncController(double posMs, bool playing) {
-    // Only seek if difference is significant (>100ms) to avoid fighting internal clock
-    final diff = (posMs - _controller.positionMs).abs();
-    if (diff > 100) {
-      _controller.seek(posMs.round());
-    }
-
-    if (playing && _controller.state != PlaybackState.playing) {
-      _play();
-    } else if (!playing && _controller.state == PlaybackState.playing) {
-      _pause();
-    }
-  }
-
   bool _getIsConnected(BuildContext context, {required bool listen}) {
     final device = listen
         ? Provider.of<DeviceProvider>(context)
@@ -245,7 +159,8 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     return device.api.isConnected;
   }
 
-  int get _boxIndex => widget.meta['boxIndex'] as int? ?? 0;
+  int get _boxIndex => widget.meta?['boxIndex'] as int? ?? 
+      context.read<DeviceProvider>().settings.activeUiBoxIndex;
 
   void _play() {
     if (!_getIsConnected(context, listen: false)) return;
@@ -255,8 +170,6 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     final linked = device.settings.linkDevicesEnabled;
     final targets = linked ? [0, 1] : [_boxIndex];
 
-    // When linking, ensure both boxes start from the same state:
-    // stop both and set volume to the lower of the two (or 0).
     if (linked) {
       for (int i = 0; i < 2; i++) {
         BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
@@ -352,54 +265,53 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_bundle?.name ?? 'Player'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.restore),
-            tooltip: 'Back to pattern mode',
-            onPressed: () {
-              _stop();
-              Navigator.pop(context);
-            },
+    return ListenableBuilder(
+      listenable: Listenable.merge([_controller, _videoSync]),
+      builder: (context, _) {
+        final isLinked = _videoSync?.isLinked ?? false;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(_bundle?.name ?? 'Waiting for video…'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.restore),
+                tooltip: 'Back to pattern mode',
+                onPressed: () {
+                  _stop();
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-      body: ListenableBuilder(
-        listenable: _controller,
-        builder: (context, _) {
-          return SingleChildScrollView(
+          body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Bundle info ──
-                _buildInfoCard(),
+                if (_bundle != null) _buildInfoCard()
+                else _buildEmptyPlayerInfo(),
                 const SizedBox(height: 16),
-
-                // ── Axis values display ──
-                _buildAxisDisplay(),
+                _buildAxisDisplay(isLinked),
                 const SizedBox(height: 20),
 
-                if (!_isVideoLinked) ...[
-                  // ── Seek bar ──
+                if (!isLinked) ...[
                   _buildSeekBar(),
                   const SizedBox(height: 8),
                   _buildTimeDisplay(),
                   const SizedBox(height: 20),
-
-                  // ── Transport controls ──
-                  _buildTransportControls(),
-                  const SizedBox(height: 24),
                 ],
 
-                // ── Waveform preview ──
+                _buildTransportControls(isLinked),
+                const SizedBox(height: 12),
+
+                _buildSyncIndicator(),
+                const SizedBox(height: 12),
+
                 if (_bundle != null) _buildWaveformPreview(),
 
                 const SizedBox(height: 32),
 
-                // ── Stop & return to pattern ──
                 OutlinedButton.icon(
                   onPressed: () {
                     _stop();
@@ -410,8 +322,35 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
                 ),
               ],
             ),
-          );
-        },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyPlayerInfo() {
+    final player = context.read<SettingsProvider>().mediaSync.activePlayer;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Icon(Icons.sync, size: 48, color: Colors.blue),
+            const SizedBox(height: 12),
+            Text(
+              'No Script Loaded',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              player == VideoPlayerType.none 
+                ? 'Select a player in Settings to begin sync.'
+                : 'Link with ${player.name} to automatically load scripts.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -433,26 +372,6 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
               'Duration: ${_formatTime(_bundle?.durationMs ?? 0)}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            if (_bundle?.sourceFile.isNotEmpty == true) ...[
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Icon(Icons.attach_file, size: 14, color: Colors.grey[500]),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      _bundle!.sourceFile,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey[500]),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
             if (axes.isNotEmpty) ...[
               const SizedBox(height: 2),
               Text(
@@ -471,22 +390,9 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     );
   }
 
-  Widget _buildAxisDisplay() {
+  Widget _buildAxisDisplay(bool isLinked) {
     final values = _controller.currentValues;
-    if (values.isEmpty && _controller.state != PlaybackState.playing) {
-      return SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: _toggleLink,
-          icon: Icon(_isVideoLinked ? Icons.link_off : Icons.link, size: 18),
-          label: Text(
-            _isVideoLinked 
-                ? '$_videoPlayerName: ${_externalFilename ?? "..."}' 
-                : 'Link to $_videoPlayerName',
-          ),
-        ),
-      );
-    }
+    final status = _videoSync?.playerStatus;
 
     return Card(
       child: Padding(
@@ -498,7 +404,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
               children: [
                 Text('Live Axis Values',
                     style: Theme.of(context).textTheme.titleSmall),
-                if (_isVideoLinked) ...[
+                if (isLinked) ...[
                   Text(' | ', style: TextStyle(color: Colors.grey[600])),
                   Text(
                     _formatTime(_controller.positionMs),
@@ -507,22 +413,13 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.link_off, size: 16),
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: _toggleLink,
-                    tooltip: 'Unlink player',
-                  ),
                 ],
               ],
             ),
-            if (_isVideoLinked) ...[
+            if (isLinked && status != null) ...[
               const SizedBox(height: 4),
               Text(
-                '$_videoPlayerName: ${_externalFilename ?? "..."}',
+                'Linked: ${status.filePath ?? "..."}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[500],
                     ),
@@ -531,29 +428,32 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
               ),
             ],
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: _controller.bundle?.axisNames.map((axis) {
-                    final val = _controller.getValue(axis);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(axis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(color: Colors.grey)),
-                        Text(
-                          val != null ? val.toStringAsFixed(3) : '—',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    );
-                  }).toList() ??
-                  [],
-            ),
+            if (values.isEmpty)
+               const Text('Waiting for script…', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
+            else
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: _controller.bundle?.axisNames.map((axis) {
+                      final val = _controller.getValue(axis);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(axis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(color: Colors.grey)),
+                          Text(
+                            val != null ? val.toStringAsFixed(3) : '—',
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      );
+                    }).toList() ??
+                    [],
+              ),
           ],
         ),
       ),
@@ -567,7 +467,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
       onChanged: (v) => _seekTo(v),
       onChangeEnd: (_) {
         if (_controller.state == PlaybackState.playing) {
-          _controller.play(); // Reset tick timer after seek
+          _controller.play();
           _startTickTimer();
         }
       },
@@ -586,7 +486,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     );
   }
 
-  Widget _buildTransportControls() {
+  Widget _buildTransportControls(bool isLinked) {
     final state = _controller.state;
     final isPlaying = state == PlaybackState.playing;
     final isConnected = _getIsConnected(context, listen: true);
@@ -596,23 +496,15 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Skip back 10s
-            IconButton(
-              icon: const Icon(Icons.replay_10),
-              tooltip: 'Back 10s',
-              onPressed: () => _controller.seek(
-                  (_controller.positionMs - 10000).clamp(0, _controller.durationMs)),
-            ),
-            const SizedBox(width: 16),
-            // Loop toggle
-            IconButton(
-              icon: Icon(Icons.repeat,
-                  color: _controller.loop ? Theme.of(context).colorScheme.primary : null),
-              tooltip: 'Loop',
-              onPressed: () => _controller.setLoop(!_controller.loop),
-            ),
-            const SizedBox(width: 16),
-            // Play / Pause
+            if (!isLinked) ...[
+              IconButton(
+                icon: const Icon(Icons.replay_10),
+                tooltip: 'Back 10s',
+                onPressed: () => _controller.seek(
+                    (_controller.positionMs - 10000).clamp(0, _controller.durationMs)),
+              ),
+              const SizedBox(width: 16),
+            ],
             FloatingActionButton.large(
               onPressed: isPlaying ? _pause : (isConnected ? _play : null),
               backgroundColor:
@@ -620,20 +512,16 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
               child: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 32),
             ),
             const SizedBox(width: 16),
-            // Stop
-            IconButton(
-              icon: const Icon(Icons.stop),
-              tooltip: 'Stop',
-              onPressed: _stop,
-            ),
-            const SizedBox(width: 16),
-            // Skip forward 10s
-            IconButton(
-              icon: const Icon(Icons.forward_10),
-              tooltip: 'Forward 10s',
-              onPressed: () => _controller.seek(
-                  (_controller.positionMs + 10000).clamp(0, _controller.durationMs)),
-            ),
+            if (!isLinked) ...[
+              IconButton(
+                icon: const Icon(Icons.forward_10),
+                tooltip: 'Forward 10s',
+                onPressed: () => _controller.seek(
+                    (_controller.positionMs + 10000).clamp(0, _controller.durationMs)),
+              ),
+              const SizedBox(width: 16),
+            ],
+            _buildSyncButton(),
           ],
         ),
         if (!isConnected)
@@ -648,91 +536,113 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     );
   }
 
+  Widget _buildSyncButton() {
+    final isLinked = _videoSync?.isLinked ?? false;
+    final syncState = _videoSync?.syncState ?? SyncState.idle;
+
+    Color color;
+    IconData icon;
+    String tooltip;
+
+    if (_syncConnecting) {
+      color = Theme.of(context).colorScheme.primary;
+      icon = Icons.sync;
+      tooltip = 'Connecting…';
+    } else if (isLinked && syncState == SyncState.error) {
+      color = Theme.of(context).colorScheme.error;
+      icon = Icons.link_off;
+      tooltip = 'Sync error — tap to retry';
+    } else if (isLinked) {
+      color = Theme.of(context).colorScheme.primary;
+      icon = Icons.link;
+      tooltip = 'Unlink video sync';
+    } else {
+      color = Theme.of(context).disabledColor;
+      icon = Icons.link_off;
+      tooltip = 'Link video sync';
+    }
+
+    return IconButton(
+      icon: Icon(icon, color: color),
+      tooltip: tooltip,
+      onPressed: () => _toggleVideoSync(),
+    );
+  }
+
+  Future<void> _toggleVideoSync() async {
+    if (_videoSync != null && _videoSync!.isLinked) {
+      _videoSync!.unlink();
+      setState(() {});
+      return;
+    }
+
+    final settings = context.read<SettingsProvider>();
+    final m = settings.mediaSync;
+
+    if (m.activePlayer == VideoPlayerType.none) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No video player configured. Set up in Settings → Media Sync.'),
+      ));
+      return;
+    }
+
+    setState(() => _syncConnecting = true);
+
+    try {
+      await _videoSync!.link(
+        m.activePlayer,
+        heresphereIp: m.hereSphereIp,
+        herespherePort: m.hereSpherePort,
+        mpcHcIp: m.mpcHcIp,
+        mpcHcPort: m.mpcHcPort,
+      );
+      // Start the hardware update loop now that we're linked
+      _startTickTimer();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
+    } finally {
+      if (mounted) setState(() => _syncConnecting = false);
+    }
+  }
+
+  Widget _buildSyncIndicator() {
+    final isBeyond = _videoSync?.isVideoBeyondScript ?? false;
+    if (!isBeyond) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.withOpacity(0.4)),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.warning_amber, size: 16, color: Colors.amber),
+          SizedBox(width: 8),
+          Text('Video beyond script duration', style: TextStyle(fontSize: 12, color: Colors.amber)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWaveformPreview() {
-    // Use the configured waveform axis (default: volume, then alpha, then first available)
     final axes = _bundle?.axes ?? {};
     if (axes.isEmpty) return const SizedBox.shrink();
 
-    final savedAxis = widget.meta['waveformAxis'] as String? ?? 'volume';
+    final savedAxis = widget.meta?['waveformAxis'] as String? ?? 'volume';
     String selectedAxis = axes.containsKey(savedAxis) ? savedAxis : axes.keys.first;
 
-    final script = axes[selectedAxis];
-    if (script == null || script.actions.isEmpty) {
-      // Try other axes as fallback
-      for (final entry in axes.entries) {
-        if (entry.value.actions.isNotEmpty) {
-          selectedAxis = entry.key;
-          break;
-        }
-      }
-    }
-
     final currentScript = axes[selectedAxis];
-    if (currentScript == null || currentScript.actions.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (currentScript == null || currentScript.actions.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildWaveformForScript(currentScript, _axisDisplayName(selectedAxis)),
-        if (axes.length > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: axes.keys.map((axis) {
-                final isSelected = axis == selectedAxis;
-                return ChoiceChip(
-                  label: Text(axis, style: const TextStyle(fontSize: 9)),
-                  selected: isSelected,
-                  onSelected: (_) {
-                    // Update meta and rebuild
-                    setState(() {
-                      widget.meta['waveformAxis'] = axis;
-                    });
-                    // Persist the change
-                    _saveWaveformAxis(axis);
-                  },
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  labelPadding: const EdgeInsets.symmetric(horizontal: 6),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                );
-              }).toList(),
-            ),
-          ),
+        _buildWaveformForScript(currentScript, selectedAxis),
       ],
     );
-  }
-
-  String _axisDisplayName(String axis) {
-    switch (axis) {
-      case 'alpha': return 'Alpha';
-      case 'beta': return 'Beta';
-      case 'volume': return 'Volume';
-      case 'frequency': return 'Frequency';
-      case 'pulse_frequency': return 'Pulse Freq';
-      case 'pulse_width': return 'Pulse Width';
-      case 'pulse_rise_time': return 'Pulse Rise';
-      case 'pulse_interval_random': return 'Pulse Interval';
-      default: return axis[0].toUpperCase() + axis.substring(1);
-    }
-  }
-
-  Future<void> _saveWaveformAxis(String axis) async {
-    try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final libraryDir = '${appDir.path}/funscript_library';
-      await FunscriptBundleLoader.updateWaveformAxis(
-        widget.meta['id'] as String,
-        axis,
-        libraryDir,
-      );
-    } catch (e) {
-      AppLogger.instance.e('FunscriptPlayerScreen: failed to save waveform axis', error: e);
-    }
   }
 
   Widget _buildWaveformForScript(dynamic script, String label) {
@@ -740,33 +650,23 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     final duration = script.durationMs;
     if (duration <= 0 || actions.isEmpty) return const SizedBox.shrink();
 
-    // Sample up to 200 points
     const sampleCount = 200;
     final samples = <double>[];
     for (int i = 0; i < sampleCount; i++) {
       final timeMs = (i * duration) ~/ sampleCount;
-      if (actions.length == 1) {
-        samples.add(actions.first.pos / 100.0);
-      } else {
-        int lo = 0, hi = actions.length - 1;
-        while (hi - lo > 1) {
-          final mid = (lo + hi) ~/ 2;
-          if (actions[mid].at <= timeMs) lo = mid;
-          else hi = mid;
-        }
-        if (timeMs <= actions.first.at) {
-          samples.add(actions.first.pos / 100.0);
-        } else if (timeMs >= actions.last.at) {
-          samples.add(actions.last.pos / 100.0);
-        } else {
-          final a = actions[lo], b = actions[hi];
-          final t = (timeMs - a.at) / (b.at - a.at);
-          samples.add(((a.pos + t * (b.pos - a.pos)) / 100.0).clamp(0.0, 1.0));
-        }
+      int lo = 0, hi = actions.length - 1;
+      while (hi - lo > 1) {
+        final mid = (lo + hi) ~/ 2;
+        if (actions[mid].at <= timeMs) lo = mid;
+        else hi = mid;
+      }
+      final a = actions[lo], b = actions[hi];
+      if (a.at == b.at) samples.add(a.pos / 100.0);
+      else {
+        final t = (timeMs - a.at) / (b.at - a.at);
+        samples.add(((a.pos + t * (b.pos - a.pos)) / 100.0).clamp(0.0, 1.0));
       }
     }
-
-    final playbackX = _controller.progress;
 
     return Card(
       child: Padding(
@@ -774,8 +674,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$label Waveform',
-                style: Theme.of(context).textTheme.titleSmall),
+            Text('$label Waveform', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             SizedBox(
               height: 72,
@@ -783,7 +682,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
                 size: Size.infinite,
                 painter: _WaveformPainter(
                   samples: samples,
-                  playbackPosition: playbackX,
+                  playbackPosition: _controller.progress,
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
@@ -795,45 +694,29 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   }
 }
 
-/// Custom painter for waveform visualization.
 class _WaveformPainter extends CustomPainter {
   final List<double> samples;
   final double playbackPosition;
   final Color color;
 
-  _WaveformPainter({
-    required this.samples,
-    required this.playbackPosition,
-    required this.color,
-  });
+  _WaveformPainter({required this.samples, required this.playbackPosition, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (samples.isEmpty) return;
-
-    final paint = Paint()
-      ..color = color.withOpacity(0.7)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
+    final paint = Paint()..color = color.withOpacity(0.7)..strokeWidth = 1.5..style = PaintingStyle.stroke;
     final path = Path();
     for (int i = 0; i < samples.length; i++) {
       final x = (i / (samples.length - 1)) * size.width;
       final y = size.height - (samples[i] * size.height);
-      if (i == 0) path.moveTo(x, y);
-      else path.lineTo(x, y);
+      if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
     }
     canvas.drawPath(path, paint);
-
-    // Playback position line
-    final linePaint = Paint()
-      ..color = Colors.red
-      ..strokeWidth = 2;
+    final linePaint = Paint()..color = Colors.red..strokeWidth = 2;
     final lineX = playbackPosition.clamp(0.0, 1.0) * size.width;
     canvas.drawLine(Offset(lineX, 0), Offset(lineX, size.height), linePaint);
   }
 
   @override
-  bool shouldRepaint(covariant _WaveformPainter old) =>
-      old.playbackPosition != playbackPosition;
+  bool shouldRepaint(covariant _WaveformPainter old) => old.playbackPosition != playbackPosition;
 }

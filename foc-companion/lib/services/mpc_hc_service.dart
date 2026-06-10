@@ -1,40 +1,45 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:foc_companion/services/app_logger.dart';
+import 'package:foc_companion/services/video_player_status.dart';
 
-class MpcHcStatus {
-  final String filename;
-  final int positionMs;
-  final int durationMs;
-  final int state; // 0=stopped, 1=paused, 2=playing
+final _log = AppLogger.instance;
 
-  MpcHcStatus({
-    required this.filename,
-    required this.positionMs,
-    required this.durationMs,
-    required this.state,
-  });
-}
-
+/// HTTP polling service for MPC-HC using the variables.html endpoint.
+///
+/// Polls the player's web interface every 500 ms and emits
+/// [VideoPlayerStatus] events through [statusStream].
 class MpcHcService {
-  Timer? _pollTimer;
   String _ip = '';
   int _port = 13579;
-  final HttpClient _client = HttpClient()..connectionTimeout = const Duration(seconds: 2);
 
-  final StreamController<MpcHcStatus> _statusController =
-      StreamController<MpcHcStatus>.broadcast();
-  Stream<MpcHcStatus> get statusStream => _statusController.stream;
+  Timer? _pollTimer;
+  final StreamController<VideoPlayerStatus> _statusController =
+      StreamController<VideoPlayerStatus>.broadcast();
+  Stream<VideoPlayerStatus> get statusStream => _statusController.stream;
+
+  static const _pollIntervalMs = 500;
+  static const _connectTimeout = Duration(seconds: 2);
+  final HttpClient _client = HttpClient()..connectionTimeout = _connectTimeout;
 
   void configure(String ip, int port) {
     _ip = ip;
     _port = port;
   }
 
-  void startPolling() {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(milliseconds: 1000), (_) => _poll());
+  /// Start periodic polling. Emits a disconnected status if polling fails.
+  Future<void> startPolling() async {
+    stopPolling();
+    if (_ip.isEmpty) return;
+    
+    _log.i('MpcHcService: starting poll to $_ip:$_port');
+
+    _pollTimer = Timer.periodic(
+      const Duration(milliseconds: _pollIntervalMs),
+      (_) => _poll(),
+    );
     _poll(); // Immediate first poll
   }
 
@@ -43,38 +48,69 @@ class MpcHcService {
     _pollTimer = null;
   }
 
-  Future<void> _poll() async {
-    if (_ip.isEmpty) return;
+  /// Single HTTP GET to retrieve current player status from variables.html.
+  Future<VideoPlayerStatus> fetchStatus() async {
+    final uri = Uri.parse('http://$_ip:$_port/variables.html');
     try {
-      final uri = Uri.parse('http://$_ip:$_port/variables.html');
       final request = await _client.getUrl(uri);
       final response = await request.close();
-      if (response.statusCode == 200) {
-        final body = await response.transform(const Utf8Decoder()).join();
-        
-        final fullPath = _extract(body, 'filepath') ?? '';
-        String filename = fullPath.split('/').last.split('\\').last;
-        if (filename.contains('.')) {
-          filename = filename.substring(0, filename.lastIndexOf('.'));
-        }
-        final position = int.tryParse(_extract(body, 'position') ?? '0') ?? 0;
-        final duration = int.tryParse(_extract(body, 'duration') ?? '0') ?? 0;
-        final state = int.tryParse(_extract(body, 'state') ?? '0') ?? 0;
 
-        _statusController.add(MpcHcStatus(
-          filename: filename ?? '',
-          positionMs: position,
-          durationMs: duration,
-          state: state,
-        ));
+      if (response.statusCode != 200) {
+        throw HttpException('HTTP ${response.statusCode}', uri: uri);
       }
+
+      final body = await response.transform(const Utf8Decoder()).join();
+      return _parseVariablesHtml(body);
     } catch (e) {
-      // Quietly ignore polling errors to avoid log spam
+      rethrow;
     }
   }
 
+  /// Send play/pause toggle command.
+  Future<void> sendPlayPause() async {
+    final uri = Uri.parse('http://$_ip:$_port/command.html?wm_command=887'); // Toggle play/pause
+    try {
+      final request = await _client.getUrl(uri);
+      await request.close();
+    } catch (e) {
+      _log.e("MpcHcService: failed to send play/pause", error: e);
+    }
+  }
+
+  /// Send seek command. [positionMs] is target in ms.
+  Future<void> sendSeek(int positionMs) async {
+    // Note: command 102 (seek) might not work via URL easily in all versions.
+    // For now we focus on status retrieval.
+  }
+
+  void _poll() async {
+    try {
+      final status = await fetchStatus();
+      _statusController.add(status);
+    } catch (e) {
+      _statusController.add(const VideoPlayerStatus.disconnected());
+    }
+  }
+
+  /// Extract data from variables.html using Regex.
+  VideoPlayerStatus _parseVariablesHtml(String body) {
+    final filePath = _extract(body, 'filepath') ?? _extract(body, 'file') ?? '';
+    final state = int.tryParse(_extract(body, 'state') ?? '0') ?? 0; // 0=stopped, 1=paused, 2=playing
+    final position = double.tryParse(_extract(body, 'position') ?? '0') ?? 0.0;
+    final duration = double.tryParse(_extract(body, 'duration') ?? '0') ?? 0.0;
+    final speed = double.tryParse(_extract(body, 'playbackrate') ?? '1.0') ?? 1.0;
+
+    return VideoPlayerStatus(
+      connected: true,
+      isPlaying: state == 2,
+      currentTimeMs: position,
+      durationMs: duration,
+      filePath: filePath,
+      playbackSpeed: speed,
+    );
+  }
+
   String? _extract(String body, String id) {
-    // Simple regex for <p id="id">value</p>
     final reg = RegExp('<p id="$id">(.*?)</p>');
     final match = reg.firstMatch(body);
     return match?.group(1);

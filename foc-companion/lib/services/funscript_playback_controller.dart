@@ -17,6 +17,7 @@ class FunscriptPlaybackController extends ChangeNotifier {
   int _positionMs = 0;
   int _lastTickMs = 0;
   bool _loop = false;
+  double _playbackSpeed = 1.0;
 
   /// Per-axis current normalized values (0.0–1.0).
   final Map<String, double> _currentValues = {};
@@ -27,6 +28,15 @@ class FunscriptPlaybackController extends ChangeNotifier {
   double get progress => durationMs > 0 ? _positionMs / durationMs : 0.0;
   FunscriptBundle? get bundle => _bundle;
   bool get loop => _loop;
+  double get playbackSpeed => _playbackSpeed;
+
+  set playbackSpeed(double value) {
+    if (_playbackSpeed != value) {
+      _playbackSpeed = value;
+      notifyListeners();
+    }
+  }
+
   Map<String, double> get currentValues => Map.unmodifiable(_currentValues);
 
   /// Whether the loaded bundle has position axes (alpha/beta).
@@ -91,7 +101,7 @@ class FunscriptPlaybackController extends ChangeNotifier {
 
     final now = DateTime.now().millisecondsSinceEpoch;
     if (_lastTickMs == 0) _lastTickMs = now;
-    _positionMs += (now - _lastTickMs);
+    _positionMs += ((now - _lastTickMs) * _playbackSpeed).round();
     _lastTickMs = now;
 
     // Handle end-of-file

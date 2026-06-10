@@ -62,18 +62,16 @@ jobs:
           name: foc-companion-release-apk
           path: foc-companion/build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Update GitHub Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: dev-latest
-          name: "Latest Development Build"
+          tag_name: ${{ github.ref_name }}
+          name: "Release ${{ github.ref_name }}"
           body: |
-            This release is automatically updated with the latest build from the `master` branch.
+            Automated release for ${{ github.ref_name }}
             
-            **Last Updated:** ${{ github.event.head_commit.timestamp }}
             **Commit:** ${{ github.sha }}
           files: foc-companion/build/app/outputs/flutter-apk/app-release.apk
-          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -13,24 +13,38 @@ class MediaSyncScreen extends StatefulWidget {
 }
 
 class _MediaSyncScreenState extends State<MediaSyncScreen> {
-  final TextEditingController _ipController = TextEditingController();
-  final TextEditingController _portController = TextEditingController();
+  final TextEditingController _heresphereIpController = TextEditingController();
+  final TextEditingController _herespherePortController = TextEditingController();
+  final TextEditingController _mpcHcIpController = TextEditingController();
+  final TextEditingController _mpcHcPortController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInputs();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadInputs();
+  }
+
+  void _loadInputs() {
+    final m = Provider.of<SettingsProvider>(context, listen: false).mediaSync;
+    _heresphereIpController.text = m.hereSphereIp;
+    _herespherePortController.text = m.hereSpherePort.toString();
+    _mpcHcIpController.text = m.mpcHcIp;
+    _mpcHcPortController.text = m.mpcHcPort.toString();
+  }
 
   @override
   void dispose() {
-    _ipController.dispose();
-    _portController.dispose();
+    _heresphereIpController.dispose();
+    _herespherePortController.dispose();
+    _mpcHcIpController.dispose();
+    _mpcHcPortController.dispose();
     super.dispose();
-  }
-
-  void _updateControllers(MediaSyncSettings m) {
-    if (m.selectedPlayer == "HereSphere") {
-      _ipController.text = m.hereSphereIp;
-      _portController.text = m.hereSpherePort.toString();
-    } else {
-      _ipController.text = m.mpcHcIp;
-      _portController.text = m.mpcHcPort.toString();
-    }
   }
 
   @override
@@ -38,71 +52,91 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final m = settings.mediaSync;
 
-    // Sync controllers on first build or if player changed
-    if (_ipController.text.isEmpty && _portController.text.isEmpty) {
-      _updateControllers(m);
-    }
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Video Player Sync"),
-      ),
+      appBar: AppBar(title: const Text('Video Player Sync')),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          const Text("Sync Provider", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          // ── Active Player Selector ──
+          const Text("Sync Provider",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: m.selectedPlayer,
+          DropdownButtonFormField<VideoPlayerType>(
+            value: m.activePlayer,
             decoration: const InputDecoration(
               labelText: "Select Player",
               border: OutlineInputBorder(),
             ),
-            items: ["HereSphere", "MPC-HC"]
-                .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                .toList(),
+            items: const [
+              DropdownMenuItem(
+                value: VideoPlayerType.none,
+                child: Text("None"),
+              ),
+              DropdownMenuItem(
+                value: VideoPlayerType.heresphere,
+                child: Text("HereSphere"),
+              ),
+              DropdownMenuItem(
+                value: VideoPlayerType.mpcHc,
+                child: Text("MPC-HC / mpv"),
+              ),
+            ],
             onChanged: (v) {
-              if (v != null) {
-                setState(() {
-                  m.selectedPlayer = v;
-                  _updateControllers(m);
-                });
-              }
+              if (v != null) setState(() => m.activePlayer = v);
             },
           ),
+
           const SizedBox(height: 16),
-          TextField(
-            decoration: const InputDecoration(
-              labelText: "Player IP Address",
-              hintText: "e.g. 192.168.1.5",
-              border: OutlineInputBorder(),
+
+          // ── HereSphere Section ──
+          if (m.activePlayer == VideoPlayerType.heresphere) ...[
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "HereSphere IP Address",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.wifi),
+              ),
+              controller: _heresphereIpController,
+              onChanged: (v) => m.hereSphereIp = v,
             ),
-            controller: _ipController,
-            onChanged: (v) {
-              if (m.selectedPlayer == "HereSphere") {
-                m.hereSphereIp = v;
-              } else {
-                m.mpcHcIp = v;
-              }
-            },
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            decoration: const InputDecoration(
-              labelText: "Player Port",
-              border: OutlineInputBorder(),
+            const SizedBox(height: 10),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "HereSphere Port",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.router),
+              ),
+              controller: _herespherePortController,
+              keyboardType: TextInputType.number,
+              onChanged: (v) => m.hereSpherePort = int.tryParse(v) ?? 23554,
             ),
-            controller: _portController,
-            keyboardType: TextInputType.number,
-            onChanged: (v) {
-              final port = int.tryParse(v) ?? (m.selectedPlayer == "HereSphere" ? 23554 : 13579);
-              if (m.selectedPlayer == "HereSphere") {
-                m.hereSpherePort = port;
-              } else {
-                m.mpcHcPort = port;
-              }
-            },
-          ),
+          ],
+
+          // ── MPC-HC Section ──
+          if (m.activePlayer == VideoPlayerType.mpcHc) ...[
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "MPC-HC IP Address",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.wifi),
+              ),
+              controller: _mpcHcIpController,
+              onChanged: (v) => m.mpcHcIp = v,
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "MPC-HC Port",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.router),
+                helperText: "Default: 13579",
+              ),
+              controller: _mpcHcPortController,
+              keyboardType: TextInputType.number,
+              onChanged: (v) => m.mpcHcPort = int.tryParse(v) ?? 13579,
+            ),
+          ],
+
           const SizedBox(height: 16),
           SwitchListTile(
             title: const Text("Autoload Matching Bundles"),
@@ -112,18 +146,22 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
           ),
 
           const Divider(height: 40),
-          const Text("Funscript Locations", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
+          // ── Funscript Locations ──
+          const Text("Funscript Locations",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
 
           ...m.funscriptLocations.map((loc) => ListTile(
-            title: Text(loc.name),
-            subtitle: Text(loc.type == 'local' ? "Local: ${loc.localPath}" : "SMB: ${loc.smbHost}/${loc.smbShare}"),
-            onTap: () => _showAddLocationDialog(context, m, location: loc),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => setState(() => m.funscriptLocations.remove(loc)),
-            ),
-          )),
+                title: Text(loc.name),
+                subtitle: Text(loc.type == 'local' ? "Local: ${loc.localPath}" : "SMB: ${loc.smbHost}/${loc.smbShare}"),
+                onTap: () => _showAddLocationDialog(context, m, location: loc),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () =>
+                      setState(() => m.funscriptLocations.remove(loc)),
+                ),
+              )),
 
           ListTile(
             leading: const Icon(Icons.add),
@@ -135,9 +173,11 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
           FilledButton(
             onPressed: () async {
               await settings.saveSettings();
-              ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
-                const SnackBar(content: Text("Settings Saved")),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context)
+                  ..clearSnackBars()
+                  ..showSnackBar(const SnackBar(content: Text("Settings Saved")));
+              }
             },
             child: const Text("Save Media Settings"),
           ),

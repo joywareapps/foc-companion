@@ -80,6 +80,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         const SizedBox(height: 24),
 
+        // ── Video Sync ──────────────────────────────
+        const Text("Video Sync",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.movie_outlined),
+          title: const Text("Video Player Sync"),
+          subtitle: const Text("Sync funscript playback with HereSphere or MPC-HC"),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MediaSyncScreen()),
+            );
+          },
+        ),
+
+        const SizedBox(height: 24),
+
         // ── Device Behavior ──────────────────────────────
         const Text("Device Behavior",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

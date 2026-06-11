@@ -33,6 +33,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   VideoSyncController? _videoSync;
   bool _syncConnecting = false;
   MediaSyncOrchestrator? _orchestrator;
+  PlaybackState? _lastHardwareState;
 
   @override
   void initState() {
@@ -177,6 +178,10 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     if (!mounted) return;
     final state = _controller.state;
 
+    // Only issue hardware commands if the transport state has actually changed.
+    if (state == _lastHardwareState) return;
+    _lastHardwareState = state;
+
     if (state == PlaybackState.playing) {
       _setupHardwarePlayback();
       if (_tickTimer == null) _startTickTimer();
@@ -205,11 +210,6 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     final targets = linked ? [0, 1] : [_boxIndex];
 
     if (linked) {
-      for (int i = 0; i < 2; i++) {
-        BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
-          'boxIndex': i,
-        });
-      }
       final vol0 = device.boxes[0].boxVolume;
       final vol1 = device.boxes[1].boxVolume;
       final safeVolume = vol0 < vol1 ? vol0 : vol1;

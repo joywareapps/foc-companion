@@ -589,6 +589,9 @@ class FocStimTaskHandler extends TaskHandler {
     final box = _boxes[boxIndex];
     if (box == null || !box.api.isConnected) return;
 
+    // Guard: ignore if already running in funscript mode
+    if (box.isLoopRunning && box.funscriptActive) return;
+
     // Stop any running pattern first
     if (box.isLoopRunning) {
       await _stopStimulation(boxIndex);

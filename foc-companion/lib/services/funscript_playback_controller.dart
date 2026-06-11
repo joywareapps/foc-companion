@@ -56,7 +56,7 @@ class FunscriptPlaybackController extends ChangeNotifier {
 
   /// Start playback from current position.
   void play() {
-    if (_bundle == null) return;
+    if (_bundle == null || _state == PlaybackState.playing) return;
     _state = PlaybackState.playing;
     _lastTickMs = DateTime.now().millisecondsSinceEpoch;
     notifyListeners();
@@ -65,6 +65,7 @@ class FunscriptPlaybackController extends ChangeNotifier {
 
   /// Pause playback (freeze position, keep last values).
   void pause() {
+    if (_state == PlaybackState.paused) return;
     _state = PlaybackState.paused;
     notifyListeners();
     AppLogger.instance.d('FunscriptPlaybackController: paused at ${_positionMs}ms');
@@ -72,6 +73,7 @@ class FunscriptPlaybackController extends ChangeNotifier {
 
   /// Stop playback and reset position to 0.
   void stop() {
+    if (_state == PlaybackState.stopped && _positionMs == 0) return;
     _state = PlaybackState.stopped;
     _positionMs = 0;
     _lastTickMs = 0;

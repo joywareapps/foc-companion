@@ -25,8 +25,8 @@ class MediaSyncOrchestrator {
   });
 
   /// Call this when the player reports a new filename.
-  Future<void> onFilenameChanged(String filename) async {
-    if (!settings.mediaSync.autoloadEnabled) return;
+  Future<void> onFilenameChanged(String filename, {bool force = false}) async {
+    if (!force && !settings.mediaSync.autoloadEnabled) return;
 
     // Robustly extract filename from URL or Path
     String name = filename;

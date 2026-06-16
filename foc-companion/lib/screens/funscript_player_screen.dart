@@ -56,7 +56,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
           ? uri.pathSegments.last 
           : path.split('/').last.split('\\').last;
       
-      _orchestrator?.onFilenameChanged(filename);
+      _orchestrator?.onFilenameChanged(filename, force: _bundle == null);
     };
 
     _controller.addListener(_syncHardwareWithController);

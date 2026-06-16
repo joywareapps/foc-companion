@@ -111,6 +111,7 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
       await FunscriptBundleLoader.importFromUri(
         Uri.file(path),
         _libraryDir,
+        suggestedName: file.name.replaceAll(RegExp(r'\.(focb|zip)$', caseSensitive: false), ''),
       );
 
       if (mounted) {

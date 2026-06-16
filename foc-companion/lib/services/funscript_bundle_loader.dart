@@ -19,9 +19,19 @@ class FunscriptBundleLoader {
   /// Import a .focb file from a file:// or content:// URI.
   static Future<FunscriptBundle> importFromUri(
     Uri sourceUri,
-    String libraryDir,
-  ) async {
+    String libraryDir, {
+    String? suggestedName,
+  }) async {
     AppLogger.instance.i('FunscriptBundleLoader: importing from $sourceUri');
+
+    // Extract name from URI if not suggested
+    String? name = suggestedName;
+    if (name == null && sourceUri.pathSegments.isNotEmpty) {
+      final fileName = sourceUri.pathSegments.last;
+      if (fileName.isNotEmpty) {
+        name = fileName.replaceAll(RegExp(r'\.(focb|zip)$', caseSensitive: false), '');
+      }
+    }
 
     // Copy source to temp file
     final sourceFile = File.fromUri(sourceUri);
@@ -29,11 +39,12 @@ class FunscriptBundleLoader {
       throw FileSystemException('Source file not found', sourceUri.toString());
     }
 
-    final tempPath = '${(await getTemporaryDirectory()).path}/import_${DateTime.now().millisecondsSinceEpoch}.focb';
+    final ext = sourceUri.path.toLowerCase().endsWith('.zip') ? 'zip' : 'focb';
+    final tempPath = '${(await getTemporaryDirectory()).path}/import_${DateTime.now().millisecondsSinceEpoch}.$ext';
     await sourceFile.copy(tempPath);
 
     try {
-      return await importFromPath(tempPath, libraryDir);
+      return await importFromPath(tempPath, libraryDir, suggestedName: name);
     } finally {
       // Clean up temp file
       try {
@@ -45,8 +56,9 @@ class FunscriptBundleLoader {
   /// Import a .focb file from a local file path.
   static Future<FunscriptBundle> importFromPath(
     String path,
-    String libraryDir,
-  ) async {
+    String libraryDir, {
+    String? suggestedName,
+  }) async {
     final bytes = await File(path).readAsBytes();
     final archive = ZipDecoder().decodeBytes(bytes);
 
@@ -62,9 +74,14 @@ class FunscriptBundleLoader {
       throw const FormatException('No .funscript files found in bundle');
     }
 
-    // Bundle name = zip filename stem
-    final zipFileName = path.split('/').last;
-    final name = zipFileName.replaceAll(RegExp(r'\.(focb|zip)$', caseSensitive: false), '');
+    // Bundle name = zip filename stem or suggested name
+    final actualFileName = path.split('/').last;
+    final name = suggestedName ?? actualFileName.replaceAll(RegExp(r'\.(focb|zip)$', caseSensitive: false), '');
+    
+    // For the "sourceFile" metadata, if we have a suggested name, use it with the original extension
+    final sourceFile = suggestedName != null 
+        ? (actualFileName.toLowerCase().endsWith('.zip') ? '$suggestedName.zip' : '$suggestedName.focb')
+        : actualFileName;
 
     // Check if bundle with this name already exists to prevent duplicates
     String id = _uuid.v4();
@@ -118,7 +135,7 @@ class FunscriptBundleLoader {
       'name': name,
       'importDate': DateTime.now().toUtc().toIso8601String(),
       'durationMs': durationMs,
-      'sourceFile': zipFileName,
+      'sourceFile': sourceFile,
       'axes': axes.keys.toList(),
       'waveformAxis': axes.containsKey('volume') ? 'volume' : (axes.containsKey('alpha') ? 'alpha' : axes.keys.first),
     };
@@ -131,7 +148,7 @@ class FunscriptBundleLoader {
       name: name,
       importDate: DateTime.now(),
       durationMs: durationMs,
-      sourceFile: zipFileName,
+      sourceFile: sourceFile,
       axes: axes,
     );
   }

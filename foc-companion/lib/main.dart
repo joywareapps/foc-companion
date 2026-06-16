@@ -12,10 +12,11 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 void _processSharedFiles(List<SharedMediaFile> files) {
   for (final f in files) {
     final path = f.path;
-    if (path.toLowerCase().endsWith('.focb')) {
+    final lowerPath = path.toLowerCase();
+    if (lowerPath.endsWith('.focb') || lowerPath.endsWith('.zip')) {
       SharedFileService.add(Uri.file(path));
     } else {
-      AppLogger.instance.d('main: ignoring shared file (not .focb): $path');
+      AppLogger.instance.d('main: ignoring shared file (not .focb or .zip): $path');
     }
   }
 }

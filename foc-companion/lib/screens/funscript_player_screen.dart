@@ -231,34 +231,17 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   void _play() {
     if (!_getIsConnected(context, listen: false)) return;
     _controller.play();
-    _setupHardwarePlayback();
-    _startTickTimer();
+    // _syncHardwareWithController handles _setupHardwarePlayback and _startTickTimer
   }
 
   void _pause() {
     _controller.pause();
-    final device = context.read<DeviceProvider>();
-    final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
-
-    for (final idx in targets) {
-      BackgroundServiceManager.sendCommand('pauseFunscriptPlayback', {
-        'boxIndex': idx,
-      });
-    }
-    _stopTickTimer();
+    // _syncHardwareWithController handles pauseFunscriptPlayback and _stopTickTimer
   }
 
   void _stop() {
     _controller.stop();
-    final device = context.read<DeviceProvider>();
-    final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
-
-    for (final idx in targets) {
-      BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
-        'boxIndex': idx,
-      });
-    }
-    _stopTickTimer();
+    // _syncHardwareWithController handles stopFunscriptPlayback and _stopTickTimer
   }
 
   void _seekTo(double progress) {

@@ -153,6 +153,11 @@ class FocStimServiceController {
         final port = data['port'] as int;
         _connect(boxIndex, ip, port);
         break;
+      case 'connectSerial':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final portName = data['portName'] as String;
+        _connectSerial(boxIndex, portName);
+        break;
       case 'disconnect':
         final int boxIndex = data['boxIndex'] as int? ?? 0;
         _disconnect(boxIndex);
@@ -307,6 +312,34 @@ class FocStimServiceController {
     } catch (e) {
       box.connectionStatus = "Error: $e";
       _logToMain(boxIndex, "Connection failed: $e");
+      _disconnect(boxIndex);
+    }
+  }
+
+  Future<void> _connectSerial(int boxIndex, String portName) async {
+    final box = _boxes[boxIndex]!;
+    box.connectionStatus = "Connecting...";
+    _sendStateUpdate(boxIndex);
+    _logToMain(boxIndex, "Opening serial port $portName");
+    try {
+      await box.api.connectSerial(portName);
+      box.connectionStatus = "Checking firmware...";
+      _sendStateUpdate(boxIndex);
+
+      final resp = await box.api.requestFirmwareVersion();
+      box.api.validateFirmwareVersion(resp);
+
+      final v = resp.stm32FirmwareVersion2;
+      box.firmwareVersion = 'v${v.major}.${v.minor}.${v.revision} (${v.branch})';
+      box.connectionStatus = "Connected";
+      _logToMain(boxIndex, "Connected via serial: ${box.firmwareVersion}");
+
+      _resetNotificationWatchdog(boxIndex);
+      _sendStateUpdate(boxIndex);
+      _updateNotificationDetails();
+    } catch (e) {
+      box.connectionStatus = "Error: $e";
+      _logToMain(boxIndex, "Serial connection failed: $e");
       _disconnect(boxIndex);
     }
   }

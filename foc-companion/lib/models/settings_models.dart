@@ -261,14 +261,21 @@ class FocStimSettings {
   String wifiIp = "192.168.1.1";
   int wifiPort = 55533;
 
+  /// Non-empty → use USB serial instead of WiFi TCP.
+  String serialPort = "";
+
+  bool get useSerial => serialPort.isNotEmpty;
+
   Map<String, dynamic> toJson() => {
     'wifiIp': wifiIp,
     'wifiPort': wifiPort,
+    'serialPort': serialPort,
   };
 
   FocStimSettings.fromJson(Map<String, dynamic> json) {
     wifiIp = json['wifiIp'] ?? "192.168.1.1";
     wifiPort = json['wifiPort'] ?? 55533;
+    serialPort = json['serialPort'] ?? "";
   }
 
   FocStimSettings();

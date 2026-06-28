@@ -37,6 +37,9 @@ dependencies:
   flutter_foreground_task: ^9.2.2
   xml: ^6.6.1
 
+  # Desktop USB/serial transport (Windows, macOS, Linux)
+  libserialport: ^0.3.0+1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

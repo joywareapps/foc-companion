@@ -420,11 +420,18 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
       boxes[targetIndex].connectionStatus = "Connecting...";
       notifyListeners();
 
-      ServiceManager.sendCommand('connect', {
-        'boxIndex': targetIndex,
-        'ip': boxProfile.connection.wifiIp,
-        'port': boxProfile.connection.wifiPort,
-      });
+      if (boxProfile.connection.useSerial) {
+        ServiceManager.sendCommand('connectSerial', {
+          'boxIndex': targetIndex,
+          'portName': boxProfile.connection.serialPort,
+        });
+      } else {
+        ServiceManager.sendCommand('connect', {
+          'boxIndex': targetIndex,
+          'ip': boxProfile.connection.wifiIp,
+          'port': boxProfile.connection.wifiPort,
+        });
+      }
     } catch (e) {
       boxes[targetIndex].connectionStatus = "Error: $e";
       notifyListeners();

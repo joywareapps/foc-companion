@@ -76,7 +76,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     
     // Attempt to stop on both boxes just in case they were linked
     for (int i = 0; i < 2; i++) {
-      BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {
+      ServiceManager.sendCommand('stopFunscriptPlayback', {
         'boxIndex': i,
       });
     }
@@ -122,16 +122,16 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         final allValues = _controller.currentValues;
 
         if (linked) {
-          BackgroundServiceManager.sendCommand('updateFunscriptValues', {
+          ServiceManager.sendCommand('updateFunscriptValues', {
             'boxIndex': 0,
             'values': _filterAxes(allValues, prostate: false),
           });
-          BackgroundServiceManager.sendCommand('updateFunscriptValues', {
+          ServiceManager.sendCommand('updateFunscriptValues', {
             'boxIndex': 1,
             'values': _filterAxes(allValues, prostate: true),
           });
         } else {
-          BackgroundServiceManager.sendCommand('updateFunscriptValues', {
+          ServiceManager.sendCommand('updateFunscriptValues', {
             'boxIndex': activeBox,
             'values': _filterAxes(allValues, prostate: activeBox == 1),
           });
@@ -189,14 +189,14 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
       final device = context.read<DeviceProvider>();
       final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
       for (final idx in targets) {
-        BackgroundServiceManager.sendCommand('pauseFunscriptPlayback', {'boxIndex': idx});
+        ServiceManager.sendCommand('pauseFunscriptPlayback', {'boxIndex': idx});
       }
       _stopTickTimer();
     } else if (state == PlaybackState.stopped) {
       final device = context.read<DeviceProvider>();
       final targets = device.settings.linkDevicesEnabled ? [0, 1] : [_boxIndex];
       for (final idx in targets) {
-        BackgroundServiceManager.sendCommand('stopFunscriptPlayback', {'boxIndex': idx});
+        ServiceManager.sendCommand('stopFunscriptPlayback', {'boxIndex': idx});
       }
       _stopTickTimer();
     }
@@ -214,7 +214,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
       final vol1 = device.boxes[1].boxVolume;
       final safeVolume = vol0 < vol1 ? vol0 : vol1;
       for (int i = 0; i < 2; i++) {
-        BackgroundServiceManager.sendCommand('setVolume', {
+        ServiceManager.sendCommand('setVolume', {
           'boxIndex': i,
           'volume': safeVolume,
         });
@@ -222,7 +222,7 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
     }
 
     for (final idx in targets) {
-      BackgroundServiceManager.sendCommand('startFunscriptPlayback', {
+      ServiceManager.sendCommand('startFunscriptPlayback', {
         'boxIndex': idx,
       });
     }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:foc_companion/services/focstim_api_service.dart';
@@ -9,84 +10,18 @@ import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/generated/protobuf/focstim_rpc.pb.dart';
 import 'package:foc_companion/generated/protobuf/constants.pbenum.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Android foreground-task entry point
+// ─────────────────────────────────────────────────────────────────────────────
+
 @pragma('vm:entry-point')
 void startCallback() {
   FlutterForegroundTask.setTaskHandler(FocStimTaskHandler());
 }
 
-class BackgroundServiceManager {
-  static bool _initialized = false;
-
-  static Future<void> init() async {
-    if (_initialized) return;
-
-    FlutterForegroundTask.init(
-      androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'foc_stim_service',
-        channelName: 'FOC Stim Service',
-        channelDescription: 'FOC Companion active background service',
-        channelImportance: NotificationChannelImportance.LOW,
-        priority: NotificationPriority.LOW,
-        playSound: false,
-        enableVibration: false,
-        onlyAlertOnce: true,
-      ),
-      iosNotificationOptions: const IOSNotificationOptions(
-        showNotification: false,
-        playSound: false,
-      ),
-      foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(5000),
-        autoRunOnBoot: false,
-        allowWakeLock: true,
-        allowWifiLock: true,
-      ),
-    );
-    _initialized = true;
-  }
-
-  static Future<bool> start() async {
-    await init();
-    
-    // Request notification permission if needed
-    final notificationPermission = await FlutterForegroundTask.checkNotificationPermission();
-    if (notificationPermission != NotificationPermission.granted) {
-      final requested = await FlutterForegroundTask.requestNotificationPermission();
-      if (requested != NotificationPermission.granted) {
-        return false;
-      }
-    }
-
-    if (await FlutterForegroundTask.isRunningService) {
-      return true;
-    }
-
-    final startResult = await FlutterForegroundTask.startService(
-      notificationTitle: 'FOC Companion',
-      notificationText: 'Service starting...',
-      notificationButtons: [
-        const NotificationButton(id: 'disconnect', text: 'Disconnect'),
-      ],
-      callback: startCallback,
-    );
-
-    return startResult is ServiceRequestSuccess;
-  }
-
-  static Future<void> stop() async {
-    if (await FlutterForegroundTask.isRunningService) {
-      await FlutterForegroundTask.stopService();
-    }
-  }
-
-  static void sendCommand(String type, [Map<String, dynamic>? data]) {
-    final msg = <String, dynamic>{'type': type};
-    if (data != null) {
-      msg.addAll(data);
-    }
-    FlutterForegroundTask.sendDataToTask(msg);
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-box runtime state (shared by both Android and desktop paths)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class ActiveBoxState {
   final int index;
@@ -101,9 +36,8 @@ class ActiveBoxState {
   bool isPotLocked = false;
   DeviceMode deviceMode = DeviceMode.threePhase;
 
-  /// Funscript playback state (updated from foreground via commands).
   bool funscriptActive = false;
-  Map<String, double> funscriptValues = {};  // axis suffix → normalized 0.0-1.0
+  Map<String, double> funscriptValues = {};
 
   int? buttonEventTimestampMs;
   DateTime? buttonEventDateTime;
@@ -121,28 +55,50 @@ class ActiveBoxState {
   }
 }
 
-class FocStimTaskHandler extends TaskHandler {
+// ─────────────────────────────────────────────────────────────────────────────
+// FocStimServiceController — platform-independent business logic
+//
+// Owns the two ActiveBoxState instances and routes IPC commands from the
+// UI to the appropriate box/loop.  All outbound messages are delivered via
+// [sendToMain]; the host (Android TaskHandler or DesktopServiceManager) is
+// responsible for forwarding them to the UI.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class FocStimServiceController {
+  final void Function(Map<String, dynamic>) _sendToMain;
+  final void Function() _requestStop;
+  final void Function(String title, String text, {bool isAnyRunning})? _updateNotification;
+
   final Map<int, ActiveBoxState> _boxes = {};
   SettingsProvider? _settings;
-  DateTime _lastGlobalNotificationUpdateTime = DateTime.fromMillisecondsSinceEpoch(0);
-
-  // Cache settings behavior to handle buttons in background
   DeviceBehaviorSettings _deviceBehavior = DeviceBehaviorSettings();
+  DateTime _lastGlobalNotificationUpdateTime =
+      DateTime.fromMillisecondsSinceEpoch(0);
+
+  FocStimServiceController({
+    required void Function(Map<String, dynamic>) sendToMain,
+    required void Function() requestStop,
+    void Function(String title, String text, {bool isAnyRunning})?
+        updateNotification,
+  })  : _sendToMain = sendToMain,
+        _requestStop = requestStop,
+        _updateNotification = updateNotification;
 
   static double _calcImpedance(double r, double x) =>
       math.sqrt(r * r + x * x);
 
-  @override
-  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
-    _settings = SettingsProvider(); // Safe stub provider
+  Future<void> init() async {
+    _settings = SettingsProvider();
 
     for (int i = 0; i < 2; i++) {
       final box = ActiveBoxState(i, _settings!);
       _boxes[i] = box;
 
-      box.threePhaseLoop.onSlowConnection = (slow) => _handleSlowConnection(i, slow);
+      box.threePhaseLoop.onSlowConnection = (slow) =>
+          _handleSlowConnection(i, slow);
       box.threePhaseLoop.onTimeout = (err) => _handleLoopTimeout(i, err);
-      box.fourPhaseLoop.onSlowConnection = (slow) => _handleSlowConnection(i, slow);
+      box.fourPhaseLoop.onSlowConnection = (slow) =>
+          _handleSlowConnection(i, slow);
       box.fourPhaseLoop.onTimeout = (err) => _handleLoopTimeout(i, err);
 
       box.api.onNotification = (n) => _handleNotification(i, n);
@@ -151,13 +107,7 @@ class FocStimTaskHandler extends TaskHandler {
     }
   }
 
-  @override
-  void onRepeatEvent(DateTime timestamp) {
-    // We do not rely on periodic repeat ticks of foreground task
-  }
-
-  @override
-  Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
+  Future<void> destroy() async {
     for (int i = 0; i < 2; i++) {
       _boxes[i]?.notificationWatchdog?.cancel();
       await _stopStimulation(i);
@@ -165,13 +115,12 @@ class FocStimTaskHandler extends TaskHandler {
     }
   }
 
-  @override
-  void onNotificationButtonPressed(String id) {
+  void handleNotificationButton(String id) {
     if (id == 'disconnect') {
       _logToMain(0, "Disconnect requested via notification.");
       _disconnect(0);
       _disconnect(1);
-      FlutterForegroundTask.stopService();
+      _requestStop();
     } else if (id == 'stop_stimulation') {
       _logToMain(0, "Stop stimulation requested via notification.");
       _stopStimulation(0);
@@ -182,153 +131,157 @@ class FocStimTaskHandler extends TaskHandler {
     }
   }
 
-  @override
-  void onReceiveData(Object data) {
-    if (data is Map) {
-      final type = data['type'];
-      switch (type) {
-        case 'requestState':
-          for (int i = 0; i < 2; i++) {
-            _sendStateUpdate(i);
-            final box = _boxes[i]!;
-            if (box.lastTelemetry.isNotEmpty) {
-              FlutterForegroundTask.sendDataToMain({
-                ...box.lastTelemetry,
-                'type': 'notification',
-                'boxIndex': i,
-              });
-            }
+  void handleCommand(Map<dynamic, dynamic> data) {
+    final type = data['type'];
+    switch (type) {
+      case 'requestState':
+        for (int i = 0; i < 2; i++) {
+          _sendStateUpdate(i);
+          final box = _boxes[i]!;
+          if (box.lastTelemetry.isNotEmpty) {
+            _sendToMain({
+              ...box.lastTelemetry,
+              'type': 'notification',
+              'boxIndex': i,
+            });
           }
-          break;
-        case 'connect':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final ip = data['ip'] as String;
-          final port = data['port'] as int;
-          _connect(boxIndex, ip, port);
-          break;
-        case 'disconnect':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          _disconnect(boxIndex);
-          break;
-        case 'toggleLoop':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          _toggleLoop(boxIndex);
-          break;
-        case 'setVolume':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final vol = (data['volume'] as num).toDouble();
-          final box = _boxes[boxIndex]!;
-          box.threePhaseLoop.volume = vol;
-          box.fourPhaseLoop.volume = vol;
-          break;
-        case 'setVelocity':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final vel = (data['velocity'] as num).toDouble();
-          final box = _boxes[boxIndex]!;
-          box.threePhaseLoop.velocity = vel;
-          break;
-        case 'set4PhaseVelocity':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final vel = (data['velocity'] as num).toDouble();
-          final box = _boxes[boxIndex]!;
-          box.fourPhaseLoop.velocity = vel;
-          break;
-        case 'selectPattern':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final index = data['index'] as int;
-          final idx = index.clamp(0, ThreephasePatternRegistry.all.length - 1);
-          final box = _boxes[boxIndex]!;
-          box.threePhaseLoop.pattern = ThreephasePatternRegistry.all[idx];
-          break;
-        case 'select4PhasePattern':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final index = data['index'] as int;
-          final idx = index.clamp(0, FourphasePatternRegistry.all.length - 1);
-          final box = _boxes[boxIndex]!;
-          box.fourPhaseLoop.pattern = FourphasePatternRegistry.all[idx];
-          break;
-        case 'updatePulseModConfig':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final configMap = Map<String, dynamic>.from(data['config']);
-          final box = _boxes[boxIndex]!;
-          box.threePhaseLoop.setPulseModConfig(PulseModulationConfig.fromJson(configMap));
-          break;
-        case 'update4PhasePulseModConfig':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final configMap = Map<String, dynamic>.from(data['config']);
-          final box = _boxes[boxIndex]!;
-          box.fourPhaseLoop.setPulseModConfig(PulseModulationConfig.fromJson(configMap));
-          break;
-        case 'togglePotLock':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          _togglePotLock(boxIndex);
-          break;
-        case 'setDeviceMode':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final modeStr = data['mode'] as String;
-          final box = _boxes[boxIndex]!;
-          box.deviceMode = DeviceMode.values.firstWhere(
-            (e) => e.name == modeStr,
-            orElse: () => DeviceMode.threePhase,
-          );
-          _sendStateUpdate(boxIndex);
-          break;
-        case 'updateSettings':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final box = _settings?.boxes[boxIndex];
-          if (box != null) {
-            if (data.containsKey('device')) {
-              box.device = DeviceSettings.fromJson(Map<String, dynamic>.from(data['device']));
-            }
-            if (data.containsKey('pulse')) {
-              box.pulse = PulseSettings.fromJson(Map<String, dynamic>.from(data['pulse']));
-            }
-            if (data.containsKey('cockpit')) {
-              box.cockpit = CockpitSettings.fromJson(Map<String, dynamic>.from(data['cockpit']));
-            }
-            if (data.containsKey('cockpit4Phase')) {
-              box.cockpit4Phase = CockpitSettings.fromJson(Map<String, dynamic>.from(data['cockpit4Phase']));
-            }
+        }
+        break;
+      case 'connect':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final ip = data['ip'] as String;
+        final port = data['port'] as int;
+        _connect(boxIndex, ip, port);
+        break;
+      case 'disconnect':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        _disconnect(boxIndex);
+        break;
+      case 'toggleLoop':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        _toggleLoop(boxIndex);
+        break;
+      case 'setVolume':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final vol = (data['volume'] as num).toDouble();
+        final box = _boxes[boxIndex]!;
+        box.threePhaseLoop.volume = vol;
+        box.fourPhaseLoop.volume = vol;
+        break;
+      case 'setVelocity':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final vel = (data['velocity'] as num).toDouble();
+        _boxes[boxIndex]!.threePhaseLoop.velocity = vel;
+        break;
+      case 'set4PhaseVelocity':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final vel = (data['velocity'] as num).toDouble();
+        _boxes[boxIndex]!.fourPhaseLoop.velocity = vel;
+        break;
+      case 'selectPattern':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final index = data['index'] as int;
+        final idx = index.clamp(0, ThreephasePatternRegistry.all.length - 1);
+        _boxes[boxIndex]!.threePhaseLoop.pattern =
+            ThreephasePatternRegistry.all[idx];
+        break;
+      case 'select4PhasePattern':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final index = data['index'] as int;
+        final idx = index.clamp(0, FourphasePatternRegistry.all.length - 1);
+        _boxes[boxIndex]!.fourPhaseLoop.pattern =
+            FourphasePatternRegistry.all[idx];
+        break;
+      case 'updatePulseModConfig':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final configMap = Map<String, dynamic>.from(data['config']);
+        _boxes[boxIndex]!
+            .threePhaseLoop
+            .setPulseModConfig(PulseModulationConfig.fromJson(configMap));
+        break;
+      case 'update4PhasePulseModConfig':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final configMap = Map<String, dynamic>.from(data['config']);
+        _boxes[boxIndex]!
+            .fourPhaseLoop
+            .setPulseModConfig(PulseModulationConfig.fromJson(configMap));
+        break;
+      case 'togglePotLock':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        _togglePotLock(boxIndex);
+        break;
+      case 'setDeviceMode':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final modeStr = data['mode'] as String;
+        _boxes[boxIndex]!.deviceMode = DeviceMode.values.firstWhere(
+          (e) => e.name == modeStr,
+          orElse: () => DeviceMode.threePhase,
+        );
+        _sendStateUpdate(boxIndex);
+        break;
+      case 'updateSettings':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final box = _settings?.boxes[boxIndex];
+        if (box != null) {
+          if (data.containsKey('device')) {
+            box.device = DeviceSettings.fromJson(
+                Map<String, dynamic>.from(data['device']));
           }
-          if (data.containsKey('deviceBehavior')) {
-            _deviceBehavior = DeviceBehaviorSettings.fromJson(Map<String, dynamic>.from(data['deviceBehavior']));
+          if (data.containsKey('pulse')) {
+            box.pulse = PulseSettings.fromJson(
+                Map<String, dynamic>.from(data['pulse']));
           }
-          break;
-        case 'startFunscriptPlayback':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          _startFunscriptPlayback(boxIndex);
-          break;
-        case 'stopFunscriptPlayback':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          _stopFunscriptPlayback(boxIndex);
-          break;
-        case 'pauseFunscriptPlayback':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          _pauseFunscriptPlayback(boxIndex);
-          break;
-        case 'setFunscriptMode':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final box = _boxes[boxIndex];
-          if (box != null) {
-            box.funscriptActive = data['active'] as bool? ?? false;
-            if (!box.funscriptActive) box.funscriptValues.clear();
+          if (data.containsKey('cockpit')) {
+            box.cockpit = CockpitSettings.fromJson(
+                Map<String, dynamic>.from(data['cockpit']));
           }
-          break;
-        case 'updateFunscriptValues':
-          final int boxIndex = data['boxIndex'] as int? ?? 0;
-          final box = _boxes[boxIndex];
-          if (box != null && box.funscriptActive) {
-            final values = data['values'] as Map?;
-            if (values != null) {
-              box.funscriptValues = Map<String, double>.from(
-                values.map((k, v) => MapEntry(k as String, (v as num).toDouble())),
-              );
-            }
+          if (data.containsKey('cockpit4Phase')) {
+            box.cockpit4Phase = CockpitSettings.fromJson(
+                Map<String, dynamic>.from(data['cockpit4Phase']));
           }
-          break;
-      }
+        }
+        if (data.containsKey('deviceBehavior')) {
+          _deviceBehavior = DeviceBehaviorSettings.fromJson(
+              Map<String, dynamic>.from(data['deviceBehavior']));
+        }
+        break;
+      case 'startFunscriptPlayback':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        _startFunscriptPlayback(boxIndex);
+        break;
+      case 'stopFunscriptPlayback':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        _stopFunscriptPlayback(boxIndex);
+        break;
+      case 'pauseFunscriptPlayback':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        _pauseFunscriptPlayback(boxIndex);
+        break;
+      case 'setFunscriptMode':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final box = _boxes[boxIndex];
+        if (box != null) {
+          box.funscriptActive = data['active'] as bool? ?? false;
+          if (!box.funscriptActive) box.funscriptValues.clear();
+        }
+        break;
+      case 'updateFunscriptValues':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final box = _boxes[boxIndex];
+        if (box != null && box.funscriptActive) {
+          final values = data['values'] as Map?;
+          if (values != null) {
+            box.funscriptValues = Map<String, double>.from(
+              values.map((k, v) =>
+                  MapEntry(k as String, (v as num).toDouble())),
+            );
+          }
+        }
+        break;
     }
   }
+
+  // ── Connection ─────────────────────────────────────────────────────────────
 
   Future<void> _connect(int boxIndex, String ip, int port) async {
     final box = _boxes[boxIndex]!;
@@ -371,6 +324,8 @@ class FocStimTaskHandler extends TaskHandler {
     _sendStateUpdate(boxIndex);
     _updateNotificationDetails();
   }
+
+  // ── Stimulation ────────────────────────────────────────────────────────────
 
   Future<void> _toggleLoop(int boxIndex) async {
     final box = _boxes[boxIndex]!;
@@ -417,6 +372,66 @@ class FocStimTaskHandler extends TaskHandler {
     }
   }
 
+  // ── Funscript playback ─────────────────────────────────────────────────────
+
+  void _startFunscriptPlayback(int boxIndex) async {
+    final box = _boxes[boxIndex];
+    if (box == null || !box.api.isConnected) return;
+    if (box.funscriptActive) return;
+
+    if (box.isLoopRunning) {
+      await _stopStimulation(boxIndex);
+    }
+
+    box.funscriptActive = true;
+    box.funscriptValues.clear();
+
+    await _startStimulation(boxIndex);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
+    _logToMain(boxIndex, "Funscript playback started.");
+  }
+
+  void _stopFunscriptPlayback(int boxIndex) async {
+    final box = _boxes[boxIndex];
+    if (box == null) return;
+
+    box.funscriptActive = false;
+    box.funscriptValues.clear();
+
+    await _stopStimulation(boxIndex);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
+    _logToMain(boxIndex, "Funscript playback stopped.");
+  }
+
+  void _pauseFunscriptPlayback(int boxIndex) async {
+    final box = _boxes[boxIndex];
+    if (box == null) return;
+
+    box.funscriptActive = false;
+    box.funscriptValues.clear();
+
+    await _stopStimulation(boxIndex);
+    _sendStateUpdate(boxIndex);
+    _updateNotificationDetails();
+    _logToMain(boxIndex, "Funscript playback paused.");
+  }
+
+  // ── Pot lock ───────────────────────────────────────────────────────────────
+
+  Future<void> _togglePotLock(int boxIndex) async {
+    final box = _boxes[boxIndex]!;
+    if (!box.api.isConnected) return;
+    try {
+      await box.api.lockDeviceVolume(!box.isPotLocked);
+    } catch (e) {
+      _logToMain(boxIndex, "Failed to toggle pot lock: $e");
+    }
+  }
+
+  // ── Watchdog ───────────────────────────────────────────────────────────────
+
   void _resetNotificationWatchdog(int boxIndex) {
     final box = _boxes[boxIndex]!;
     box.notificationWatchdog?.cancel();
@@ -427,6 +442,8 @@ class FocStimTaskHandler extends TaskHandler {
       });
     }
   }
+
+  // ── Telemetry handler ──────────────────────────────────────────────────────
 
   void _handleNotification(int boxIndex, Notification n) {
     final box = _boxes[boxIndex]!;
@@ -461,7 +478,8 @@ class FocStimTaskHandler extends TaskHandler {
     }
 
     if (n.hasNotificationBattery()) {
-      data['batteryVoltage'] = "${n.notificationBattery.batteryVoltage.toStringAsFixed(2)}V";
+      data['batteryVoltage'] =
+          "${n.notificationBattery.batteryVoltage.toStringAsFixed(2)}V";
       data['batterySoc'] = n.notificationBattery.batterySoc;
     }
 
@@ -500,30 +518,36 @@ class FocStimTaskHandler extends TaskHandler {
     }
 
     if (n.hasNotificationDebugString()) {
-      final msg = n.notificationDebugString.message;
-      data['debugMessage'] = msg;
+      data['debugMessage'] = n.notificationDebugString.message;
     }
 
-    // Cache telemetry (excluding 'type' and 'boxIndex')
-    final cacheData = Map<String, dynamic>.from(data)..remove('type')..remove('boxIndex');
+    final cacheData = Map<String, dynamic>.from(data)
+      ..remove('type')
+      ..remove('boxIndex');
     box.lastTelemetry.addAll(cacheData);
 
-    // ── Throttling: IPC telemetry to Main (10Hz) ──
     final now = DateTime.now();
     if (now.difference(box.lastNotificationUpdateTime).inMilliseconds >= 100) {
       box.lastNotificationUpdateTime = now;
-      FlutterForegroundTask.sendDataToMain(data);
+      _sendToMain(data);
     }
 
-    // ── Throttling: Foreground Notification (1Hz) ──
-    if (now.difference(_lastGlobalNotificationUpdateTime).inMilliseconds >= 1000) {
+    if (now
+            .difference(_lastGlobalNotificationUpdateTime)
+            .inMilliseconds >=
+        1000) {
       _lastGlobalNotificationUpdateTime = now;
       _updateNotificationDetails();
     }
   }
 
+  // ── Internal helpers ───────────────────────────────────────────────────────
+
   void _updateNotificationDetails() {
-    List<String> statuses = [];
+    final update = _updateNotification;
+    if (update == null) return;
+
+    final statuses = <String>[];
     bool isAnyRunning = false;
     for (int i = 0; i < 2; i++) {
       final box = _boxes[i]!;
@@ -543,18 +567,10 @@ class FocStimTaskHandler extends TaskHandler {
       statuses.add(status);
     }
 
-    String overallText = statuses.join(" | ");
-
-    FlutterForegroundTask.updateService(
-      notificationTitle: isAnyRunning ? "FOC Companion - Playing" : "FOC Companion",
-      notificationText: overallText,
-      notificationButtons: isAnyRunning
-          ? [
-              const NotificationButton(id: 'stop_stimulation', text: 'Stop All'),
-            ]
-          : [
-              const NotificationButton(id: 'disconnect', text: 'Disconnect'),
-            ],
+    update(
+      isAnyRunning ? "FOC Companion - Playing" : "FOC Companion",
+      statuses.join(" | "),
+      isAnyRunning: isAnyRunning,
     );
   }
 
@@ -572,75 +588,9 @@ class FocStimTaskHandler extends TaskHandler {
     }
   }
 
-  Future<void> _togglePotLock(int boxIndex) async {
-    final box = _boxes[boxIndex]!;
-    if (!box.api.isConnected) return;
-    try {
-      await box.api.lockDeviceVolume(!box.isPotLocked);
-    } catch (e) {
-      _logToMain(boxIndex, "Failed to toggle pot lock: $e");
-    }
-  }
-
-  // ── Funscript playback ──────────────────────────────────────────────
-
-  /// Start funscript playback: enable funscript mode and start the command loop.
-  void _startFunscriptPlayback(int boxIndex) async {
-    final box = _boxes[boxIndex];
-    if (box == null || !box.api.isConnected) return;
-
-    // Guard: funscriptActive is set synchronously before the first await, so a
-    // racing duplicate message (from double-send on the UI side) is blocked here
-    // before both calls can race into _startStimulation concurrently.
-    if (box.funscriptActive) return;
-
-    // Stop any running pattern first
-    if (box.isLoopRunning) {
-      await _stopStimulation(boxIndex);
-    }
-
-    // Enable funscript mode
-    box.funscriptActive = true;
-    box.funscriptValues.clear();
-
-    // Start the command loop — it will read funscript values each tick
-    await _startStimulation(boxIndex);
-    _sendStateUpdate(boxIndex);
-    _updateNotificationDetails();
-    _logToMain(boxIndex, "Funscript playback started.");
-  }
-
-  /// Stop funscript playback: disable funscript mode and stop the command loop.
-  void _stopFunscriptPlayback(int boxIndex) async {
-    final box = _boxes[boxIndex];
-    if (box == null) return;
-
-    box.funscriptActive = false;
-    box.funscriptValues.clear();
-
-    await _stopStimulation(boxIndex);
-    _sendStateUpdate(boxIndex);
-    _updateNotificationDetails();
-    _logToMain(boxIndex, "Funscript playback stopped.");
-  }
-
-  /// Pause funscript playback: stop the command loop.
-  void _pauseFunscriptPlayback(int boxIndex) async {
-    final box = _boxes[boxIndex];
-    if (box == null) return;
-
-    box.funscriptActive = false;
-    box.funscriptValues.clear();
-
-    await _stopStimulation(boxIndex);
-    _sendStateUpdate(boxIndex);
-    _updateNotificationDetails();
-    _logToMain(boxIndex, "Funscript playback paused.");
-  }
-
   void _sendStateUpdate(int boxIndex) {
     final box = _boxes[boxIndex]!;
-    FlutterForegroundTask.sendDataToMain({
+    _sendToMain({
       'type': 'stateUpdate',
       'boxIndex': boxIndex,
       'connectionStatus': box.connectionStatus,
@@ -652,11 +602,7 @@ class FocStimTaskHandler extends TaskHandler {
   }
 
   void _logToMain(int boxIndex, String message) {
-    FlutterForegroundTask.sendDataToMain({
-      'type': 'log',
-      'boxIndex': boxIndex,
-      'message': message,
-    });
+    _sendToMain({'type': 'log', 'boxIndex': boxIndex, 'message': message});
   }
 
   void _handleSlowConnection(int boxIndex, bool slow) {
@@ -677,14 +623,212 @@ class FocStimTaskHandler extends TaskHandler {
     _updateNotificationDetails();
   }
 
-  void _handleDisconnect(int boxIndex) {
-    _disconnect(boxIndex);
-  }
+  void _handleDisconnect(int boxIndex) => _disconnect(boxIndex);
 
   void _handleError(int boxIndex, String err) {
-    final box = _boxes[boxIndex]!;
-    box.connectionStatus = "Error: $err";
+    _boxes[boxIndex]!.connectionStatus = "Error: $err";
     _logToMain(boxIndex, "Socket error: $err");
     _disconnect(boxIndex);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Android: TaskHandler wraps FocStimServiceController
+// ─────────────────────────────────────────────────────────────────────────────
+
+class FocStimTaskHandler extends TaskHandler {
+  late FocStimServiceController _controller;
+
+  @override
+  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
+    _controller = FocStimServiceController(
+      sendToMain: (data) => FlutterForegroundTask.sendDataToMain(data),
+      requestStop: () => FlutterForegroundTask.stopService(),
+      updateNotification: (title, text, {bool isAnyRunning = false}) =>
+          FlutterForegroundTask.updateService(
+            notificationTitle: title,
+            notificationText: text,
+            notificationButtons: isAnyRunning
+                ? [const NotificationButton(id: 'stop_stimulation', text: 'Stop All')]
+                : [const NotificationButton(id: 'disconnect', text: 'Disconnect')],
+          ),
+    );
+    await _controller.init();
+  }
+
+  @override
+  void onRepeatEvent(DateTime timestamp) {}
+
+  @override
+  Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
+    await _controller.destroy();
+  }
+
+  @override
+  void onNotificationButtonPressed(String id) {
+    _controller.handleNotificationButton(id);
+  }
+
+  @override
+  void onReceiveData(Object data) {
+    if (data is Map) _controller.handleCommand(data);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Android: manages the FlutterForegroundTask service lifecycle
+// ─────────────────────────────────────────────────────────────────────────────
+
+class BackgroundServiceManager {
+  static bool _initialized = false;
+
+  static Future<void> init() async {
+    if (_initialized) return;
+
+    FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'foc_stim_service',
+        channelName: 'FOC Stim Service',
+        channelDescription: 'FOC Companion active background service',
+        channelImportance: NotificationChannelImportance.LOW,
+        priority: NotificationPriority.LOW,
+        playSound: false,
+        enableVibration: false,
+        onlyAlertOnce: true,
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: false,
+        playSound: false,
+      ),
+      foregroundTaskOptions: ForegroundTaskOptions(
+        eventAction: ForegroundTaskEventAction.repeat(5000),
+        autoRunOnBoot: false,
+        allowWakeLock: true,
+        allowWifiLock: true,
+      ),
+    );
+    _initialized = true;
+  }
+
+  static Future<bool> start() async {
+    await init();
+
+    final notificationPermission =
+        await FlutterForegroundTask.checkNotificationPermission();
+    if (notificationPermission != NotificationPermission.granted) {
+      final requested =
+          await FlutterForegroundTask.requestNotificationPermission();
+      if (requested != NotificationPermission.granted) return false;
+    }
+
+    if (await FlutterForegroundTask.isRunningService) return true;
+
+    final startResult = await FlutterForegroundTask.startService(
+      notificationTitle: 'FOC Companion',
+      notificationText: 'Service starting...',
+      notificationButtons: [
+        const NotificationButton(id: 'disconnect', text: 'Disconnect'),
+      ],
+      callback: startCallback,
+    );
+
+    return startResult is ServiceRequestSuccess;
+  }
+
+  static Future<void> stop() async {
+    if (await FlutterForegroundTask.isRunningService) {
+      await FlutterForegroundTask.stopService();
+    }
+  }
+
+  static void sendCommand(String type, [Map<String, dynamic>? data]) {
+    final msg = <String, dynamic>{'type': type};
+    if (data != null) msg.addAll(data);
+    FlutterForegroundTask.sendDataToTask(msg);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Desktop: runs FocStimServiceController in the main isolate
+// ─────────────────────────────────────────────────────────────────────────────
+
+class DesktopServiceManager {
+  static FocStimServiceController? _controller;
+  static final _toMain =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  static Stream<Map<String, dynamic>> get messageStream => _toMain.stream;
+
+  static bool get isRunning => _controller != null;
+
+  static Future<void> start() async {
+    if (_controller != null) return;
+    _controller = FocStimServiceController(
+      sendToMain: (data) => _toMain.add(Map<String, dynamic>.from(data)),
+      requestStop: stop,
+      // Desktop has no notification panel — no-op.
+    );
+    await _controller!.init();
+  }
+
+  static Future<void> stop() async {
+    final c = _controller;
+    _controller = null;
+    await c?.destroy();
+  }
+
+  static void sendCommand(String type, [Map<String, dynamic>? data]) {
+    final msg = <String, dynamic>{'type': type};
+    if (data != null) msg.addAll(data);
+    _controller?.handleCommand(msg);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ServiceManager — unified facade used by DeviceProvider
+// ─────────────────────────────────────────────────────────────────────────────
+
+class ServiceManager {
+  static Future<bool> start() async {
+    if (Platform.isAndroid) return BackgroundServiceManager.start();
+    await DesktopServiceManager.start();
+    return true;
+  }
+
+  static Future<void> stop() async {
+    if (Platform.isAndroid) {
+      await BackgroundServiceManager.stop();
+    } else {
+      await DesktopServiceManager.stop();
+    }
+  }
+
+  static void sendCommand(String type, [Map<String, dynamic>? data]) {
+    if (Platform.isAndroid) {
+      BackgroundServiceManager.sendCommand(type, data);
+    } else {
+      DesktopServiceManager.sendCommand(type, data);
+    }
+  }
+
+  static Future<bool> get isRunning async {
+    if (Platform.isAndroid) {
+      return FlutterForegroundTask.isRunningService;
+    }
+    return DesktopServiceManager.isRunning;
+  }
+
+  /// Register a message handler.  Returns a cleanup callback.
+  static void Function() addMessageCallback(
+      void Function(Map<String, dynamic>) callback) {
+    if (Platform.isAndroid) {
+      FlutterForegroundTask.addTaskDataCallback(
+          (data) => callback(Map<String, dynamic>.from(data as Map)));
+      return () => FlutterForegroundTask.removeTaskDataCallback(
+          (data) => callback(Map<String, dynamic>.from(data as Map)));
+    } else {
+      final sub = DesktopServiceManager.messageStream.listen(callback);
+      return () => sub.cancel();
+    }
   }
 }

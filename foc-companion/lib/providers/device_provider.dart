@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/patterns.dart';
@@ -16,7 +16,9 @@ final _log = AppLogger.instance;
 class BackgroundApiCompatibility {
   final DeviceProvider _provider;
   BackgroundApiCompatibility(this._provider);
-  bool get isConnected => _provider.connectionStatus == "Connected" || _provider.connectionStatus.startsWith("Connected");
+  bool get isConnected =>
+      _provider.connectionStatus == "Connected" ||
+      _provider.connectionStatus.startsWith("Connected");
 }
 
 class BoxStatus {
@@ -45,7 +47,7 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
 
   final List<BoxStatus> boxes = [BoxStatus(0), BoxStatus(1)];
 
-  // Active Focused Box Status Getters (For backwards compatibility)
+  // Active Focused Box Status Getters (for backwards compatibility)
   BoxStatus get activeBoxStatus => boxes[settings.activeUiBoxIndex];
 
   String get connectionStatus => activeBoxStatus.connectionStatus;
@@ -62,7 +64,6 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
   double? get impedanceC => activeBoxStatus.impedanceC;
   double? get impedanceD => activeBoxStatus.impedanceD;
 
-  /// Captured debug notifications/logs
   final List<String> capturedLogs = [];
   bool isRecordingLogs = false;
   bool isShowingErrorDialog = false;
@@ -71,20 +72,30 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
   Timer? _logInactivityTimer;
   Timer? _periodicSyncTimer;
 
+  // Desktop: subscription to in-process service stream.
+  StreamSubscription<Map<String, dynamic>>? _desktopSub;
+
   /// Master volume (0–1). Not persisted — resets to 0.1 on app restart/connect.
   double volume = 0.1;
 
   DeviceProvider(this.settings) {
     WidgetsBinding.instance.addObserver(this);
-    FlutterForegroundTask.addTaskDataCallback(_handleBackgroundMessage);
+
+    if (Platform.isAndroid) {
+      FlutterForegroundTask.addTaskDataCallback(_handleBackgroundMessage);
+    } else {
+      _desktopSub = DesktopServiceManager.messageStream
+          .listen(_handleBackgroundMessage);
+    }
+
     checkExistingConnection();
     _startPeriodicSync();
   }
 
   void _startPeriodicSync() {
     _periodicSyncTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
-      if (await FlutterForegroundTask.isRunningService) {
-        BackgroundServiceManager.sendCommand('requestState');
+      if (await ServiceManager.isRunning) {
+        ServiceManager.sendCommand('requestState');
       }
     });
   }
@@ -93,7 +104,13 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
   void dispose() {
     _periodicSyncTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    FlutterForegroundTask.removeTaskDataCallback(_handleBackgroundMessage);
+
+    if (Platform.isAndroid) {
+      FlutterForegroundTask.removeTaskDataCallback(_handleBackgroundMessage);
+    } else {
+      _desktopSub?.cancel();
+    }
+
     _logInactivityTimer?.cancel();
     super.dispose();
   }
@@ -101,21 +118,20 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // "Heal" state mismatches by requesting fresh state from background service when app reopens
       checkExistingConnection();
     }
   }
 
   Future<void> checkExistingConnection() async {
-    if (await FlutterForegroundTask.isRunningService) {
-      BackgroundServiceManager.sendCommand('requestState');
+    if (await ServiceManager.isRunning) {
+      ServiceManager.sendCommand('requestState');
       _syncSettingsToBackground();
     }
   }
 
   void _syncSettingsToBackground() {
     for (int i = 0; i < 2; i++) {
-      BackgroundServiceManager.sendCommand('updateSettings', {
+      ServiceManager.sendCommand('updateSettings', {
         'boxIndex': i,
         'device': settings.boxes[i].device.toJson(),
         'pulse': settings.boxes[i].pulse.toJson(),
@@ -135,10 +151,14 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
 
     switch (type) {
       case 'stateUpdate':
-        box.connectionStatus = msg['connectionStatus'] as String? ?? box.connectionStatus;
-        box.firmwareVersion = msg['firmwareVersion'] as String? ?? box.firmwareVersion;
-        box.isLoopRunning = msg['isLoopRunning'] as bool? ?? box.isLoopRunning;
-        box.isSlowConnection = msg['isSlowConnection'] as bool? ?? box.isSlowConnection;
+        box.connectionStatus =
+            msg['connectionStatus'] as String? ?? box.connectionStatus;
+        box.firmwareVersion =
+            msg['firmwareVersion'] as String? ?? box.firmwareVersion;
+        box.isLoopRunning =
+            msg['isLoopRunning'] as bool? ?? box.isLoopRunning;
+        box.isSlowConnection =
+            msg['isSlowConnection'] as bool? ?? box.isSlowConnection;
         box.isPotLocked = msg['isPotLocked'] as bool? ?? box.isPotLocked;
         notifyListeners();
         break;
@@ -146,7 +166,7 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
       case 'log':
         final logMsg = msg['message'] as String;
         _log.i("[Background] $logMsg");
-        
+
         if (isRecordingLogs && capturedLogs.length < _kMaxLogRows) {
           capturedLogs.add(logMsg);
         }
@@ -154,13 +174,13 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
         break;
 
       case 'notification':
-        // Reset inactivity timer
         if (isRecordingLogs) {
           _logInactivityTimer?.cancel();
           _logInactivityTimer = Timer(const Duration(seconds: 5), () {
             if (isRecordingLogs) {
               isRecordingLogs = false;
-              capturedLogs.add("${DateTime.now().toIso8601String()} [INFO] Recording stopped due to inactivity.");
+              capturedLogs.add(
+                  "${DateTime.now().toIso8601String()} [INFO] Recording stopped due to inactivity.");
               notifyListeners();
             }
           });
@@ -198,15 +218,18 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
           _log.d("Device $boxIndex: $dbgMsg");
 
           if (isRecordingLogs && capturedLogs.length < _kMaxLogRows) {
-            capturedLogs.add("${DateTime.now().toIso8601String()} [Device $boxIndex Debug] $dbgMsg");
+            capturedLogs.add(
+                "${DateTime.now().toIso8601String()} [Device $boxIndex Debug] $dbgMsg");
           }
 
-          if (dbgMsg.contains("Current limit exceeded") || dbgMsg.contains("Producer too slow")) {
+          if (dbgMsg.contains("Current limit exceeded") ||
+              dbgMsg.contains("Producer too slow")) {
             if (!isRecordingLogs) {
               lastErrorMessage = "[Box ${boxIndex + 1}] $dbgMsg";
               isRecordingLogs = true;
               capturedLogs.clear();
-              capturedLogs.add("${DateTime.now().toIso8601String()} [INITIAL_ERROR] [Box ${boxIndex + 1}] $dbgMsg");
+              capturedLogs.add(
+                  "${DateTime.now().toIso8601String()} [INITIAL_ERROR] [Box ${boxIndex + 1}] $dbgMsg");
             }
           }
         }
@@ -227,10 +250,12 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
 
   void selectPattern(int index) {
     final idx = index.clamp(0, ThreephasePatternRegistry.all.length - 1);
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
       settings.boxes[i].cockpit.patternIndex = idx;
-      BackgroundServiceManager.sendCommand('selectPattern', {'boxIndex': i, 'index': idx});
+      ServiceManager.sendCommand(
+          'selectPattern', {'boxIndex': i, 'index': idx});
     }
     settings.saveSettings();
     notifyListeners();
@@ -238,20 +263,24 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
 
   void setVelocity(double v) {
     final speed = v.clamp(0.1, 4.0);
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
       settings.boxes[i].cockpit.velocity = speed;
-      BackgroundServiceManager.sendCommand('setVelocity', {'boxIndex': i, 'velocity': speed});
+      ServiceManager.sendCommand(
+          'setVelocity', {'boxIndex': i, 'velocity': speed});
     }
     settings.saveSettings();
     notifyListeners();
   }
 
   void updatePulseModConfig(PulseModulationConfig config) {
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
       settings.boxes[i].cockpit.pulseFreqMod = config;
-      BackgroundServiceManager.sendCommand('updatePulseModConfig', {'boxIndex': i, 'config': config.toJson()});
+      ServiceManager.sendCommand('updatePulseModConfig',
+          {'boxIndex': i, 'config': config.toJson()});
     }
     settings.saveSettings();
     notifyListeners();
@@ -261,10 +290,12 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
 
   void select4PhasePattern(int index) {
     final idx = index.clamp(0, FourphasePatternRegistry.all.length - 1);
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
       settings.boxes[i].cockpit4Phase.patternIndex = idx;
-      BackgroundServiceManager.sendCommand('select4PhasePattern', {'boxIndex': i, 'index': idx});
+      ServiceManager.sendCommand(
+          'select4PhasePattern', {'boxIndex': i, 'index': idx});
     }
     settings.saveSettings();
     notifyListeners();
@@ -272,20 +303,24 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
 
   void set4PhaseVelocity(double v) {
     final speed = v.clamp(0.1, 4.0);
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
       settings.boxes[i].cockpit4Phase.velocity = speed;
-      BackgroundServiceManager.sendCommand('set4PhaseVelocity', {'boxIndex': i, 'velocity': speed});
+      ServiceManager.sendCommand(
+          'set4PhaseVelocity', {'boxIndex': i, 'velocity': speed});
     }
     settings.saveSettings();
     notifyListeners();
   }
 
   void update4PhasePulseModConfig(PulseModulationConfig config) {
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
       settings.boxes[i].cockpit4Phase.pulseFreqMod = config;
-      BackgroundServiceManager.sendCommand('update4PhasePulseModConfig', {'boxIndex': i, 'config': config.toJson()});
+      ServiceManager.sendCommand('update4PhasePulseModConfig',
+          {'boxIndex': i, 'config': config.toJson()});
     }
     settings.saveSettings();
     notifyListeners();
@@ -295,9 +330,10 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
 
   void setVolume(double v) {
     volume = v.clamp(0.0, 1.0);
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
-      BackgroundServiceManager.sendCommand('setVolume', {'boxIndex': i, 'volume': volume});
+      ServiceManager.sendCommand('setVolume', {'boxIndex': i, 'volume': volume});
     }
     notifyListeners();
   }
@@ -316,7 +352,8 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
 
     final allText = capturedLogs.join('\n');
     final topText = capturedLogs.take(2).join('\n');
-    final summary = "FOC Companion Diagnostic Summary:\n$topText\n... (Full log attached)";
+    final summary =
+        "FOC Companion Diagnostic Summary:\n$topText\n... (Full log attached)";
 
     try {
       final tempDir = await getTemporaryDirectory();
@@ -344,30 +381,46 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
     notifyListeners();
 
     try {
-      final success = await BackgroundServiceManager.start();
+      final success = await ServiceManager.start();
       if (!success) {
         boxes[targetIndex].connectionStatus = "Error: Permission Denied";
         notifyListeners();
         return;
       }
 
-      // Sync settings
       _syncSettingsToBackground();
 
-      // Send initial control settings
-      BackgroundServiceManager.sendCommand('setDeviceMode', {'boxIndex': targetIndex, 'mode': boxProfile.device.deviceMode.name});
-      BackgroundServiceManager.sendCommand('setVolume', {'boxIndex': targetIndex, 'volume': volume});
-      BackgroundServiceManager.sendCommand('selectPattern', {'boxIndex': targetIndex, 'index': boxProfile.cockpit.patternIndex});
-      BackgroundServiceManager.sendCommand('select4PhasePattern', {'boxIndex': targetIndex, 'index': boxProfile.cockpit4Phase.patternIndex});
-      BackgroundServiceManager.sendCommand('setVelocity', {'boxIndex': targetIndex, 'velocity': boxProfile.cockpit.velocity});
-      BackgroundServiceManager.sendCommand('set4PhaseVelocity', {'boxIndex': targetIndex, 'velocity': boxProfile.cockpit4Phase.velocity});
-      BackgroundServiceManager.sendCommand('updatePulseModConfig', {'boxIndex': targetIndex, 'config': boxProfile.cockpit.pulseFreqMod.toJson()});
-      BackgroundServiceManager.sendCommand('update4PhasePulseModConfig', {'boxIndex': targetIndex, 'config': boxProfile.cockpit4Phase.pulseFreqMod.toJson()});
+      ServiceManager.sendCommand('setDeviceMode', {
+        'boxIndex': targetIndex,
+        'mode': boxProfile.device.deviceMode.name,
+      });
+      ServiceManager.sendCommand(
+          'setVolume', {'boxIndex': targetIndex, 'volume': volume});
+      ServiceManager.sendCommand('selectPattern',
+          {'boxIndex': targetIndex, 'index': boxProfile.cockpit.patternIndex});
+      ServiceManager.sendCommand('select4PhasePattern', {
+        'boxIndex': targetIndex,
+        'index': boxProfile.cockpit4Phase.patternIndex,
+      });
+      ServiceManager.sendCommand('setVelocity',
+          {'boxIndex': targetIndex, 'velocity': boxProfile.cockpit.velocity});
+      ServiceManager.sendCommand('set4PhaseVelocity', {
+        'boxIndex': targetIndex,
+        'velocity': boxProfile.cockpit4Phase.velocity,
+      });
+      ServiceManager.sendCommand('updatePulseModConfig', {
+        'boxIndex': targetIndex,
+        'config': boxProfile.cockpit.pulseFreqMod.toJson(),
+      });
+      ServiceManager.sendCommand('update4PhasePulseModConfig', {
+        'boxIndex': targetIndex,
+        'config': boxProfile.cockpit4Phase.pulseFreqMod.toJson(),
+      });
 
       boxes[targetIndex].connectionStatus = "Connecting...";
       notifyListeners();
-      
-      BackgroundServiceManager.sendCommand('connect', {
+
+      ServiceManager.sendCommand('connect', {
         'boxIndex': targetIndex,
         'ip': boxProfile.connection.wifiIp,
         'port': boxProfile.connection.wifiPort,
@@ -381,10 +434,12 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
   DeviceMode get deviceMode => settings.device.deviceMode;
 
   void setDeviceMode(DeviceMode mode) {
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
       settings.boxes[i].device.deviceMode = mode;
-      BackgroundServiceManager.sendCommand('setDeviceMode', {'boxIndex': i, 'mode': mode.name});
+      ServiceManager.sendCommand(
+          'setDeviceMode', {'boxIndex': i, 'mode': mode.name});
     }
     settings.saveSettings();
     notifyListeners();
@@ -392,35 +447,40 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
 
   Future<void> disconnect({int? boxIndex}) async {
     final targetIndex = boxIndex ?? settings.activeUiBoxIndex;
-    
-    BackgroundServiceManager.sendCommand('disconnect', {'boxIndex': targetIndex});
+
+    ServiceManager.sendCommand('disconnect', {'boxIndex': targetIndex});
 
     boxes[targetIndex].connectionStatus = "Disconnected";
     boxes[targetIndex].isLoopRunning = false;
     boxes[targetIndex].isSlowConnection = false;
-    boxes[targetIndex].impedanceA = boxes[targetIndex].impedanceB = boxes[targetIndex].impedanceC = boxes[targetIndex].impedanceD = null;
+    boxes[targetIndex].impedanceA =
+        boxes[targetIndex].impedanceB =
+            boxes[targetIndex].impedanceC =
+                boxes[targetIndex].impedanceD = null;
     notifyListeners();
 
-    // Stop foreground service only if both devices are disconnected
-    bool anyConnected = boxes.any((b) => b.connectionStatus != "Disconnected");
+    final anyConnected =
+        boxes.any((b) => b.connectionStatus != "Disconnected");
     if (!anyConnected) {
       _logInactivityTimer?.cancel();
       isRecordingLogs = false;
-      await BackgroundServiceManager.stop();
+      await ServiceManager.stop();
     }
   }
 
   Future<void> toggleLoop() async {
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
-      BackgroundServiceManager.sendCommand('toggleLoop', {'boxIndex': i});
+      ServiceManager.sendCommand('toggleLoop', {'boxIndex': i});
     }
   }
 
   Future<void> togglePotLock() async {
-    final targets = settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
+    final targets =
+        settings.linkDevicesEnabled ? [0, 1] : [settings.activeUiBoxIndex];
     for (var i in targets) {
-      BackgroundServiceManager.sendCommand('togglePotLock', {'boxIndex': i});
+      ServiceManager.sendCommand('togglePotLock', {'boxIndex': i});
     }
   }
 }

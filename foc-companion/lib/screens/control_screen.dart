@@ -52,7 +52,7 @@ class ControlScreen extends StatelessWidget {
                         // Stop any running loops so both boxes start in sync
                         for (int i = 0; i < 2; i++) {
                           if (device.boxes[i].isLoopRunning) {
-                            BackgroundServiceManager.sendCommand('toggleLoop', {
+                            ServiceManager.sendCommand('toggleLoop', {
                               'boxIndex': i,
                             });
                           }
@@ -62,7 +62,7 @@ class ControlScreen extends StatelessWidget {
                         final vol1 = device.boxes[1].boxVolume;
                         final safeVolume = vol0 < vol1 ? vol0 : vol1;
                         for (int i = 0; i < 2; i++) {
-                          BackgroundServiceManager.sendCommand('setVolume', {
+                          ServiceManager.sendCommand('setVolume', {
                             'boxIndex': i,
                             'volume': safeVolume,
                           });

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:foc_companion/services/app_logger.dart';
 import 'package:foc_companion/services/focstim_api_service.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
@@ -20,6 +21,41 @@ const _kTickInterval = Duration(milliseconds: 33); // 30 Hz
 // How many consecutive skipped ticks (each 33 ms) before we flag the
 // connection as slow. 3 ticks ≈ 100 ms behind — clearly not keeping 30 Hz.
 const _kSlowThreshold = 3;
+
+// ─────────────────────────────────────────────────────────
+// Axis conversion: user-facing 0–1 values → firmware units
+// ─────────────────────────────────────────────────────────
+
+/// Converts the three intuitive axes (speed, pulse, texture) to the three
+/// firmware parameters (pulse_frequency_hz, pulse_width_cycles,
+/// pulse_rise_time_cycles).
+///
+/// [carrierHz]  AXIS_CARRIER_FREQUENCY_HZ (current value)
+/// [speed]      0 = slow (long inter-pulse gap), 1 = fast (short gap)
+/// [pulse]      0 = brief wavelet (3 cycles), 1 = sustained (20 cycles)
+/// [texture]    0 = sharp onset (min rise), 1 = smooth (max rise)
+({double freqHz, double widthCycles, double riseCycles}) pulseFirmwareAxes({
+  required double carrierHz,
+  required double speed,
+  required double pulse,
+  required double texture,
+}) {
+  // 1. Wavelet duration in cycles (3..20) and seconds
+  final widthCycles = (3.0 + pulse * 17.0).clamp(3.0, 20.0);
+  final waveletSeconds = widthCycles / carrierHz;
+
+  // 2. Inter-pulse gap: 0.5 s (slow) → 0.005 s (fast), logarithmic
+  //    gap = 0.5 × (0.01)^speed
+  final gapSeconds = 0.5 * math.pow(0.01, speed.clamp(0.0, 1.0));
+  final freqHz = (1.0 / (waveletSeconds + gapSeconds)).clamp(1.0, 300.0);
+
+  // 3. Rise time: 2 cycles (sharp) → pulse_width/2 cycles (smooth), capped at 10
+  final effectiveMaxRise = (widthCycles / 2.0).clamp(2.0, 10.0);
+  final riseCycles =
+      (2.0 + texture * (effectiveMaxRise - 2.0)).clamp(2.0, 10.0);
+
+  return (freqHz: freqHz, widthCycles: widthCycles, riseCycles: riseCycles);
+}
 
 // ─────────────────────────────────────────────────────────
 // 4-Phase command loop
@@ -136,11 +172,20 @@ class FourPhaseCommandLoop {
     final modCfg = _pulseFreqMod.config;
     final freqModActive = modCfg.mode == 'freq' || modCfg.mode == 'both';
     final widthModActive = modCfg.mode == 'width' || modCfg.mode == 'both';
+
+    // Convert intuitive axes to firmware units.
+    final axes = pulseFirmwareAxes(
+      carrierHz: _pulse.carrierFrequency,
+      speed: _pulse.speed,
+      pulse: _pulse.pulse,
+      texture: _pulse.texture,
+    );
+
+    // Pulse-modulation oscillator overrides freq and/or width when active.
     final modFreq = freqModActive
         ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
             .clamp(1.0, 300.0)
-        : _pulse.pulseFrequency;
-    // Width uses a phase-shifted sample of the same oscillator.
+        : axes.freqHz;
     final modWidth = widthModActive
         ? (modCfg.minWidth +
                 (modCfg.maxWidth - modCfg.minWidth) *
@@ -149,7 +194,7 @@ class FourPhaseCommandLoop {
                           1) /
                     2)
             .clamp(3.0, 15.0)
-        : _pulse.pulseWidth;
+        : axes.widthCycles;
 
     // Collect futures for changed axes only (or all axes on full sync).
     final futs = <Future<Response>>[];
@@ -177,7 +222,7 @@ class FourPhaseCommandLoop {
     send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, _pulse.carrierFrequency);
     send(AxisType.AXIS_PULSE_FREQUENCY_HZ, modFreq);
     send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, modWidth);
-    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, _pulse.pulseRiseTime);
+    send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, axes.riseCycles);
     send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         _pulse.pulseIntervalRandom / 100.0);
     send(AxisType.AXIS_CALIBRATION_4_A, _device.calibration4A);
@@ -214,8 +259,14 @@ class FourPhaseCommandLoop {
           ..interval = 0));
     }
 
-    var p = _pulse;
-    var d = _device;
+    final p = _pulse;
+    final d = _device;
+    final axes = pulseFirmwareAxes(
+      carrierHz: p.carrierFrequency,
+      speed: p.speed,
+      pulse: p.pulse,
+      texture: p.texture,
+    );
 
     await send(AxisType.AXIS_ELECTRODE_1_POWER, 0);
     await send(AxisType.AXIS_ELECTRODE_2_POWER, 0);
@@ -223,9 +274,9 @@ class FourPhaseCommandLoop {
     await send(AxisType.AXIS_ELECTRODE_4_POWER, 0);
     await send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, 0);
     await send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, p.carrierFrequency);
-    await send(AxisType.AXIS_PULSE_FREQUENCY_HZ, p.pulseFrequency);
-    await send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, p.pulseWidth);
-    await send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, p.pulseRiseTime);
+    await send(AxisType.AXIS_PULSE_FREQUENCY_HZ, axes.freqHz);
+    await send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, axes.widthCycles);
+    await send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, axes.riseCycles);
     await send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         p.pulseIntervalRandom / 100.0);
     await send(AxisType.AXIS_CALIBRATION_4_A, d.calibration4A);
@@ -380,6 +431,14 @@ class CommandLoop {
             ramp
         : volume * _device.waveformAmplitude * ramp;
 
+    // Convert intuitive axes to firmware units.
+    final axes = pulseFirmwareAxes(
+      carrierHz: _pulse.carrierFrequency,
+      speed: _pulse.speed,
+      pulse: _pulse.pulse,
+      texture: _pulse.texture,
+    );
+
     // Pulse modulation still applies unless funscript overrides the axis.
     final norm = _pulseFreqMod.update(dt, velocity);
     final modCfg = _pulseFreqMod.config;
@@ -398,10 +457,10 @@ class CommandLoop {
         : (freqModActive
             ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
                 .clamp(1.0, 300.0)
-            : _pulse.pulseFrequency);
+            : axes.freqHz);
 
     final double modWidth = useFunscript
-        ? (fsDevice('pulse_width', min: 3.0, max: 15.0) ?? _pulse.pulseWidth)
+        ? (fsDevice('pulse_width', min: 3.0, max: 15.0) ?? axes.widthCycles)
         : (widthModActive
             ? (modCfg.minWidth +
                     (modCfg.maxWidth - modCfg.minWidth) *
@@ -410,11 +469,11 @@ class CommandLoop {
                               1) /
                             2)
                 .clamp(3.0, 15.0)
-            : _pulse.pulseWidth);
+            : axes.widthCycles);
 
     final double pulseRiseTime = useFunscript
-        ? (fsDevice('pulse_rise_time', min: 2.0, max: 20.0) ?? _pulse.pulseRiseTime)
-        : _pulse.pulseRiseTime;
+        ? (fsDevice('pulse_rise_time', min: 2.0, max: 20.0) ?? axes.riseCycles)
+        : axes.riseCycles;
 
     final double pulseIntervalRandom = useFunscript
         ? (fsDevice('pulse_interval_random', min: 0.0, max: 1.0) ??
@@ -479,16 +538,22 @@ class CommandLoop {
           ..interval = 0));
     }
 
-    var p = _pulse;
-    var d = _device;
+    final p = _pulse;
+    final d = _device;
+    final axes = pulseFirmwareAxes(
+      carrierHz: p.carrierFrequency,
+      speed: p.speed,
+      pulse: p.pulse,
+      texture: p.texture,
+    );
 
     await send(AxisType.AXIS_POSITION_ALPHA, 0);
     await send(AxisType.AXIS_POSITION_BETA, 0);
     await send(AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS, 0);
     await send(AxisType.AXIS_CARRIER_FREQUENCY_HZ, p.carrierFrequency);
-    await send(AxisType.AXIS_PULSE_FREQUENCY_HZ, p.pulseFrequency);
-    await send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, p.pulseWidth);
-    await send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, p.pulseRiseTime);
+    await send(AxisType.AXIS_PULSE_FREQUENCY_HZ, axes.freqHz);
+    await send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, axes.widthCycles);
+    await send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, axes.riseCycles);
     await send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         p.pulseIntervalRandom / 100.0);
     await send(AxisType.AXIS_CALIBRATION_3_CENTER, d.calibration3Center);

@@ -190,30 +190,64 @@ class DeviceSettings {
 }
 
 // ──────────────────────────────────────────────
-// Pulse settings
+// Pulse settings — intuitive 0–1 axes
+//
+// Three user-facing axes replace the old firmware-unit parameters:
+//   speed   : inter-pulse gap (0 = slow/long gap, 1 = fast/short gap)
+//   pulse   : wavelet duration (0 = short/brief, 1 = long/sustained)
+//   texture : onset sharpness  (0 = sharp,        1 = smooth)
+//
+// The command loop converts these to firmware units; see axis_math.dart.
 // ──────────────────────────────────────────────
 
 class PulseSettings {
   double carrierFrequency = 700;
-  double pulseFrequency = 50;
-  double pulseWidth = 5;
-  double pulseRiseTime = 3;
+  double speed = 0.5;             // 0–1
+  double pulse = 0.25;            // 0–1 (maps to ~7 cycles at default)
+  double texture = 0.3;           // 0–1
   double pulseIntervalRandom = 10;
 
   Map<String, dynamic> toJson() => {
         'carrierFrequency': carrierFrequency,
-        'pulseFrequency': pulseFrequency,
-        'pulseWidth': pulseWidth,
-        'pulseRiseTime': pulseRiseTime,
+        'speed': speed,
+        'pulse': pulse,
+        'texture': texture,
         'pulseIntervalRandom': pulseIntervalRandom,
       };
 
   PulseSettings.fromJson(Map<String, dynamic> json) {
-    carrierFrequency = json['carrierFrequency'] ?? 700;
-    pulseFrequency = json['pulseFrequency'] ?? 50;
-    pulseWidth = json['pulseWidth'] ?? 5;
-    pulseRiseTime = json['pulseRiseTime'] ?? 3;
-    pulseIntervalRandom = json['pulseIntervalRandom'] ?? 10;
+    carrierFrequency = (json['carrierFrequency'] as num?)?.toDouble() ?? 700;
+    pulseIntervalRandom =
+        (json['pulseIntervalRandom'] as num?)?.toDouble() ?? 10;
+
+    if (json.containsKey('speed')) {
+      // New format
+      speed = (json['speed'] as num?)?.toDouble() ?? 0.5;
+      pulse = (json['pulse'] as num?)?.toDouble() ?? 0.25;
+      texture = (json['texture'] as num?)?.toDouble() ?? 0.3;
+    } else {
+      // Migrate from old firmware-unit format
+      final oldWidth = (json['pulseWidth'] as num?)?.toDouble() ?? 5.0;
+      final oldRise = (json['pulseRiseTime'] as num?)?.toDouble() ?? 3.0;
+      final oldFreq = (json['pulseFrequency'] as num?)?.toDouble() ?? 50.0;
+
+      // pulse: (width - 3) / 17  [3..20 cycles → 0..1]
+      pulse = ((oldWidth - 3.0) / 17.0).clamp(0.0, 1.0);
+
+      // texture: inverse of the rise-time mapping
+      final effectiveMax = (oldWidth / 2.0).clamp(2.0, 10.0);
+      texture = effectiveMax > 2.0
+          ? ((oldRise - 2.0) / (effectiveMax - 2.0)).clamp(0.0, 1.0)
+          : 0.0;
+
+      // speed: invert  gap → speed
+      // gap = period - waveletSeconds; period = 1/freq
+      final wavelet = oldWidth / carrierFrequency;
+      final gap = (1.0 / oldFreq) - wavelet;
+      // gap = 0.5 * 0.01^speed  → speed = log(gap/0.5) / log(0.01)
+      final clampedGap = gap.clamp(0.005, 0.5);
+      speed = (1.0 - (clampedGap - 0.005) / (0.5 - 0.005)).clamp(0.0, 1.0);
+    }
   }
 
   PulseSettings();

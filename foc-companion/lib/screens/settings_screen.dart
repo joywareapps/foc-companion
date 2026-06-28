@@ -283,7 +283,16 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
 
   void _refreshPorts() {
     final ports = FocStimApiService.listSerialPorts();
-    if (mounted) setState(() => _availablePorts = ports);
+    if (mounted) {
+      setState(() => _availablePorts = ports);
+      if (ports.isEmpty) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(const SnackBar(
+            content: Text("No serial ports found — check app_log for details"),
+          ));
+      }
+    }
   }
 
   @override

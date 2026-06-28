@@ -91,7 +91,8 @@ class FocStimApiService {
     if (Platform.isAndroid || Platform.isIOS) return [];
     try {
       return SerialPort.availablePorts;
-    } catch (_) {
+    } catch (e) {
+      _log.e("listSerialPorts failed", error: e);
       return [];
     }
   }

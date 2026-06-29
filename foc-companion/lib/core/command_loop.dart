@@ -452,8 +452,18 @@ class CommandLoop {
             _pulse.carrierFrequency)
         : _pulse.carrierFrequency;
 
+    // pulse_frequency funscript axis is treated as 0–1 "speed" (same semantics
+    // as the pulse tab slider), so the gap (silence between pulses) is what
+    // changes rather than the total period.
     final double modFreq = useFunscript
-        ? (fsDevice('pulse_frequency', min: 1.0, max: 100.0) ?? axes.freqHz)
+        ? (fsVal('pulse_frequency') != null
+            ? pulseFirmwareAxes(
+                carrierHz: _pulse.carrierFrequency,
+                speed: fsVal('pulse_frequency')!.clamp(0.0, 1.0),
+                pulse: _pulse.pulse,
+                texture: _pulse.texture,
+              ).freqHz
+            : axes.freqHz)
         : (freqModActive
             ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
                 .clamp(1.0, 100.0)

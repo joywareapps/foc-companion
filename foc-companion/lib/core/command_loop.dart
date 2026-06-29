@@ -47,7 +47,7 @@ const _kSlowThreshold = 3;
   // 2. Inter-pulse gap: 0.5 s (slow) → 0.005 s (fast), logarithmic
   //    gap = 0.5 × (0.01)^speed
   final gapSeconds = 0.5 * math.pow(0.01, speed.clamp(0.0, 1.0));
-  final freqHz = (1.0 / (waveletSeconds + gapSeconds)).clamp(1.0, 300.0);
+  final freqHz = (1.0 / (waveletSeconds + gapSeconds)).clamp(1.0, 100.0);
 
   // 3. Rise time: 2 cycles (sharp) → pulse_width/2 cycles (smooth), capped at 10
   final effectiveMaxRise = (widthCycles / 2.0).clamp(2.0, 10.0);
@@ -184,7 +184,7 @@ class FourPhaseCommandLoop {
     // Pulse-modulation oscillator overrides freq and/or width when active.
     final modFreq = freqModActive
         ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
-            .clamp(1.0, 300.0)
+            .clamp(1.0, 100.0)
         : axes.freqHz;
     final modWidth = widthModActive
         ? (modCfg.minWidth +
@@ -453,10 +453,10 @@ class CommandLoop {
         : _pulse.carrierFrequency;
 
     final double modFreq = useFunscript
-        ? (fsDevice('pulse_frequency', min: 1.0, max: 300.0) ?? axes.freqHz)
+        ? (fsDevice('pulse_frequency', min: 1.0, max: 100.0) ?? axes.freqHz)
         : (freqModActive
             ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
-                .clamp(1.0, 300.0)
+                .clamp(1.0, 100.0)
             : axes.freqHz);
 
     final double modWidth = useFunscript

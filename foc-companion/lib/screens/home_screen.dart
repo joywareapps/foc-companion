@@ -380,19 +380,31 @@ class _PlayBar extends StatelessWidget {
       // ── Running: volume slider (0–100%) + stop button ──
       final vol = device.volume;
       final boxVol = device.boxVolume;
-      final totalVol = vol * boxVol;
+      final sensorMult = device.sensorMultiplier;
+      final potentialVol = vol * boxVol;
+      final actualVol = potentialVol * sensorMult;
 
       return Container(
         color: colorScheme.surfaceContainerHighest,
         child: Stack(
           children: [
-            // VU-meter background fill
+            // Base layer: Potential volume (less saturated/semi-transparent)
             Positioned.fill(
               child: FractionallySizedBox(
                 alignment: Alignment.centerLeft,
-                widthFactor: totalVol.clamp(0.0, 1.0),
+                widthFactor: potentialVol.clamp(0.0, 1.0),
                 child: Container(
-                  color: colorScheme.primary.withAlpha(40),
+                  color: colorScheme.primary.withAlpha(20),
+                ),
+              ),
+            ),
+            // Top layer: Actual volume modified by sensor (opaque)
+            Positioned.fill(
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: actualVol.clamp(0.0, 1.0),
+                child: Container(
+                  color: colorScheme.primary.withAlpha(80),
                 ),
               ),
             ),
@@ -440,7 +452,7 @@ class _PlayBar extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.only(right: 8.0),
                               child: Text(
-                                'Total: ${(totalVol * 100).round()}%',
+                                'Total: ${(actualVol * 100).round()}%',
                                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: colorScheme.primary,

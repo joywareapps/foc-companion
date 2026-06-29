@@ -386,6 +386,97 @@ class FunscriptLocation {
 }
 
 // ──────────────────────────────────────────────
+// Sensor Settings
+// ──────────────────────────────────────────────
+
+class As5311ModeConfig {
+  double threshold;
+  double range;
+  double decayRate;
+  double volumeChange;
+  double sliderMin;
+  double sliderMax;
+  bool useAbsolute;
+
+  As5311ModeConfig({
+    this.threshold = 0.1,
+    this.range = 0.5,
+    this.decayRate = 1.0,
+    this.volumeChange = 0.5,
+    this.sliderMin = -2.0,
+    this.sliderMax = 2.0,
+    this.useAbsolute = true,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'threshold': threshold,
+        'range': range,
+        'decayRate': decayRate,
+        'volumeChange': volumeChange,
+        'sliderMin': sliderMin,
+        'sliderMax': sliderMax,
+        'useAbsolute': useAbsolute,
+      };
+
+  As5311ModeConfig.fromJson(Map<String, dynamic>? json)
+      : threshold = ((json?['threshold'] ?? 0.1) as num).toDouble(),
+        range = ((json?['range'] ?? 0.5) as num).toDouble(),
+        decayRate = ((json?['decayRate'] ?? 1.0) as num).toDouble(),
+        volumeChange = ((json?['volumeChange'] ?? 0.5) as num).toDouble(),
+        sliderMin = ((json?['sliderMin'] ?? -2.0) as num).toDouble(),
+        sliderMax = ((json?['sliderMax'] ?? 2.0) as num).toDouble(),
+        useAbsolute = json?['useAbsolute'] as bool? ?? true;
+}
+
+class As5311Settings {
+  String mode; // 'off', 'absolute', 'velocity', 'highpass'
+  int targetBox; // 0 for Box 1, 1 for Box 2, 2 for Both
+  As5311ModeConfig absoluteMode;
+  As5311ModeConfig velocityMode;
+  As5311ModeConfig highpassMode;
+
+  As5311Settings({
+    this.mode = 'off',
+    this.targetBox = 0,
+    As5311ModeConfig? absoluteMode,
+    As5311ModeConfig? velocityMode,
+    As5311ModeConfig? highpassMode,
+  })  : absoluteMode = absoluteMode ??
+            As5311ModeConfig(sliderMin: -2.0, sliderMax: 2.0, useAbsolute: true),
+        velocityMode = velocityMode ??
+            As5311ModeConfig(sliderMin: -10.0, sliderMax: 10.0, useAbsolute: true),
+        highpassMode = highpassMode ??
+            As5311ModeConfig(sliderMin: -2.0, sliderMax: 2.0, useAbsolute: true);
+
+  As5311ModeConfig get activeConfig {
+    if (mode == 'velocity') return velocityMode;
+    if (mode == 'highpass') return highpassMode;
+    return absoluteMode;
+  }
+
+  Map<String, dynamic> toJson() => {
+        'mode': mode,
+        'targetBox': targetBox,
+        'absoluteMode': absoluteMode.toJson(),
+        'velocityMode': velocityMode.toJson(),
+        'highpassMode': highpassMode.toJson(),
+      };
+
+  As5311Settings.fromJson(Map<String, dynamic> json)
+      : mode = json['mode'] ?? 'off',
+        targetBox = json['targetBox'] ?? 0,
+        absoluteMode = json.containsKey('absoluteMode')
+            ? As5311ModeConfig.fromJson(json['absoluteMode'])
+            : As5311ModeConfig(sliderMin: -2.0, sliderMax: 2.0),
+        velocityMode = json.containsKey('velocityMode')
+            ? As5311ModeConfig.fromJson(json['velocityMode'])
+            : As5311ModeConfig(sliderMin: -10.0, sliderMax: 10.0),
+        highpassMode = json.containsKey('highpassMode')
+            ? As5311ModeConfig.fromJson(json['highpassMode'])
+            : As5311ModeConfig(sliderMin: -2.0, sliderMax: 2.0);
+}
+
+// ──────────────────────────────────────────────
 // Box profile (grouping connection, device, pulse and cockpit configurations)
 // ──────────────────────────────────────────────
 
@@ -397,6 +488,7 @@ class BoxProfile {
   PulseSettings pulse;
   CockpitSettings cockpit;
   CockpitSettings cockpit4Phase;
+  As5311Settings as5311;
 
   BoxProfile({
     required this.name,
@@ -406,11 +498,13 @@ class BoxProfile {
     PulseSettings? pulse,
     CockpitSettings? cockpit,
     CockpitSettings? cockpit4Phase,
+    As5311Settings? as5311,
   })  : connection = connection ?? FocStimSettings(),
         device = device ?? DeviceSettings(),
         pulse = pulse ?? PulseSettings(),
         cockpit = cockpit ?? CockpitSettings(),
-        cockpit4Phase = cockpit4Phase ?? CockpitSettings();
+        cockpit4Phase = cockpit4Phase ?? CockpitSettings(),
+        as5311 = as5311 ?? As5311Settings();
 
   Map<String, dynamic> toJson() => {
         'name': name,
@@ -420,6 +514,7 @@ class BoxProfile {
         'pulse': pulse.toJson(),
         'cockpit': cockpit.toJson(),
         'cockpit4Phase': cockpit4Phase.toJson(),
+        'as5311': as5311.toJson(),
       };
 
   BoxProfile.fromJson(Map<String, dynamic> json)
@@ -439,5 +534,8 @@ class BoxProfile {
             : CockpitSettings(),
         cockpit4Phase = json['cockpit4Phase'] != null
             ? CockpitSettings.fromJson(Map<String, dynamic>.from(json['cockpit4Phase']))
-            : CockpitSettings();
+            : CockpitSettings(),
+        as5311 = json['as5311'] != null
+            ? As5311Settings.fromJson(Map<String, dynamic>.from(json['as5311']))
+            : As5311Settings();
 }

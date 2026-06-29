@@ -38,6 +38,10 @@ class BoxStatus {
   double? impedanceC;
   double? impedanceD;
 
+  double sensorRaw = 0.0;
+  double sensorDecayed = 0.0;
+  double sensorMultiplier = 1.0;
+
   BoxStatus(this.index);
 }
 
@@ -63,6 +67,9 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
   double? get impedanceB => activeBoxStatus.impedanceB;
   double? get impedanceC => activeBoxStatus.impedanceC;
   double? get impedanceD => activeBoxStatus.impedanceD;
+  double get sensorRaw => activeBoxStatus.sensorRaw;
+  double get sensorDecayed => activeBoxStatus.sensorDecayed;
+  double get sensorMultiplier => activeBoxStatus.sensorMultiplier;
 
   final List<String> capturedLogs = [];
   bool isRecordingLogs = false;
@@ -139,6 +146,7 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
         'pulse': settings.boxes[i].pulse.toJson(),
         'cockpit': settings.boxes[i].cockpit.toJson(),
         'cockpit4Phase': settings.boxes[i].cockpit4Phase.toJson(),
+        'as5311': settings.boxes[i].as5311.toJson(),
         'deviceBehavior': settings.deviceBehavior.toJson(),
       });
     }
@@ -241,6 +249,13 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
             }
           }
         }
+        notifyListeners();
+        break;
+
+      case 'sensorTelemetry':
+        box.sensorRaw = (msg['raw'] as num).toDouble();
+        box.sensorDecayed = (msg['decayed'] as num).toDouble();
+        box.sensorMultiplier = (msg['multiplier'] as num).toDouble();
         notifyListeners();
         break;
     }

@@ -8,26 +8,43 @@ class SambaService {
   SambaService._();
   static final instance = SambaService._();
 
+  String _cleanShare(String raw) {
+    final s = raw.replaceAll('\\', '/').replaceAll('//', '/');
+    return s.startsWith('/') ? s.substring(1) : s;
+  }
+
+  String _cleanPath(String raw) {
+    final s = raw.replaceAll('\\', '/').trim();
+    // Strip leading/trailing slashes so we can safely join with '/'
+    return s.replaceAll(RegExp(r'^/+|/+$'), '');
+  }
+
+  /// Resolves the directory path within the share for listing.
+  String _listDir(FunscriptLocation loc) {
+    return _cleanPath(loc.smbPath);
+  }
+
+  /// Prefixes [filename] with the subfolder path when non-empty.
+  String _remotePath(FunscriptLocation loc, String filename) {
+    final dir = _cleanPath(loc.smbPath);
+    return dir.isEmpty ? filename : '$dir/$filename';
+  }
+
   /// Test connection to an SMB location.
   /// Returns null on success, or an error message on failure.
   Future<String?> testConnection(FunscriptLocation loc) async {
     if (loc.type != 'smb') return "Invalid location type";
 
     try {
-      final share = loc.smbShare.replaceAll('\\', '/').replaceAll('//', '/');
-      final cleanShare = share.startsWith('/') ? share.substring(1) : share;
-
       final pool = await Smb2Pool.connect(
         host: loc.smbHost,
-        share: cleanShare,
+        share: _cleanShare(loc.smbShare),
         user: loc.smbUsername.isEmpty ? 'guest' : loc.smbUsername,
         password: loc.smbPassword,
         domain: loc.smbDomain,
       );
-      
-      // Try to list the root of the share to verify access
-      // Using empty string as some servers reject '.'
-      await pool.listDirectory('');
+
+      await pool.listDirectory(_listDir(loc));
       await pool.disconnect();
       return null; // Success
     } catch (e) {
@@ -37,34 +54,30 @@ class SambaService {
   }
 
   /// Search for a file in an SMB location.
-  /// Returns the remote path if found, null otherwise.
+  /// Returns the remote path (with subfolder prefix) if found, null otherwise.
   Future<String?> findFile(FunscriptLocation loc, String pattern) async {
     if (loc.type != 'smb') return null;
 
     try {
-      final share = loc.smbShare.replaceAll('\\', '/').replaceAll('//', '/');
-      final cleanShare = share.startsWith('/') ? share.substring(1) : share;
-
       final pool = await Smb2Pool.connect(
         host: loc.smbHost,
-        share: cleanShare,
+        share: _cleanShare(loc.smbShare),
         user: loc.smbUsername.isEmpty ? 'guest' : loc.smbUsername,
         password: loc.smbPassword,
         domain: loc.smbDomain,
       );
 
-      // Pattern is usually "Filename.focb" or "Filename.zip"
-      final entries = await pool.listDirectory('');
-      
+      final entries = await pool.listDirectory(_listDir(loc));
+
       String? foundPath;
       for (final entry in entries) {
         if (entry.name.toLowerCase() == pattern.toLowerCase()) {
-          AppLogger.instance.i("SambaService: found match '$pattern' at ${loc.smbHost}/$cleanShare");
-          foundPath = entry.name;
+          foundPath = _remotePath(loc, entry.name);
+          AppLogger.instance.i("SambaService: found '$pattern' at ${loc.smbHost}/${loc.smbShare}/$foundPath");
           break;
         }
       }
-      
+
       await pool.disconnect();
       return foundPath;
     } catch (e) {
@@ -74,14 +87,12 @@ class SambaService {
   }
 
   /// Download a file from SMB to a temporary local file.
+  /// [remotePath] should already include any subfolder prefix (as returned by findFile).
   Future<File?> downloadFile(FunscriptLocation loc, String remotePath) async {
     try {
-      final share = loc.smbShare.replaceAll('\\', '/').replaceAll('//', '/');
-      final cleanShare = share.startsWith('/') ? share.substring(1) : share;
-
       final pool = await Smb2Pool.connect(
         host: loc.smbHost,
-        share: cleanShare,
+        share: _cleanShare(loc.smbShare),
         user: loc.smbUsername.isEmpty ? 'guest' : loc.smbUsername,
         password: loc.smbPassword,
         domain: loc.smbDomain,

@@ -238,7 +238,9 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
 
           ...m.funscriptLocations.map((loc) => ListTile(
                 title: Text(loc.name),
-                subtitle: Text(loc.type == 'local' ? "Local: ${loc.localPath}" : "SMB: ${loc.smbHost}/${loc.smbShare}"),
+                subtitle: Text(loc.type == 'local'
+                    ? "Local: ${loc.localPath}"
+                    : "SMB: ${loc.smbHost}/${loc.smbShare}${loc.smbPath.isNotEmpty ? '/${loc.smbPath}' : ''}"),
                 onTap: () => _showAddLocationDialog(context, m, location: loc),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
@@ -277,6 +279,7 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
     String localPath = location?.localPath ?? "/storage/emulated/0/Download";
     String smbHost = location?.smbHost ?? "";
     String smbShare = location?.smbShare ?? "";
+    String smbPath = location?.smbPath ?? "";
     String smbDomain = location?.smbDomain ?? "WORKGROUP";
     String smbUser = location?.smbUsername ?? "";
     String smbPass = location?.smbPassword ?? "";
@@ -321,6 +324,14 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
                     decoration: const InputDecoration(labelText: "Share Name"),
                     controller: TextEditingController(text: smbShare)..selection = TextSelection.collapsed(offset: smbShare.length),
                     onChanged: (v) => smbShare = v,
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: "Subfolder (optional)",
+                      hintText: "e.g. funscripts/hd",
+                    ),
+                    controller: TextEditingController(text: smbPath)..selection = TextSelection.collapsed(offset: smbPath.length),
+                    onChanged: (v) => smbPath = v,
                   ),
                   TextField(
                     decoration: const InputDecoration(labelText: "Workgroup / Domain"),
@@ -384,6 +395,7 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
                   target.localPath = localPath;
                   target.smbHost = smbHost;
                   target.smbShare = smbShare;
+                  target.smbPath = smbPath;
                   target.smbDomain = smbDomain;
                   target.smbUsername = smbUser;
                   target.smbPassword = smbPass;

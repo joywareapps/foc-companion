@@ -362,6 +362,7 @@ class FunscriptLocation {
   // SMB fields
   String smbHost = "";
   String smbShare = "";
+  String smbPath = "";  // Optional subfolder within the share (e.g. "funscripts/hd")
   String smbDomain = "WORKGROUP";
   String smbUsername = "";
   String smbPassword = "";
@@ -373,6 +374,7 @@ class FunscriptLocation {
     'localPath': localPath,
     'smbHost': smbHost,
     'smbShare': smbShare,
+    'smbPath': smbPath,
     'smbDomain': smbDomain,
     'smbUsername': smbUsername,
     'smbPassword': smbPassword,
@@ -385,6 +387,7 @@ class FunscriptLocation {
     localPath = json['localPath'] ?? "";
     smbHost = json['smbHost'] ?? "";
     smbShare = json['smbShare'] ?? "";
+    smbPath = json['smbPath'] ?? "";
     smbDomain = json['smbDomain'] ?? "WORKGROUP";
     smbUsername = json['smbUsername'] ?? "";
     smbPassword = json['smbPassword'] ?? "";

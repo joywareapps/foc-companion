@@ -270,7 +270,8 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
   void didUpdateWidget(covariant _ConnectionSettingsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.boxIndex != widget.boxIndex) {
-      _loadInputs();
+      setState(() => _loadInputs());
+      if (_isDesktop) _refreshPorts();
     }
   }
 

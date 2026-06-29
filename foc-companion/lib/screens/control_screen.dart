@@ -31,7 +31,7 @@ class ControlScreen extends StatelessWidget {
                         ButtonSegment(value: 1, label: Text("Box 2"), icon: Icon(Icons.looks_two)),
                       ],
                       selected: {device.settings.activeUiBoxIndex},
-                      onSelectionChanged: (s) => device.settings.setActiveUiBoxIndex(s.first),
+                      onSelectionChanged: (s) => device.setActiveUiBoxIndex(s.first),
                       showSelectedIcon: false,
                     ),
                   ),

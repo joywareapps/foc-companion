@@ -438,6 +438,11 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
+  void setActiveUiBoxIndex(int index) {
+    settings.setActiveUiBoxIndex(index);
+    notifyListeners();
+  }
+
   DeviceMode get deviceMode => settings.device.deviceMode;
 
   void setDeviceMode(DeviceMode mode) {

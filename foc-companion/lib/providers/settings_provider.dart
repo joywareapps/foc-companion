@@ -177,9 +177,29 @@ class SettingsProvider with ChangeNotifier {
 
   Future<bool> reloadCalibration() async {
     final prefs = await SharedPreferences.getInstance();
-    final json = prefs.getString('device_settings');
-    if (json == null) return false;
-    final saved = DeviceSettings.fromJson(jsonDecode(json));
+
+    DeviceSettings? saved;
+
+    // Prefer the current multi-box storage format.
+    final boxesJson = prefs.getString('box_profiles_v2');
+    if (boxesJson != null) {
+      try {
+        final List decoded = jsonDecode(boxesJson);
+        if (activeUiBoxIndex < decoded.length) {
+          final boxMap = Map<String, dynamic>.from(decoded[activeUiBoxIndex] as Map);
+          final deviceMap = boxMap['device'] as Map<String, dynamic>?;
+          if (deviceMap != null) saved = DeviceSettings.fromJson(deviceMap);
+        }
+      } catch (_) {}
+    }
+
+    // Fall back to old single-box key for users who haven't migrated yet.
+    if (saved == null) {
+      final json = prefs.getString('device_settings');
+      if (json == null) return false;
+      saved = DeviceSettings.fromJson(jsonDecode(json));
+    }
+
     device
       ..calibration3Center = saved.calibration3Center
       ..calibration3Up = saved.calibration3Up
@@ -191,6 +211,10 @@ class SettingsProvider with ChangeNotifier {
       ..calibration4B = saved.calibration4B
       ..calibration4C = saved.calibration4C
       ..calibration4D = saved.calibration4D;
+
+    // Sync Up/Left → A/B/C in case this save predates the A/B/C fields.
+    _syncFromUdLrForBox(device);
+
     notifyListeners();
     return true;
   }

@@ -100,6 +100,7 @@ class FocStimApiService {
   // ─── Shared ─────────────────────────────────────────────────────────────────
 
   void disconnect() {
+    if (!isConnected) return;
     _socket?.close();
     _socket = null;
     _serialReader?.close();

@@ -1,3 +1,5 @@
+import 'dart:math' as dart_math;
+
 enum DeviceMode { threePhase, fourPhase }
 
 enum VideoPlayerType { none, heresphere, mpcHc, vlc }
@@ -239,11 +241,10 @@ class PulseSettings {
 
       // speed: invert  gap → speed
       // gap = period - waveletSeconds; period = 1/freq
+      // Forward: gap = 0.5 × 0.01^speed  →  speed = log(gap/0.5) / log(0.01)
       final wavelet = oldWidth / carrierFrequency;
-      final gap = (1.0 / oldFreq) - wavelet;
-      // gap = 0.5 * 0.01^speed  → speed = log(gap/0.5) / log(0.01)
-      final clampedGap = gap.clamp(0.005, 0.5);
-      speed = (1.0 - (clampedGap - 0.005) / (0.5 - 0.005)).clamp(0.0, 1.0);
+      final gap = ((1.0 / oldFreq) - wavelet).clamp(0.005, 0.5);
+      speed = (dart_math.log(gap / 0.5) / dart_math.log(0.01)).clamp(0.0, 1.0);
     }
   }
 

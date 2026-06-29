@@ -263,7 +263,7 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
   void initState() {
     super.initState();
     _loadInputs();
-    if (_isDesktop) _refreshPorts();
+    if (_isDesktop) _discoverPorts();
   }
 
   @override
@@ -271,7 +271,7 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
     super.didUpdateWidget(oldWidget);
     if (oldWidget.boxIndex != widget.boxIndex) {
       setState(() => _loadInputs());
-      if (_isDesktop) _refreshPorts();
+      if (_isDesktop) _discoverPorts();
     }
   }
 
@@ -282,17 +282,23 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
     _useSerial = conn.useSerial;
   }
 
+  // Silent discovery used on init and box switch — no snackbar.
+  void _discoverPorts() {
+    final ports = FocStimApiService.listSerialPorts();
+    if (mounted) setState(() => _availablePorts = ports);
+  }
+
+  // User-triggered refresh — shows snackbar when nothing is found.
   void _refreshPorts() {
     final ports = FocStimApiService.listSerialPorts();
-    if (mounted) {
-      setState(() => _availablePorts = ports);
-      if (ports.isEmpty) {
-        ScaffoldMessenger.of(context)
-          ..clearSnackBars()
-          ..showSnackBar(const SnackBar(
-            content: Text("No serial ports found — check app_log for details"),
-          ));
-      }
+    if (!mounted) return;
+    setState(() => _availablePorts = ports);
+    if (ports.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(const SnackBar(
+          content: Text("No serial ports found — check app_log for details"),
+        ));
     }
   }
 

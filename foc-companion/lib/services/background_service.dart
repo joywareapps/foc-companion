@@ -385,6 +385,8 @@ class FocStimServiceController {
     box.isLoopRunning = false;
     box.isSlowConnection = false;
     box.connectionStatus = "Disconnected";
+    box.threePhaseLoop.sensorVolumeMultiplier = 1.0;
+    box.fourPhaseLoop.sensorVolumeMultiplier = 1.0;
     box.threePhaseLoop.stop().catchError((e) => null);
     box.fourPhaseLoop.stop().catchError((e) => null);
     box.api.disconnect();
@@ -706,8 +708,10 @@ class FocStimServiceController {
     final box = _boxes[boxIndex]!;
     final settings = _settings?.boxes[boxIndex].as5311;
     if (settings == null || settings.mode == 'off') {
-      box.threePhaseLoop.sensorVolumeMultiplier = 1.0;
-      box.fourPhaseLoop.sensorVolumeMultiplier = 1.0;
+      for (final b in _boxes.values) {
+        b.threePhaseLoop.sensorVolumeMultiplier = 1.0;
+        b.fourPhaseLoop.sensorVolumeMultiplier = 1.0;
+      }
       return;
     }
 

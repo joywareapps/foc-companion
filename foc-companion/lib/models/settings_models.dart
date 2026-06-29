@@ -425,7 +425,7 @@ class As5311ModeConfig {
         volumeChange = ((json?['volumeChange'] ?? 0.5) as num).toDouble(),
         sliderMin = ((json?['sliderMin'] ?? -2.0) as num).toDouble(),
         sliderMax = ((json?['sliderMax'] ?? 2.0) as num).toDouble(),
-        useAbsolute = json?['useAbsolute'] as bool? ?? false;
+        useAbsolute = json?['useAbsolute'] as bool? ?? true;
 }
 
 class As5311Settings {

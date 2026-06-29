@@ -1,3 +1,5 @@
+import 'dart:math' as dart_math;
+
 enum DeviceMode { threePhase, fourPhase }
 
 enum VideoPlayerType { none, heresphere, mpcHc, vlc }
@@ -134,9 +136,8 @@ class DeviceSettings {
 
   // 3-Phase calibration
   double calibration3Center = -0.5;
-  double calibration3Up = 0.0;
-  double calibration3Left = 0.0;
-  String calibration3Interface = 'modern';
+  double calibration3Up = 0.0;    // kept for firmware protocol (command_loop sends AXIS_CALIBRATION_3_UP)
+  double calibration3Left = 0.0;  // kept for firmware protocol (command_loop sends AXIS_CALIBRATION_3_LEFT)
   double calibration3A = 0.0;
   double calibration3B = 0.0;
   double calibration3C = 0.0;
@@ -155,7 +156,6 @@ class DeviceSettings {
         'calibration3Center': calibration3Center,
         'calibration3Up': calibration3Up,
         'calibration3Left': calibration3Left,
-        'calibration3Interface': calibration3Interface,
         'calibration3A': calibration3A,
         'calibration3B': calibration3B,
         'calibration3C': calibration3C,
@@ -176,7 +176,6 @@ class DeviceSettings {
     calibration3Center = json['calibration3Center'] ?? -0.5;
     calibration3Up = json['calibration3Up'] ?? 0.0;
     calibration3Left = json['calibration3Left'] ?? 0.0;
-    calibration3Interface = json['calibration3Interface'] ?? 'modern';
     calibration3A = (json['calibration3A'] ?? 0.0).toDouble();
     calibration3B = (json['calibration3B'] ?? 0.0).toDouble();
     calibration3C = (json['calibration3C'] ?? 0.0).toDouble();
@@ -190,30 +189,63 @@ class DeviceSettings {
 }
 
 // ──────────────────────────────────────────────
-// Pulse settings
+// Pulse settings — intuitive 0–1 axes
+//
+// Three user-facing axes replace the old firmware-unit parameters:
+//   speed   : inter-pulse gap (0 = slow/long gap, 1 = fast/short gap)
+//   pulse   : wavelet duration (0 = short/brief, 1 = long/sustained)
+//   texture : onset sharpness  (0 = sharp,        1 = smooth)
+//
+// The command loop converts these to firmware units; see axis_math.dart.
 // ──────────────────────────────────────────────
 
 class PulseSettings {
   double carrierFrequency = 700;
-  double pulseFrequency = 50;
-  double pulseWidth = 5;
-  double pulseRiseTime = 3;
+  double speed = 0.5;             // 0–1
+  double pulse = 0.25;            // 0–1 (maps to ~7 cycles at default)
+  double texture = 0.3;           // 0–1
   double pulseIntervalRandom = 10;
 
   Map<String, dynamic> toJson() => {
         'carrierFrequency': carrierFrequency,
-        'pulseFrequency': pulseFrequency,
-        'pulseWidth': pulseWidth,
-        'pulseRiseTime': pulseRiseTime,
+        'speed': speed,
+        'pulse': pulse,
+        'texture': texture,
         'pulseIntervalRandom': pulseIntervalRandom,
       };
 
   PulseSettings.fromJson(Map<String, dynamic> json) {
-    carrierFrequency = json['carrierFrequency'] ?? 700;
-    pulseFrequency = json['pulseFrequency'] ?? 50;
-    pulseWidth = json['pulseWidth'] ?? 5;
-    pulseRiseTime = json['pulseRiseTime'] ?? 3;
-    pulseIntervalRandom = json['pulseIntervalRandom'] ?? 10;
+    carrierFrequency = (json['carrierFrequency'] as num?)?.toDouble() ?? 700;
+    pulseIntervalRandom =
+        (json['pulseIntervalRandom'] as num?)?.toDouble() ?? 10;
+
+    if (json.containsKey('speed')) {
+      // New format
+      speed = (json['speed'] as num?)?.toDouble() ?? 0.5;
+      pulse = (json['pulse'] as num?)?.toDouble() ?? 0.25;
+      texture = (json['texture'] as num?)?.toDouble() ?? 0.3;
+    } else {
+      // Migrate from old firmware-unit format
+      final oldWidth = (json['pulseWidth'] as num?)?.toDouble() ?? 5.0;
+      final oldRise = (json['pulseRiseTime'] as num?)?.toDouble() ?? 3.0;
+      final oldFreq = (json['pulseFrequency'] as num?)?.toDouble() ?? 50.0;
+
+      // pulse: (width - 3) / 17  [3..20 cycles → 0..1]
+      pulse = ((oldWidth - 3.0) / 17.0).clamp(0.0, 1.0);
+
+      // texture: inverse of the rise-time mapping
+      final effectiveMax = (oldWidth / 2.0).clamp(2.0, 10.0);
+      texture = effectiveMax > 2.0
+          ? ((oldRise - 2.0) / (effectiveMax - 2.0)).clamp(0.0, 1.0)
+          : 0.0;
+
+      // speed: invert  gap → speed
+      // gap = period - waveletSeconds; period = 1/freq
+      // Forward: gap = 0.5 × 0.01^speed  →  speed = log(gap/0.5) / log(0.01)
+      final wavelet = oldWidth / carrierFrequency;
+      final gap = ((1.0 / oldFreq) - wavelet).clamp(0.005, 0.5);
+      speed = (dart_math.log(gap / 0.5) / dart_math.log(0.01)).clamp(0.0, 1.0);
+    }
   }
 
   PulseSettings();
@@ -227,14 +259,21 @@ class FocStimSettings {
   String wifiIp = "192.168.1.1";
   int wifiPort = 55533;
 
+  /// Non-empty → use USB serial instead of WiFi TCP.
+  String serialPort = "";
+
+  bool get useSerial => serialPort.isNotEmpty;
+
   Map<String, dynamic> toJson() => {
     'wifiIp': wifiIp,
     'wifiPort': wifiPort,
+    'serialPort': serialPort,
   };
 
   FocStimSettings.fromJson(Map<String, dynamic> json) {
     wifiIp = json['wifiIp'] ?? "192.168.1.1";
     wifiPort = json['wifiPort'] ?? 55533;
+    serialPort = json['serialPort'] ?? "";
   }
 
   FocStimSettings();

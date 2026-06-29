@@ -93,6 +93,21 @@ install(DIRECTORY "${NATIVE_ASSETS_DIR}"
    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
    COMPONENT Runtime)
 
+# Bundle serialport.dll (libserialport C library required by the libserialport
+# Dart package). Place serialport.dll next to this CMakeLists.txt before
+# building. Obtain it from MSYS2 (mingw-w64-x86_64-libserialport) or vcpkg
+# (libserialport:x64-windows) and copy the DLL here as "serialport.dll".
+set(SERIALPORT_DLL "${CMAKE_CURRENT_SOURCE_DIR}/serialport.dll")
+if(EXISTS "${SERIALPORT_DLL}")
+  install(FILES "${SERIALPORT_DLL}"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
+else()
+  message(WARNING
+    "serialport.dll not found in windows/ — USB serial support will be "
+    "unavailable at runtime. See windows/CMakeLists.txt for instructions.")
+endif()
+
 # Fully re-copy the assets directory on each build to avoid having stale files
 # from a previous install.
 set(FLUTTER_ASSET_DIR_NAME "flutter_assets")

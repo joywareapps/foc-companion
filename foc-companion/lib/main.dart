@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -8,7 +9,6 @@ import 'package:foc_companion/services/app_logger.dart';
 import 'package:foc_companion/services/shared_file_service.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
-/// Filter shared files for .focb and forward to SharedFileService.
 void _processSharedFiles(List<SharedMediaFile> files) {
   for (final f in files) {
     final path = f.path;
@@ -16,25 +16,27 @@ void _processSharedFiles(List<SharedMediaFile> files) {
     if (lowerPath.endsWith('.focb') || lowerPath.endsWith('.zip')) {
       SharedFileService.add(Uri.file(path));
     } else {
-      AppLogger.instance.d('main: ignoring shared file (not .focb or .zip): $path');
+      AppLogger.instance
+          .d('main: ignoring shared file (not .focb or .zip): $path');
     }
   }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  FlutterForegroundTask.initCommunicationPort();
-  
+
+  if (Platform.isAndroid) {
+    FlutterForegroundTask.initCommunicationPort();
+
+    // Handle .focb files shared from other apps.
+    final initialFiles =
+        await ReceiveSharingIntent.instance.getInitialMedia();
+    _processSharedFiles(initialFiles);
+    ReceiveSharingIntent.instance.getMediaStream().listen(_processSharedFiles);
+  }
+
   final settingsProvider = SettingsProvider();
   await settingsProvider.loadSettings();
-
-  // Handle files that opened the app (cold start)
-  final initialFiles = await ReceiveSharingIntent.instance.getInitialMedia();
-  _processSharedFiles(initialFiles);
-
-  // Handle files while app is running (hot resume)
-  ReceiveSharingIntent.instance.getMediaStream().listen(_processSharedFiles);
 
   runApp(
     MultiProvider(
@@ -42,8 +44,8 @@ void main() async {
         ChangeNotifierProvider.value(value: settingsProvider),
         ChangeNotifierProxyProvider<SettingsProvider, DeviceProvider>(
           create: (context) => DeviceProvider(settingsProvider),
-          update: (context, settings, previous) => 
-            previous!..updateSettings(settings),
+          update: (context, settings, previous) =>
+              previous!..updateSettings(settings),
         ),
       ],
       child: const MyApp(),

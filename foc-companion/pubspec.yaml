@@ -1,7 +1,7 @@
 name: foc_companion
 description: "FOC Companion App"
 publish_to: 'none'
-version: 1.4.6+19
+version: 1.4.7+20
 
 environment:
   sdk: '>=3.2.3 <4.0.0'
@@ -36,6 +36,9 @@ dependencies:
   wakelock_plus: ^1.2.8
   flutter_foreground_task: ^9.2.2
   xml: ^6.6.1
+
+  # Desktop USB/serial transport (Windows, macOS, Linux)
+  libserialport: ^0.3.0+1
 
 dev_dependencies:
   flutter_test:

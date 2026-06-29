@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/app_logger.dart';
+import 'package:foc_companion/services/focstim_api_service.dart';
 import 'package:foc_companion/screens/media_sync_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -250,17 +252,26 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
   final TextEditingController _ipController = TextEditingController();
   final TextEditingController _portController = TextEditingController();
 
+  // Desktop serial port state
+  List<String> _availablePorts = [];
+  bool _useSerial = false;
+
+  bool get _isDesktop =>
+      !Platform.isAndroid && !Platform.isIOS;
+
   @override
   void initState() {
     super.initState();
     _loadInputs();
+    if (_isDesktop) _discoverPorts();
   }
 
   @override
   void didUpdateWidget(covariant _ConnectionSettingsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.boxIndex != widget.boxIndex) {
-      _loadInputs();
+      setState(() => _loadInputs());
+      if (_isDesktop) _discoverPorts();
     }
   }
 
@@ -268,6 +279,27 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
     final conn = widget.settings.boxes[widget.boxIndex].connection;
     _ipController.text = conn.wifiIp;
     _portController.text = conn.wifiPort.toString();
+    _useSerial = conn.useSerial;
+  }
+
+  // Silent discovery used on init and box switch — no snackbar.
+  void _discoverPorts() {
+    final ports = FocStimApiService.listSerialPorts();
+    if (mounted) setState(() => _availablePorts = ports);
+  }
+
+  // User-triggered refresh — shows snackbar when nothing is found.
+  void _refreshPorts() {
+    final ports = FocStimApiService.listSerialPorts();
+    if (!mounted) return;
+    setState(() => _availablePorts = ports);
+    if (ports.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(const SnackBar(
+          content: Text("No serial ports found — check app_log for details"),
+        ));
+    }
   }
 
   @override
@@ -301,27 +333,111 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
                   ?.copyWith(color: Theme.of(context).colorScheme.error),
             ),
           ),
-        TextField(
-          controller: _ipController,
-          enabled: !widget.isConnected,
-          decoration: const InputDecoration(
-            labelText: "FOC-Stim Device IP",
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.wifi),
+
+        // ── Transport selector (desktop only) ────────
+        if (_isDesktop) ...[
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: false,
+                label: Text("WiFi (TCP)"),
+                icon: Icon(Icons.wifi),
+              ),
+              ButtonSegment(
+                value: true,
+                label: Text("Serial (USB)"),
+                icon: Icon(Icons.usb),
+              ),
+            ],
+            selected: {_useSerial},
+            onSelectionChanged: widget.isConnected
+                ? null
+                : (s) {
+                    setState(() => _useSerial = s.first);
+                    if (!_useSerial) {
+                      widget.settings.boxes[widget.boxIndex].connection.serialPort = "";
+                    }
+                    widget.settings.saveSettings();
+                  },
           ),
-          keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: _portController,
-          enabled: !widget.isConnected,
-          decoration: const InputDecoration(
-            labelText: "FOC-Stim Device Port",
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.router),
+          const SizedBox(height: 14),
+        ],
+
+        // ── WiFi fields ───────────────────────────────
+        if (!_useSerial) ...[
+          TextField(
+            controller: _ipController,
+            enabled: !widget.isConnected,
+            decoration: const InputDecoration(
+              labelText: "FOC-Stim Device IP",
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.wifi),
+            ),
+            keyboardType: TextInputType.number,
           ),
-          keyboardType: TextInputType.number,
-        ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _portController,
+            enabled: !widget.isConnected,
+            decoration: const InputDecoration(
+              labelText: "FOC-Stim Device Port",
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.router),
+            ),
+            keyboardType: TextInputType.number,
+          ),
+        ],
+
+        // ── Serial port picker (desktop, serial mode) ─
+        if (_isDesktop && _useSerial) ...[
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: "Serial Port",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.usb),
+                  ),
+                  value: _availablePorts.contains(
+                          widget.settings.boxes[widget.boxIndex].connection.serialPort)
+                      ? widget.settings.boxes[widget.boxIndex].connection.serialPort
+                      : null,
+                  hint: const Text("Select port"),
+                  items: _availablePorts
+                      .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                      .toList(),
+                  onChanged: widget.isConnected
+                      ? null
+                      : (v) {
+                          if (v == null) return;
+                          setState(() {
+                            widget.settings.boxes[widget.boxIndex].connection.serialPort = v;
+                          });
+                          widget.settings.saveSettings();
+                        },
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: "Refresh port list",
+                icon: const Icon(Icons.refresh),
+                onPressed: _refreshPorts,
+              ),
+            ],
+          ),
+          if (_availablePorts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                "No serial ports found. Connect device and press refresh.",
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
 
         const SizedBox(height: 24),
 

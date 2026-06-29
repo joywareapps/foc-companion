@@ -4,7 +4,6 @@ import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/core/patterns.dart';
-import 'package:foc_companion/widgets/gradient_slider_track.dart';
 import 'package:foc_companion/services/background_service.dart';
 
 class ControlScreen extends StatelessWidget {
@@ -137,8 +136,15 @@ class _CalibrationCardState extends State<_CalibrationCard> {
               _buildSlider('Electrode D', d.calibration4D, (v) => d.calibration4D = v, color: Colors.green),
             ] else ...[
               _buildSlider('Center', d.calibration3Center, (v) => d.calibration3Center = v),
-              _buildSlider('Up', d.calibration3Up, (v) => d.calibration3Up = v, color: Colors.red),
-              _buildLeftRightSlider(d.calibration3Left, (v) => d.calibration3Left = v),
+              _buildSlider('Electrode A', d.calibration3A,
+                  (v) => settings.updateCalibration3Modern(v, d.calibration3B, d.calibration3C),
+                  color: Colors.red, min: -20, max: 0),
+              _buildSlider('Electrode B', d.calibration3B,
+                  (v) => settings.updateCalibration3Modern(d.calibration3A, v, d.calibration3C),
+                  color: Colors.blue, min: -20, max: 0),
+              _buildSlider('Electrode C', d.calibration3C,
+                  (v) => settings.updateCalibration3Modern(d.calibration3A, d.calibration3B, v),
+                  color: Colors.amber, min: -20, max: 0),
             ],
             const SizedBox(height: 8),
             Row(
@@ -192,46 +198,12 @@ class _CalibrationCardState extends State<_CalibrationCard> {
     );
   }
 
-  Widget _buildLeftRightSlider(double value, void Function(double) onSet) {
-    const leftColor = Colors.blue;
-    const rightColor = Colors.amber;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Left',
-                style: TextStyle(color: leftColor, fontWeight: FontWeight.w500)),
-            Text(value.toStringAsFixed(2)),
-            const Text('Right',
-                style: TextStyle(color: rightColor, fontWeight: FontWeight.w500)),
-          ],
-        ),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackShape: const GradientSliderTrackShape(
-              startColor: leftColor,
-              endColor: rightColor,
-            ),
-          ),
-          child: Slider(
-            value: value.clamp(-2.0, 2.0),
-            min: -2,
-            max: 2,
-            onChanged: (v) => setState(() => onSet(v)),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildSlider(String label, double value, void Function(double) onSet,
-      {Color? color}) {
+      {Color? color, double min = -2.0, double max = 2.0}) {
     final slider = Slider(
-      value: value.clamp(-2.0, 2.0),
-      min: -2,
-      max: 2,
+      value: value.clamp(min, max),
+      min: min,
+      max: max,
       onChanged: (v) => setState(() => onSet(v)),
     );
     return Column(

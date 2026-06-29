@@ -159,30 +159,19 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateCalibration3Classic(double up, double left) {
-    device.calibration3Up = up;
-    device.calibration3Left = left;
-    syncFromUdLr();
-    notifyListeners();
-  }
-
-  void setCalibration3Interface(String val) {
-    device.calibration3Interface = val;
-    notifyListeners();
-  }
-
   void resetCalibration() {
     final d = DeviceSettings();
     device
       ..calibration3Center = d.calibration3Center
       ..calibration3Up = d.calibration3Up
       ..calibration3Left = d.calibration3Left
-      ..calibration3Interface = d.calibration3Interface
+      ..calibration3A = d.calibration3A
+      ..calibration3B = d.calibration3B
+      ..calibration3C = d.calibration3C
       ..calibration4A = d.calibration4A
       ..calibration4B = d.calibration4B
       ..calibration4C = d.calibration4C
       ..calibration4D = d.calibration4D;
-    syncFromUdLr();
     notifyListeners();
   }
 
@@ -195,12 +184,13 @@ class SettingsProvider with ChangeNotifier {
       ..calibration3Center = saved.calibration3Center
       ..calibration3Up = saved.calibration3Up
       ..calibration3Left = saved.calibration3Left
-      ..calibration3Interface = saved.calibration3Interface
+      ..calibration3A = saved.calibration3A
+      ..calibration3B = saved.calibration3B
+      ..calibration3C = saved.calibration3C
       ..calibration4A = saved.calibration4A
       ..calibration4B = saved.calibration4B
       ..calibration4C = saved.calibration4C
       ..calibration4D = saved.calibration4D;
-    syncFromUdLr();
     notifyListeners();
     return true;
   }

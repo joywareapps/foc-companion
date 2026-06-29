@@ -134,9 +134,8 @@ class DeviceSettings {
 
   // 3-Phase calibration
   double calibration3Center = -0.5;
-  double calibration3Up = 0.0;
-  double calibration3Left = 0.0;
-  String calibration3Interface = 'modern';
+  double calibration3Up = 0.0;    // kept for firmware protocol (command_loop sends AXIS_CALIBRATION_3_UP)
+  double calibration3Left = 0.0;  // kept for firmware protocol (command_loop sends AXIS_CALIBRATION_3_LEFT)
   double calibration3A = 0.0;
   double calibration3B = 0.0;
   double calibration3C = 0.0;
@@ -155,7 +154,6 @@ class DeviceSettings {
         'calibration3Center': calibration3Center,
         'calibration3Up': calibration3Up,
         'calibration3Left': calibration3Left,
-        'calibration3Interface': calibration3Interface,
         'calibration3A': calibration3A,
         'calibration3B': calibration3B,
         'calibration3C': calibration3C,
@@ -176,7 +174,6 @@ class DeviceSettings {
     calibration3Center = json['calibration3Center'] ?? -0.5;
     calibration3Up = json['calibration3Up'] ?? 0.0;
     calibration3Left = json['calibration3Left'] ?? 0.0;
-    calibration3Interface = json['calibration3Interface'] ?? 'modern';
     calibration3A = (json['calibration3A'] ?? 0.0).toDouble();
     calibration3B = (json['calibration3B'] ?? 0.0).toDouble();
     calibration3C = (json['calibration3C'] ?? 0.0).toDouble();

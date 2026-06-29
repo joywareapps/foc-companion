@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
-import 'package:foc_companion/widgets/gradient_slider_track.dart';
 
 class DeviceSettingsScreen extends StatefulWidget {
   const DeviceSettingsScreen({super.key});
@@ -23,30 +22,8 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       padding: const EdgeInsets.all(16.0),
       children: [
         if (d.deviceMode == DeviceMode.threePhase) ...[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("3-Phase Calibration",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              SizedBox(
-                width: 160,
-                child: DropdownButton<String>(
-                  value: d.calibration3Interface,
-                  isExpanded: true,
-                  underline: const SizedBox(),
-                  items: const [
-                    DropdownMenuItem(value: 'modern', child: Text('Modern (A/B/C)')),
-                    DropdownMenuItem(value: 'classic', child: Text('Classic (Up/Left)')),
-                  ],
-                  onChanged: (v) {
-                    if (v != null) {
-                      settings.setCalibration3Interface(v);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
+          const Text("3-Phase Calibration",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           _buildSlider(
             label: "Center",
@@ -55,58 +32,33 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             max: 2,
             onChanged: (v) => setState(() => d.calibration3Center = v),
           ),
-          if (d.calibration3Interface == 'modern') ...[
-            _buildSlider(
-              label: "Electrode A",
-              value: d.calibration3A,
-              min: -20,
-              max: 0,
-              onChanged: (v) => settings.updateCalibration3Modern(v, d.calibration3B, d.calibration3C),
-              color: Colors.red,
-              impedance: device.impedanceA,
-            ),
-            _buildSlider(
-              label: "Electrode B",
-              value: d.calibration3B,
-              min: -20,
-              max: 0,
-              onChanged: (v) => settings.updateCalibration3Modern(d.calibration3A, v, d.calibration3C),
-              color: Colors.blue,
-              impedance: device.impedanceB,
-            ),
-            _buildSlider(
-              label: "Electrode C",
-              value: d.calibration3C,
-              min: -20,
-              max: 0,
-              onChanged: (v) => settings.updateCalibration3Modern(d.calibration3A, d.calibration3B, v),
-              color: Colors.amber,
-              impedance: device.impedanceC,
-            ),
-          ] else ...[
-            _buildSlider(
-              label: "Up",
-              value: d.calibration3Up,
-              min: -2,
-              max: 2,
-              onChanged: (v) => settings.updateCalibration3Classic(v, d.calibration3Left),
-              color: Colors.red,
-            ),
-            _buildLeftRightSlider(
-              value: d.calibration3Left,
-              onChanged: (v) => settings.updateCalibration3Classic(d.calibration3Up, v),
-            ),
-            if (device.impedanceA != null) ...[
-              const SizedBox(height: 8),
-              _ImpedanceRow(
-                channels: [
-                  ('Ch A', device.impedanceA),
-                  ('Ch B', device.impedanceB),
-                  ('Ch C', device.impedanceC),
-                ],
-              ),
-            ],
-          ],
+          _buildSlider(
+            label: "Electrode A",
+            value: d.calibration3A,
+            min: -20,
+            max: 0,
+            onChanged: (v) => settings.updateCalibration3Modern(v, d.calibration3B, d.calibration3C),
+            color: Colors.red,
+            impedance: device.impedanceA,
+          ),
+          _buildSlider(
+            label: "Electrode B",
+            value: d.calibration3B,
+            min: -20,
+            max: 0,
+            onChanged: (v) => settings.updateCalibration3Modern(d.calibration3A, v, d.calibration3C),
+            color: Colors.blue,
+            impedance: device.impedanceB,
+          ),
+          _buildSlider(
+            label: "Electrode C",
+            value: d.calibration3C,
+            min: -20,
+            max: 0,
+            onChanged: (v) => settings.updateCalibration3Modern(d.calibration3A, d.calibration3B, v),
+            color: Colors.amber,
+            impedance: device.impedanceC,
+          ),
         ] else ...[
           const Text("4-Phase Calibration",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -194,43 +146,6 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
               ),
             ),
           ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLeftRightSlider({
-    required double value,
-    required Function(double) onChanged,
-  }) {
-    const leftColor = Colors.blue;
-    const rightColor = Colors.amber;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Left',
-                style: TextStyle(color: leftColor, fontWeight: FontWeight.w500)),
-            Text(value.toStringAsFixed(2)),
-            const Text('Right',
-                style: TextStyle(color: rightColor, fontWeight: FontWeight.w500)),
-          ],
-        ),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackShape: const GradientSliderTrackShape(
-              startColor: leftColor,
-              endColor: rightColor,
-            ),
-          ),
-          child: Slider(
-            value: value.clamp(-2.0, 2.0),
-            min: -2,
-            max: 2,
-            onChanged: onChanged,
-          ),
         ),
       ],
     );
@@ -326,38 +241,3 @@ class _ImpedanceBadge extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Compact impedance row for 3-phase (channels don't map 1:1 to sliders).
-// ─────────────────────────────────────────────────────────
-
-class _ImpedanceRow extends StatelessWidget {
-  final List<(String, double?)> channels;
-  const _ImpedanceRow({required this.channels});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text('Impedance:', style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(width: 8),
-        ...channels.map((ch) {
-          final label = ch.$1;
-          final ohms = ch.$2;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('$label ', style: Theme.of(context).textTheme.bodySmall),
-                if (ohms != null)
-                  _ImpedanceBadge(ohms)
-                else
-                  Text('—', style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ),
-          );
-        }),
-      ],
-    );
-  }
-}

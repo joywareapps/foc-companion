@@ -7,6 +7,7 @@ import 'package:foc_companion/providers/device_provider.dart';
 import 'package:foc_companion/core/patterns.dart';
 import 'package:foc_companion/screens/control_screen.dart';
 import 'package:foc_companion/screens/device_settings_screen.dart';
+import 'package:foc_companion/screens/sensor_settings_screen.dart';
 import 'package:foc_companion/screens/pulse_settings_screen.dart';
 import 'package:foc_companion/screens/media_sync_screen.dart';
 import 'package:foc_companion/screens/settings_screen.dart';
@@ -24,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _showCalibration = false;
+  bool _showSensor = false;
   StreamSubscription<Uri>? _sharedFileSub;
 
   @override
@@ -42,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _selectedIndex = 2; // Library tab
           _showCalibration = false;
+          _showSensor = false;
         });
       }
     });
@@ -140,10 +143,10 @@ class _HomeScreenState extends State<HomeScreen> {
         final isConnected = device.api.isConnected;
         final is4Phase = device.deviceMode == DeviceMode.fourPhase;
 
-        // Auto-reset calibration view when device disconnects unexpectedly
-        if (!isConnected && _showCalibration) {
+        // Auto-reset overlay views when device disconnects unexpectedly
+        if (!isConnected && (_showCalibration || _showSensor)) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) setState(() => _showCalibration = false);
+            if (mounted) setState(() { _showCalibration = false; _showSensor = false; });
           });
         }
 
@@ -220,21 +223,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? [
                     IconButton(
                       icon: Icon(
+                        Icons.sensors,
+                        color: _showSensor
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
+                      tooltip: _showSensor ? 'Close Sensor' : 'Sensor',
+                      onPressed: () => setState(() {
+                        _showSensor = !_showSensor;
+                        if (_showSensor) _showCalibration = false;
+                      }),
+                    ),
+                    IconButton(
+                      icon: Icon(
                         Icons.tune,
                         color: _showCalibration
                             ? Theme.of(context).colorScheme.primary
                             : null,
                       ),
                       tooltip: _showCalibration ? 'Close Calibration' : 'Calibration',
-                      onPressed: () =>
-                          setState(() => _showCalibration = !_showCalibration),
+                      onPressed: () => setState(() {
+                        _showCalibration = !_showCalibration;
+                        if (_showCalibration) _showSensor = false;
+                      }),
                     ),
                     IconButton(
                       icon: const Icon(Icons.power_off),
                       tooltip: 'Disconnect Focused Box',
                       style: IconButton.styleFrom(foregroundColor: Colors.red),
                       onPressed: () {
-                        setState(() => _showCalibration = false);
+                        setState(() { _showCalibration = false; _showSensor = false; });
                         device.disconnect();
                       },
                     ),
@@ -243,18 +261,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           body: isConnected && _showCalibration
               ? const DeviceSettingsScreen()
-              : _pages(context).elementAt(_selectedIndex),
+              : isConnected && _showSensor
+                  ? const SensorSettingsScreen()
+                  : _pages(context).elementAt(_selectedIndex),
           bottomNavigationBar: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (isConnected)
-                _showCalibration
+                (_showCalibration || _showSensor)
                     ? _CalibrationCloseBar(
-                        onClose: () =>
-                            setState(() => _showCalibration = false),
+                        label: _showSensor ? 'Sensor' : 'Calibration',
+                        onClose: () => setState(() {
+                          _showCalibration = false;
+                          _showSensor = false;
+                        }),
                       )
                     : _PlayBar(
-                        device: device, 
+                        device: device,
                         is4Phase: is4Phase,
                         isLibraryTab: _selectedIndex == 2,
                       ),
@@ -263,6 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onDestinationSelected: (i) => setState(() {
                   _selectedIndex = i;
                   _showCalibration = false;
+                  _showSensor = false;
                 }),
                 destinations: const <NavigationDestination>[
                   NavigationDestination(
@@ -298,22 +322,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _CalibrationCloseBar extends StatelessWidget {
   final VoidCallback onClose;
+  final String label;
 
-  const _CalibrationCloseBar({required this.onClose});
+  const _CalibrationCloseBar({required this.onClose, this.label = 'Calibration'});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isSensor = label == 'Sensor';
     return Container(
       color: colorScheme.surfaceContainerHighest,
       padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
       child: Row(
         children: [
-          Icon(Icons.tune, color: colorScheme.primary),
+          Icon(isSensor ? Icons.sensors : Icons.tune, color: colorScheme.primary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Calibration',
+              label,
               style: Theme.of(context).textTheme.labelMedium,
             ),
           ),

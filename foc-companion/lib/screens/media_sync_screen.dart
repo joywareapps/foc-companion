@@ -20,6 +20,8 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
   final TextEditingController _vlcIpController = TextEditingController();
   final TextEditingController _vlcPortController = TextEditingController();
   final TextEditingController _vlcPasswordController = TextEditingController();
+  final TextEditingController _kodiIpController = TextEditingController();
+  final TextEditingController _kodiPortController = TextEditingController();
 
   @override
   void initState() {
@@ -42,6 +44,8 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
     _vlcIpController.text = m.vlcIp;
     _vlcPortController.text = m.vlcPort.toString();
     _vlcPasswordController.text = m.vlcPassword;
+    _kodiIpController.text = m.kodiIp;
+    _kodiPortController.text = m.kodiPort.toString();
   }
 
   @override
@@ -53,6 +57,8 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
     _vlcIpController.dispose();
     _vlcPortController.dispose();
     _vlcPasswordController.dispose();
+    _kodiIpController.dispose();
+    _kodiPortController.dispose();
     super.dispose();
   }
 
@@ -92,6 +98,10 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
               DropdownMenuItem(
                 value: VideoPlayerType.vlc,
                 child: Text("VLC"),
+              ),
+              DropdownMenuItem(
+                value: VideoPlayerType.kodi,
+                child: Text("Kodi"),
               ),
             ],
             onChanged: (v) {
@@ -147,6 +157,31 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
               controller: _mpcHcPortController,
               keyboardType: TextInputType.number,
               onChanged: (v) => m.mpcHcPort = int.tryParse(v) ?? 13579,
+            ),
+          ],
+
+          // ── Kodi Section ──
+          if (m.activePlayer == VideoPlayerType.kodi) ...[
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "Kodi IP Address",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.wifi),
+              ),
+              controller: _kodiIpController,
+              onChanged: (v) => m.kodiIp = v,
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "Kodi WebSocket Port",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.router),
+                helperText: "Default: 9090 (Settings → Services → Control → Allow remote control)",
+              ),
+              controller: _kodiPortController,
+              keyboardType: TextInputType.number,
+              onChanged: (v) => m.kodiPort = int.tryParse(v) ?? 9090,
             ),
           ],
 

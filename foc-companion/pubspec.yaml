@@ -31,6 +31,9 @@ dependencies:
   # SMB
   dart_smb2: ^0.1.0
 
+  # WebSocket (for Kodi JSON-RPC)
+  web_socket_channel: ^3.0.0
+
   # UI
   share_plus: ^10.1.4
   wakelock_plus: ^1.2.8

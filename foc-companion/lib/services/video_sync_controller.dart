@@ -6,6 +6,7 @@ import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/app_logger.dart';
 import 'package:foc_companion/services/funscript_playback_controller.dart';
 import 'package:foc_companion/services/heresphere_service.dart';
+import 'package:foc_companion/services/kodi_service.dart';
 import 'package:foc_companion/services/mpc_hc_service.dart';
 import 'package:foc_companion/services/video_player_status.dart';
 
@@ -24,6 +25,7 @@ class VideoSyncController extends ChangeNotifier {
   HereSphereService? _heresphereService;
   MpcHcService? _mpcHcService;
   VlcService? _vlcService;
+  KodiService? _kodiService;
   StreamSubscription<VideoPlayerStatus>? _statusSubscription;
 
   SyncState _syncState = SyncState.idle;
@@ -61,6 +63,8 @@ class VideoSyncController extends ChangeNotifier {
     required String vlcIp,
     required int vlcPort,
     required String vlcPassword,
+    required String kodiIp,
+    required int kodiPort,
   }) async {
     if (_isLinked) {
       _log.w('VideoSyncController: already linked to $_linkedPlayer, unlinking first');
@@ -94,6 +98,14 @@ class VideoSyncController extends ChangeNotifier {
           _statusSubscription =
               _vlcService!.statusStream.listen(_onPlayerStatus);
           await _vlcService!.startPolling();
+          break;
+
+        case VideoPlayerType.kodi:
+          _kodiService = KodiService();
+          _kodiService!.configure(kodiIp, kodiPort);
+          _statusSubscription =
+              _kodiService!.statusStream.listen(_onPlayerStatus);
+          await _kodiService!.startPolling();
           break;
 
         case VideoPlayerType.none:
@@ -139,6 +151,8 @@ class VideoSyncController extends ChangeNotifier {
     _mpcHcService = null;
     _vlcService?.dispose();
     _vlcService = null;
+    _kodiService?.dispose();
+    _kodiService = null;
   }
 
   void _onPlayerStatus(VideoPlayerStatus status) {

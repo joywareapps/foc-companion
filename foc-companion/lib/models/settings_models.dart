@@ -2,7 +2,7 @@ import 'dart:math' as dart_math;
 
 enum DeviceMode { threePhase, fourPhase }
 
-enum VideoPlayerType { none, heresphere, mpcHc, vlc }
+enum VideoPlayerType { none, heresphere, mpcHc, vlc, kodi }
 
 enum ButtonAction { nothing, togglePlayPause, toggleVolumeLock }
 
@@ -298,6 +298,9 @@ class MediaSyncSettings {
   int vlcPort = 8080;
   String vlcPassword = "";
 
+  String kodiIp = "";
+  int kodiPort = 9090;
+
   bool autoloadEnabled = false;
   
   List<FunscriptLocation> funscriptLocations = [];
@@ -312,6 +315,8 @@ class MediaSyncSettings {
     'vlcIp': vlcIp,
     'vlcPort': vlcPort,
     'vlcPassword': vlcPassword,
+    'kodiIp': kodiIp,
+    'kodiPort': kodiPort,
     'autoloadEnabled': autoloadEnabled,
     'funscriptLocations': funscriptLocations.map((e) => e.toJson()).toList(),
   };
@@ -332,6 +337,9 @@ class MediaSyncSettings {
     vlcIp = json['vlcIp'] ?? "";
     vlcPort = json['vlcPort'] ?? 8080;
     vlcPassword = json['vlcPassword'] ?? "";
+
+    kodiIp = json['kodiIp'] ?? "";
+    kodiPort = json['kodiPort'] ?? 9090;
 
     autoloadEnabled = json['autoloadEnabled'] ?? false;
 

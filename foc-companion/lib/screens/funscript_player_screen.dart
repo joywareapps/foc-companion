@@ -622,6 +622,8 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         vlcIp: m.vlcIp,
         vlcPort: m.vlcPort,
         vlcPassword: m.vlcPassword,
+        kodiIp: m.kodiIp,
+        kodiPort: m.kodiPort,
       );
       
       // Ensure the device enters funscript mode

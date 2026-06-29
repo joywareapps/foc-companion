@@ -405,7 +405,7 @@ class As5311ModeConfig {
     this.volumeChange = 0.5,
     this.sliderMin = -2.0,
     this.sliderMax = 2.0,
-    this.useAbsolute = false,
+    this.useAbsolute = true,
   });
 
   Map<String, dynamic> toJson() => {
@@ -467,13 +467,13 @@ class As5311Settings {
         targetBox = json['targetBox'] ?? 0,
         absoluteMode = json.containsKey('absoluteMode')
             ? As5311ModeConfig.fromJson(json['absoluteMode'])
-            : As5311ModeConfig.fromJson(json),
+            : As5311ModeConfig(sliderMin: -2.0, sliderMax: 2.0),
         velocityMode = json.containsKey('velocityMode')
             ? As5311ModeConfig.fromJson(json['velocityMode'])
-            : As5311ModeConfig.fromJson(json),
+            : As5311ModeConfig(sliderMin: -10.0, sliderMax: 10.0),
         highpassMode = json.containsKey('highpassMode')
             ? As5311ModeConfig.fromJson(json['highpassMode'])
-            : As5311ModeConfig.fromJson(json);
+            : As5311ModeConfig(sliderMin: -2.0, sliderMax: 2.0);
 }
 
 // ──────────────────────────────────────────────

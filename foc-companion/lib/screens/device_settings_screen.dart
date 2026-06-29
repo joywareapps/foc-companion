@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
@@ -16,6 +17,18 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   bool _isDeterminingRange = false;
   double _detectedMin = double.infinity;
   double _detectedMax = double.negativeInfinity;
+  Timer? _saveDebounce;
+
+  void _debouncedSave(SettingsProvider settings) {
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 300), settings.saveSettings);
+  }
+
+  @override
+  void dispose() {
+    _saveDebounce?.cancel();
+    super.dispose();
+  }
 
   Widget _buildSensorSettingsPanel(SettingsProvider settings, DeviceProvider device) {
     final boxAs5311 = settings.boxes[settings.activeUiBoxIndex].as5311;
@@ -126,20 +139,18 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   ],
                 ),
                 if (_isDeterminingRange) ...[
-                  Builder(
-                    builder: (context) {
-                      // Dynamically track min/max during build frames when telemetry arrives
-                      if (device.sensorRaw < _detectedMin) _detectedMin = device.sensorRaw;
-                      if (device.sensorRaw > _detectedMax) _detectedMax = device.sensorRaw;
-                      
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          'Move sensor to limits... Detected: ${_detectedMin != double.infinity ? _detectedMin.toStringAsFixed(2) : '-'} to ${_detectedMax != double.negativeInfinity ? _detectedMax.toStringAsFixed(2) : '-'}',
-                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
-                        ),
-                      );
-                    }
+                  _RangeDetector(
+                    sensorRaw: device.sensorRaw,
+                    onRangeUpdated: (min, max) {
+                      if (min < _detectedMin || max > _detectedMax) {
+                        setState(() {
+                          if (min < _detectedMin) _detectedMin = min;
+                          if (max > _detectedMax) _detectedMax = max;
+                        });
+                      }
+                    },
+                    detectedMin: _detectedMin,
+                    detectedMax: _detectedMax,
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -199,7 +210,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                           activeConfig.threshold = values.start;
                           activeConfig.range = (values.end - values.start).clamp(0.01, activeConfig.sliderMax - activeConfig.sliderMin);
                         });
-                        settings.saveSettings(); // maybe debounce
+                        _debouncedSave(settings);
                       },
                     ),
                   ),
@@ -479,6 +490,55 @@ class _ImpedanceBadge extends StatelessWidget {
 // ─────────────────────────────────────────────────────────
 // Simple VU Meter for sensor feedback
 // ─────────────────────────────────────────────────────────
+
+// Tracks sensor range during calibration recording — updates parent via callback
+// rather than mutating state inside build().
+class _RangeDetector extends StatefulWidget {
+  final double sensorRaw;
+  final void Function(double min, double max) onRangeUpdated;
+  final double detectedMin;
+  final double detectedMax;
+
+  const _RangeDetector({
+    required this.sensorRaw,
+    required this.onRangeUpdated,
+    required this.detectedMin,
+    required this.detectedMax,
+  });
+
+  @override
+  State<_RangeDetector> createState() => _RangeDetectorState();
+}
+
+class _RangeDetectorState extends State<_RangeDetector> {
+  @override
+  void didUpdateWidget(_RangeDetector old) {
+    super.didUpdateWidget(old);
+    if (widget.sensorRaw != old.sensorRaw) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onRangeUpdated(widget.sensorRaw, widget.sensorRaw);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final minStr = widget.detectedMin != double.infinity
+        ? widget.detectedMin.toStringAsFixed(2)
+        : '-';
+    final maxStr = widget.detectedMax != double.negativeInfinity
+        ? widget.detectedMax.toStringAsFixed(2)
+        : '-';
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Text(
+        'Move sensor to limits... Detected: $minStr to $maxStr',
+        style: const TextStyle(
+            color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
+      ),
+    );
+  }
+}
 
 class _VuMeter extends StatelessWidget {
   final double value;

@@ -54,9 +54,6 @@ class ActiveBoxState {
   double sensorHighpassOut = 0.0;
   double sensorHighpassLastIn = 0.0;
   int lastSensorUpdateMs = 0; // throttle UI updates
-  double sensorLastEmittedDecayed = 0.0;
-  double sensorLastEmittedRaw = 0.0;
-
   DateTime lastNotificationUpdateTime = DateTime.fromMillisecondsSinceEpoch(0);
   bool? lastIsLoopRunningState;
 
@@ -306,12 +303,6 @@ class FocStimServiceController {
           }
         }
         break;
-      case 'setWifiCredentials':
-        final int boxIndex = data['boxIndex'] as int? ?? 0;
-        final ssid = data['ssid'] as String? ?? '';
-        final password = data['password'] as String? ?? '';
-        _setWifiCredentials(boxIndex, ssid, password);
-        break;
     }
   }
 
@@ -384,20 +375,6 @@ class FocStimServiceController {
       box.connectionStatus = "Error: $e";
       _logToMain(boxIndex, "Serial connection failed: $e");
       _disconnect(boxIndex);
-    }
-  }
-
-  Future<void> _setWifiCredentials(int boxIndex, String ssid, String password) async {
-    final box = _boxes[boxIndex];
-    if (box == null || !box.api.isConnected) {
-      _sendToMain({'type': 'wifiCredentialsResult', 'boxIndex': boxIndex, 'error': 'Not connected to device'});
-      return;
-    }
-    try {
-      await box.api.setWifiCredentials(ssid, password);
-      _sendToMain({'type': 'wifiCredentialsResult', 'boxIndex': boxIndex});
-    } catch (e) {
-      _sendToMain({'type': 'wifiCredentialsResult', 'boxIndex': boxIndex, 'error': e.toString()});
     }
   }
 
@@ -824,10 +801,7 @@ class FocStimServiceController {
     // Send telemetry to UI at ~30Hz
     if (nowMs - box.lastSensorUpdateMs >= 33) {
       box.lastSensorUpdateMs = nowMs;
-      box.sensorLastEmittedRaw = box.sensorRaw;
-      box.sensorLastEmittedDecayed = box.sensorDecayed;
-       
-      FlutterForegroundTask.sendDataToMain({
+      _sendToMain({
         'type': 'sensorTelemetry',
         'boxIndex': boxIndex,
         'raw': box.sensorRaw,

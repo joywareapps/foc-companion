@@ -22,19 +22,13 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Cache vcpkg packages
-        uses: actions/cache@v4
-        with:
-          path: C:\vcpkg\installed
-          key: vcpkg-libserialport-windows-x64-v1
-
-      - name: Install libserialport via vcpkg
-        run: vcpkg install libserialport:x64-windows
-
-      - name: Copy serialport.dll into Flutter windows/ directory
+      - name: Install libserialport via MSYS2
         shell: pwsh
         run: |
-          Copy-Item "C:\vcpkg\installed\x64-windows\bin\serialport.dll" `
+          # MSYS2 is pre-installed on windows-latest; install the MinGW64 libserialport package
+          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm mingw-w64-x86_64-libserialport
+          # Copy DLL with the name the Dart libserialport package expects
+          Copy-Item "C:\msys64\mingw64\bin\libserialport-0.dll" `
             "foc-companion\windows\serialport.dll"
 
       - name: Get Dependencies
@@ -48,6 +42,24 @@ jobs:
         run: |
           cd foc-companion
           flutter build windows --release --build-number=${{ github.run_number }}
+
+      - name: Copy MinGW runtime deps alongside the executable
+        shell: pwsh
+        run: |
+          # Resolve any non-Windows DLLs that serialport.dll links against
+          $releaseDir = "foc-companion\build\windows\x64\runner\Release"
+          $lddOutput = & "C:\msys64\usr\bin\bash.exe" -lc `
+            "ldd /mingw64/bin/libserialport-0.dll 2>/dev/null"
+          $lddOutput | ForEach-Object {
+            if ($_ -match '=> /mingw64/bin/(.+\.dll)') {
+              $dll = $Matches[1]
+              $src = "C:\msys64\mingw64\bin\$dll"
+              if (Test-Path $src) {
+                Write-Host "Bundling runtime dep: $dll"
+                Copy-Item $src "$releaseDir\$dll" -Force
+              }
+            }
+          }
 
       - name: Package Windows build as zip
         shell: pwsh

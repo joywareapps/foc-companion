@@ -253,7 +253,7 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
   final TextEditingController _portController = TextEditingController();
 
   // Desktop serial port state
-  List<String> _availablePorts = [];
+  List<({String name, String label})> _availablePorts = [];
   bool _useSerial = false;
 
   bool get _isDesktop =>
@@ -399,13 +399,13 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.usb),
                   ),
-                  value: _availablePorts.contains(
-                          widget.settings.boxes[widget.boxIndex].connection.serialPort)
+                  value: _availablePorts.any((p) =>
+                          p.name == widget.settings.boxes[widget.boxIndex].connection.serialPort)
                       ? widget.settings.boxes[widget.boxIndex].connection.serialPort
                       : null,
                   hint: const Text("Select port"),
                   items: _availablePorts
-                      .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                      .map((p) => DropdownMenuItem(value: p.name, child: Text(p.label)))
                       .toList(),
                   onChanged: widget.isConnected
                       ? null

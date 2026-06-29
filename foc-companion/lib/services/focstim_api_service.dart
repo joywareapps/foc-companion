@@ -85,12 +85,26 @@ class FocStimApiService {
     );
   }
 
-  /// List available serial port names on the current machine.
+  /// List available serial ports with human-readable labels.
   /// Returns an empty list on Android / iOS where libserialport isn't available.
-  static List<String> listSerialPorts() {
+  /// Each entry has [name] (for connecting) and [label] (for display).
+  static List<({String name, String label})> listSerialPorts() {
     if (Platform.isAndroid || Platform.isIOS) return [];
     try {
-      return SerialPort.availablePorts;
+      return SerialPort.availablePorts.map((name) {
+        final port = SerialPort(name);
+        final desc = port.description;
+        final mfr = port.manufacturer;
+        port.dispose();
+        String label = name;
+        if (desc != null && desc.isNotEmpty) {
+          label = '$name — $desc';
+          if (mfr != null && mfr.isNotEmpty && !desc.contains(mfr)) {
+            label = '$label ($mfr)';
+          }
+        }
+        return (name: name, label: label);
+      }).toList();
     } catch (e) {
       _log.e("listSerialPorts failed", error: e);
       return [];

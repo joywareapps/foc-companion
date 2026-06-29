@@ -453,7 +453,7 @@ class CommandLoop {
         : _pulse.carrierFrequency;
 
     final double modFreq = useFunscript
-        ? freq
+        ? (fsDevice('pulse_frequency', min: 1.0, max: 300.0) ?? axes.freqHz)
         : (freqModActive
             ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
                 .clamp(1.0, 300.0)

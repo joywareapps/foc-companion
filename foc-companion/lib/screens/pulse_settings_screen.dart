@@ -43,6 +43,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
           displayValue:
               "${p.carrierFrequency.toStringAsFixed(0)} Hz",
           onChanged: (v) => setState(() => p.carrierFrequency = v),
+          onChangeEnd: (_) => settings.saveSettings(),
         ),
 
         const Divider(height: 24),
@@ -59,6 +60,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
           infoText:
               "${effFreqHz.toStringAsFixed(1)} Hz effective",
           onChanged: (v) => setState(() => p.speed = v),
+          onChangeEnd: (_) => settings.saveSettings(),
         ),
 
         // ── Pulse (wavelet duration) ───────────────────────────────────────
@@ -70,6 +72,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
           infoText:
               "${effWidthMs.toStringAsFixed(1)} ms • ${axes.widthCycles.toStringAsFixed(1)} cycles",
           onChanged: (v) => setState(() => p.pulse = v),
+          onChangeEnd: (_) => settings.saveSettings(),
         ),
 
         // ── Texture (onset sharpness) ──────────────────────────────────────
@@ -81,6 +84,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
           infoText:
               "${axes.riseCycles.toStringAsFixed(1)} cycle rise",
           onChanged: (v) => setState(() => p.texture = v),
+          onChangeEnd: (_) => settings.saveSettings(),
         ),
 
         const Divider(height: 24),
@@ -93,6 +97,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
           max: 100,
           displayValue: "${p.pulseIntervalRandom.toStringAsFixed(0)}%",
           onChanged: (v) => setState(() => p.pulseIntervalRandom = v),
+          onChangeEnd: (_) => settings.saveSettings(),
         ),
 
         const SizedBox(height: 30),
@@ -157,6 +162,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
     required double max,
     required String displayValue,
     required void Function(double) onChanged,
+    void Function(double)? onChangeEnd,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,6 +180,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
           min: min,
           max: max,
           onChanged: onChanged,
+          onChangeEnd: onChangeEnd,
         ),
       ],
     );
@@ -187,6 +194,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
     required double value,
     required String infoText,
     required void Function(double) onChanged,
+    void Function(double)? onChangeEnd,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +211,7 @@ class _PulseSettingsScreenState extends State<PulseSettingsScreen> {
                     ?.copyWith(color: Colors.grey)),
           ],
         ),
-        Slider(value: value, min: 0, max: 1, onChanged: onChanged),
+        Slider(value: value, min: 0, max: 1, onChanged: onChanged, onChangeEnd: onChangeEnd),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(

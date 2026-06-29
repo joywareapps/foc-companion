@@ -109,6 +109,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> saveSettings() async {
+    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('box_profiles_v2', jsonEncode(boxes.map((e) => e.toJson()).toList()));
     await prefs.setInt('active_ui_box_index', activeUiBoxIndex);
@@ -116,7 +117,6 @@ class SettingsProvider with ChangeNotifier {
     await prefs.setString('media_settings', jsonEncode(mediaSync.toJson()));
     await prefs.setBool('keep_screen_on', keepScreenOn);
     await prefs.setString('device_behavior_settings', jsonEncode(deviceBehavior.toJson()));
-    notifyListeners();
   }
 
   Future<void> setKeepScreenOn(bool value) async {
@@ -131,12 +131,12 @@ class SettingsProvider with ChangeNotifier {
 
   void _syncFromUdLrForBox(DeviceSettings dev) {
     final abc = CalibrationUtils.udLrToIntensityRatio(dev.calibration3Up, dev.calibration3Left);
-    dev.calibration3A = abc[0] > 0.0 ? (math.log(abc[0]) / math.ln10) * 10.0 : -20.0;
-    dev.calibration3B = abc[1] > 0.0 ? (math.log(abc[1]) / math.ln10) * 10.0 : -20.0;
-    dev.calibration3C = abc[2] > 0.0 ? (math.log(abc[2]) / math.ln10) * 10.0 : -20.0;
-    dev.calibration3A = dev.calibration3A.clamp(-20.0, 0.0);
-    dev.calibration3B = dev.calibration3B.clamp(-20.0, 0.0);
-    dev.calibration3C = dev.calibration3C.clamp(-20.0, 0.0);
+    dev.calibration3A = abc[0] > 0.0 ? (math.log(abc[0]) / math.ln10) * 10.0 : -5.0;
+    dev.calibration3B = abc[1] > 0.0 ? (math.log(abc[1]) / math.ln10) * 10.0 : -5.0;
+    dev.calibration3C = abc[2] > 0.0 ? (math.log(abc[2]) / math.ln10) * 10.0 : -5.0;
+    dev.calibration3A = dev.calibration3A.clamp(-5.0, 0.0);
+    dev.calibration3B = dev.calibration3B.clamp(-5.0, 0.0);
+    dev.calibration3C = dev.calibration3C.clamp(-5.0, 0.0);
   }
 
   void syncFromUdLr() {
@@ -144,9 +144,9 @@ class SettingsProvider with ChangeNotifier {
   }
 
   void updateCalibration3Modern(double a, double b, double c) {
-    device.calibration3A = a.clamp(-20.0, 0.0);
-    device.calibration3B = b.clamp(-20.0, 0.0);
-    device.calibration3C = c.clamp(-20.0, 0.0);
+    device.calibration3A = a.clamp(-5.0, 0.0);
+    device.calibration3B = b.clamp(-5.0, 0.0);
+    device.calibration3C = c.clamp(-5.0, 0.0);
     
     // Convert to ratios
     final double ratioA = math.pow(10.0, device.calibration3A / 10.0).toDouble();

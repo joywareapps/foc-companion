@@ -138,13 +138,13 @@ class _CalibrationCardState extends State<_CalibrationCard> {
               _buildSlider('Center', d.calibration3Center, (v) => d.calibration3Center = v),
               _buildSlider('Electrode A', d.calibration3A,
                   (v) => settings.updateCalibration3Modern(v, d.calibration3B, d.calibration3C),
-                  color: Colors.red, min: -20, max: 0),
+                  color: Colors.red, min: -5, max: 0),
               _buildSlider('Electrode B', d.calibration3B,
                   (v) => settings.updateCalibration3Modern(d.calibration3A, v, d.calibration3C),
-                  color: Colors.blue, min: -20, max: 0),
+                  color: Colors.blue, min: -5, max: 0),
               _buildSlider('Electrode C', d.calibration3C,
                   (v) => settings.updateCalibration3Modern(d.calibration3A, d.calibration3B, v),
-                  color: Colors.amber, min: -20, max: 0),
+                  color: Colors.amber, min: -5, max: 0),
             ],
             const SizedBox(height: 8),
             Row(
@@ -199,12 +199,14 @@ class _CalibrationCardState extends State<_CalibrationCard> {
   }
 
   Widget _buildSlider(String label, double value, void Function(double) onSet,
-      {Color? color, double min = -2.0, double max = 2.0}) {
+      {Color? color, double min = -2.0, double max = 2.0, void Function(double)? onChangeEnd}) {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
     final slider = Slider(
       value: value.clamp(min, max),
       min: min,
       max: max,
       onChanged: (v) => setState(() => onSet(v)),
+      onChangeEnd: onChangeEnd ?? (_) => settings.saveSettings(),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -221,4 +221,12 @@ class FocStimApiService {
       ..requestLockDeviceVolume = (RequestLockDeviceVolume()..lock = lock);
     await sendRequest(req);
   }
+
+  Future<void> setWifiCredentials(String ssid, String password) async {
+    final req = Request()
+      ..requestWifiParametersSet = (RequestWifiParametersSet()
+        ..ssid = ssid.codeUnits
+        ..password = password.codeUnits);
+    await sendRequest(req);
+  }
 }

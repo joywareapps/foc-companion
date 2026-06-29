@@ -18,6 +18,9 @@ class SettingsProvider with ChangeNotifier {
   bool keepScreenOn = false;
   DeviceBehaviorSettings deviceBehavior = DeviceBehaviorSettings();
 
+  String wifiUploadSsid = '';
+  String wifiUploadPassword = '';
+
   BoxProfile get activeBox => boxes[activeUiBoxIndex.clamp(0, boxes.length - 1)];
 
   // Compatibility getters/setters mapping to active focused box in UI
@@ -97,6 +100,9 @@ class SettingsProvider with ChangeNotifier {
     keepScreenOn = prefs.getBool('keep_screen_on') ?? false;
     if (keepScreenOn) WakelockPlus.enable(); else WakelockPlus.disable();
 
+    wifiUploadSsid = prefs.getString('wifi_upload_ssid') ?? '';
+    wifiUploadPassword = prefs.getString('wifi_upload_password') ?? '';
+
     final behaviorJson = prefs.getString('device_behavior_settings');
     if (behaviorJson != null) deviceBehavior = DeviceBehaviorSettings.fromJson(jsonDecode(behaviorJson));
 
@@ -117,6 +123,8 @@ class SettingsProvider with ChangeNotifier {
     await prefs.setString('media_settings', jsonEncode(mediaSync.toJson()));
     await prefs.setBool('keep_screen_on', keepScreenOn);
     await prefs.setString('device_behavior_settings', jsonEncode(deviceBehavior.toJson()));
+    await prefs.setString('wifi_upload_ssid', wifiUploadSsid);
+    await prefs.setString('wifi_upload_password', wifiUploadPassword);
   }
 
   Future<void> setKeepScreenOn(bool value) async {

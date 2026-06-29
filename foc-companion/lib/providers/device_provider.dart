@@ -69,6 +69,8 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
   bool isShowingErrorDialog = false;
   String? lastErrorMessage;
   static const int _kMaxLogRows = 1000;
+
+  Completer<String?>? _wifiCredentialsCompleter;
   Timer? _logInactivityTimer;
   Timer? _periodicSyncTimer;
 
@@ -171,6 +173,12 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
           capturedLogs.add(logMsg);
         }
         notifyListeners();
+        break;
+
+      case 'wifiCredentialsResult':
+        final error = msg['error'] as String?;
+        _wifiCredentialsCompleter?.complete(error);
+        _wifiCredentialsCompleter = null;
         break;
 
       case 'notification':
@@ -436,6 +444,24 @@ class DeviceProvider with ChangeNotifier, WidgetsBindingObserver {
       boxes[targetIndex].connectionStatus = "Error: $e";
       notifyListeners();
     }
+  }
+
+  /// Send WiFi credentials to the device. Returns null on success, or an error message.
+  Future<String?> uploadWifiCredentials(int boxIndex, String ssid, String password) {
+    _wifiCredentialsCompleter?.completeError('superseded');
+    _wifiCredentialsCompleter = Completer<String?>();
+    ServiceManager.sendCommand('setWifiCredentials', {
+      'boxIndex': boxIndex,
+      'ssid': ssid,
+      'password': password,
+    });
+    return _wifiCredentialsCompleter!.future.timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        _wifiCredentialsCompleter = null;
+        return 'Timeout: no response from device';
+      },
+    );
   }
 
   void setActiveUiBoxIndex(int index) {

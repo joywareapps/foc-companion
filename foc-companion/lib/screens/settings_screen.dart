@@ -302,6 +302,27 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
     }
   }
 
+  void _showWifiCredentialsDialog() {
+    final settings = widget.settings;
+    final ssidCtrl = TextEditingController(text: settings.wifiUploadSsid);
+    final passCtrl = TextEditingController(text: settings.wifiUploadPassword);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => _WifiCredentialsDialog(
+        boxIndex: widget.boxIndex,
+        ssidController: ssidCtrl,
+        passwordController: passCtrl,
+        isConnected: widget.isConnected,
+        onSave: (ssid, password) {
+          settings.wifiUploadSsid = ssid;
+          settings.wifiUploadPassword = password;
+          settings.saveSettings();
+        },
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _ipController.dispose();
@@ -423,6 +444,12 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
                 tooltip: "Refresh port list",
                 icon: const Icon(Icons.refresh),
                 onPressed: _refreshPorts,
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                tooltip: "Upload WiFi credentials to device",
+                icon: const Icon(Icons.wifi_password),
+                onPressed: _showWifiCredentialsDialog,
               ),
             ],
           ),
@@ -583,6 +610,157 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
         ),
       ],
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// WiFi Credentials Upload Dialog
+// ─────────────────────────────────────────────────────────
+
+class _WifiCredentialsDialog extends StatefulWidget {
+  final int boxIndex;
+  final TextEditingController ssidController;
+  final TextEditingController passwordController;
+  final bool isConnected;
+  final void Function(String ssid, String password) onSave;
+
+  const _WifiCredentialsDialog({
+    required this.boxIndex,
+    required this.ssidController,
+    required this.passwordController,
+    required this.isConnected,
+    required this.onSave,
+  });
+
+  @override
+  State<_WifiCredentialsDialog> createState() => _WifiCredentialsDialogState();
+}
+
+class _WifiCredentialsDialogState extends State<_WifiCredentialsDialog> {
+  bool _obscurePassword = true;
+  bool _isUploading = false;
+  String? _resultMessage;
+  bool _resultIsError = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Upload WiFi Credentials"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!widget.isConnected)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber, color: Theme.of(context).colorScheme.error, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Connect to the device via serial first.",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.error),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          TextField(
+            controller: widget.ssidController,
+            decoration: const InputDecoration(
+              labelText: "WiFi SSID",
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.wifi),
+            ),
+            autofocus: true,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: widget.passwordController,
+            obscureText: _obscurePassword,
+            decoration: InputDecoration(
+              labelText: "WiFi Password",
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.lock_outline),
+              suffixIcon: IconButton(
+                icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              ),
+            ),
+          ),
+          if (_resultMessage != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  _resultIsError ? Icons.error_outline : Icons.check_circle_outline,
+                  color: _resultIsError
+                      ? Theme.of(context).colorScheme.error
+                      : Colors.green,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _resultMessage!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: _resultIsError
+                              ? Theme.of(context).colorScheme.error
+                              : Colors.green),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isUploading ? null : () => Navigator.of(context).pop(),
+          child: const Text("Close"),
+        ),
+        FilledButton.icon(
+          icon: _isUploading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : const Icon(Icons.upload),
+          label: const Text("Write to Device"),
+          onPressed: (_isUploading || !widget.isConnected) ? null : _upload,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _upload() async {
+    final ssid = widget.ssidController.text.trim();
+    final password = widget.passwordController.text;
+    if (ssid.isEmpty) {
+      setState(() {
+        _resultMessage = "SSID cannot be empty.";
+        _resultIsError = true;
+      });
+      return;
+    }
+
+    widget.onSave(ssid, password);
+    setState(() {
+      _isUploading = true;
+      _resultMessage = null;
+    });
+
+    final device = Provider.of<DeviceProvider>(context, listen: false);
+    final error = await device.uploadWifiCredentials(widget.boxIndex, ssid, password);
+
+    if (!mounted) return;
+    setState(() {
+      _isUploading = false;
+      _resultIsError = error != null;
+      _resultMessage = error ?? "WiFi credentials written successfully.";
+    });
   }
 }
 

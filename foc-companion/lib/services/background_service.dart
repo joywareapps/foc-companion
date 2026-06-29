@@ -283,6 +283,26 @@ class FocStimServiceController {
           }
         }
         break;
+      case 'setWifiCredentials':
+        final int boxIndex = data['boxIndex'] as int? ?? 0;
+        final ssid = data['ssid'] as String? ?? '';
+        final password = data['password'] as String? ?? '';
+        _setWifiCredentials(boxIndex, ssid, password);
+        break;
+    }
+  }
+
+  Future<void> _setWifiCredentials(int boxIndex, String ssid, String password) async {
+    final box = _boxes[boxIndex];
+    if (box == null || !box.api.isConnected) {
+      _sendToMain({'type': 'wifiCredentialsResult', 'boxIndex': boxIndex, 'error': 'Not connected to device'});
+      return;
+    }
+    try {
+      await box.api.setWifiCredentials(ssid, password);
+      _sendToMain({'type': 'wifiCredentialsResult', 'boxIndex': boxIndex});
+    } catch (e) {
+      _sendToMain({'type': 'wifiCredentialsResult', 'boxIndex': boxIndex, 'error': e.toString()});
     }
   }
 

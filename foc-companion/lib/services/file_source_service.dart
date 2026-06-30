@@ -10,12 +10,12 @@ class FileSourceService {
       final dir = Directory(location.localPath);
       if (!await dir.exists()) return [];
 
-      final files = await dir.list().toList();
+      final files = await dir.list(recursive: location.searchSubfolders).toList();
       return files
           .whereType<File>()
           .where((f) {
             final name = f.path.split(Platform.pathSeparator).last.toLowerCase();
-            return (name.endsWith('.focb') || name.endsWith('.zip')) && 
+            return (name.endsWith('.focb') || name.endsWith('.zip')) &&
                    name.startsWith(videoBasename.toLowerCase());
           })
           .map((f) => f.path)

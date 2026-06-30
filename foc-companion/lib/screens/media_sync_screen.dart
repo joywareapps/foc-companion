@@ -283,6 +283,7 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
     String smbDomain = location?.smbDomain ?? "WORKGROUP";
     String smbUser = location?.smbUsername ?? "";
     String smbPass = location?.smbPassword ?? "";
+    bool searchSubfolders = location?.searchSubfolders ?? false;
 
     bool isTesting = false;
 
@@ -350,6 +351,14 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
                     onChanged: (v) => smbPass = v,
                   ),
                 ],
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text("Search subfolders"),
+                  value: searchSubfolders,
+                  onChanged: (v) => setDialogState(() => searchSubfolders = v ?? false),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  dense: true,
+                ),
               ],
             ),
           ),
@@ -399,7 +408,8 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
                   target.smbDomain = smbDomain;
                   target.smbUsername = smbUser;
                   target.smbPassword = smbPass;
-                  
+                  target.searchSubfolders = searchSubfolders;
+
                   if (!isEditing) {
                     m.funscriptLocations.add(target);
                   }

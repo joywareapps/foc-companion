@@ -24,11 +24,6 @@ class SambaService {
     return _cleanPath(loc.smbPath);
   }
 
-  /// Prefixes [filename] with the subfolder path when non-empty.
-  String _remotePath(FunscriptLocation loc, String filename) {
-    final dir = _cleanPath(loc.smbPath);
-    return dir.isEmpty ? filename : '$dir/$filename';
-  }
 
   /// Test connection to an SMB location.
   /// Returns null on success, or an error message on failure.
@@ -67,23 +62,52 @@ class SambaService {
         domain: loc.smbDomain,
       );
 
-      final entries = await pool.listDirectory(_listDir(loc));
-
-      String? foundPath;
-      for (final entry in entries) {
-        if (entry.name.toLowerCase() == pattern.toLowerCase()) {
-          foundPath = _remotePath(loc, entry.name);
-          AppLogger.instance.i("SambaService: found '$pattern' at ${loc.smbHost}/${loc.smbShare}/$foundPath");
-          break;
-        }
-      }
+      final rootDir = _listDir(loc);
+      final foundPath = loc.searchSubfolders
+          ? await _findRecursive(pool, rootDir, pattern, 0)
+          : await _findInDir(pool, rootDir, pattern, rootDir);
 
       await pool.disconnect();
+
+      if (foundPath != null) {
+        AppLogger.instance.i("SambaService: found '$pattern' at ${loc.smbHost}/${loc.smbShare}/$foundPath");
+      }
       return foundPath;
     } catch (e) {
       AppLogger.instance.e("SambaService list error", error: e);
       return null;
     }
+  }
+
+  Future<String?> _findInDir(Smb2Pool pool, String dirPath, String pattern, String rootDir) async {
+    final entries = await pool.listDirectory(dirPath);
+    for (final entry in entries) {
+      if (entry.isFile && entry.name.toLowerCase() == pattern.toLowerCase()) {
+        return dirPath.isEmpty ? entry.name : '$dirPath/${entry.name}';
+      }
+    }
+    return null;
+  }
+
+  Future<String?> _findRecursive(Smb2Pool pool, String dirPath, String pattern, int depth) async {
+    if (depth > 6) return null;
+    try {
+      final entries = await pool.listDirectory(dirPath);
+      for (final entry in entries) {
+        if (entry.name == '.' || entry.name == '..') continue;
+        final entryPath = dirPath.isEmpty ? entry.name : '$dirPath/${entry.name}';
+        if (entry.isFile && entry.name.toLowerCase() == pattern.toLowerCase()) {
+          return entryPath;
+        }
+        if (entry.isDirectory) {
+          final found = await _findRecursive(pool, entryPath, pattern, depth + 1);
+          if (found != null) return found;
+        }
+      }
+    } catch (e) {
+      AppLogger.instance.e("SambaService recursive list error at $dirPath", error: e);
+    }
+    return null;
   }
 
   /// Download a file from SMB to a temporary local file.

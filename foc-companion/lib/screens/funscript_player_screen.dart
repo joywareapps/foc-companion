@@ -13,6 +13,8 @@ import 'package:foc_companion/services/video_sync_controller.dart';
 import 'package:foc_companion/models/funscript_bundle.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/media_sync_orchestrator.dart';
+import 'package:foc_companion/screens/device_settings_screen.dart';
+import 'package:foc_companion/screens/sensor_settings_screen.dart';
 
 /// Full-screen funscript player with transport controls and live axis display.
 class FunscriptPlayerScreen extends StatefulWidget {
@@ -34,6 +36,8 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
   bool _syncConnecting = false;
   MediaSyncOrchestrator? _orchestrator;
   PlaybackState? _lastHardwareState;
+  bool _showCalibration = false;
+  bool _showSensor = false;
 
   @override
   void initState() {
@@ -295,8 +299,32 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(_bundle?.name ?? 'Waiting for video…'),
+            title: Text(_showCalibration
+                ? 'Calibration'
+                : _showSensor
+                    ? 'Sensor Settings'
+                    : (_bundle?.name ?? 'Waiting for video…')),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.sensors),
+                tooltip: 'Sensor Settings',
+                isSelected: _showSensor,
+                selectedIcon: const Icon(Icons.sensors),
+                onPressed: () => setState(() {
+                  _showSensor = !_showSensor;
+                  if (_showSensor) _showCalibration = false;
+                }),
+              ),
+              IconButton(
+                icon: const Icon(Icons.tune),
+                tooltip: 'Calibration',
+                isSelected: _showCalibration,
+                selectedIcon: const Icon(Icons.tune),
+                onPressed: () => setState(() {
+                  _showCalibration = !_showCalibration;
+                  if (_showCalibration) _showSensor = false;
+                }),
+              ),
               IconButton(
                 icon: const Icon(Icons.restore),
                 tooltip: 'Back to pattern mode',
@@ -307,7 +335,11 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
               ),
             ],
           ),
-          body: SingleChildScrollView(
+          body: _showCalibration
+              ? const DeviceSettingsScreen()
+              : _showSensor
+                  ? const SensorSettingsScreen()
+                  : SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

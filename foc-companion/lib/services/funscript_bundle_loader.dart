@@ -277,6 +277,96 @@ class FunscriptBundleLoader {
     }
   }
 
+  /// Import a bundle directly from a list of loose .funscript [File] objects.
+  ///
+  /// Used when the user keeps unpacked funscripts in a folder rather than
+  /// a .focb / .zip archive.
+  static Future<FunscriptBundle> importFromFiles(
+    String name,
+    List<File> files,
+    String libraryDir,
+  ) async {
+    final axes = <String, Funscript>{};
+    for (final file in files) {
+      final filename = file.path.split(Platform.pathSeparator).last;
+      final axisSuffix = detectAxisSuffix(filename) ?? 'alpha';
+      final content = await file.readAsString();
+      axes[axisSuffix] = FunscriptParser.parse(content);
+      AppLogger.instance.d('FunscriptBundleLoader: parsed axis "$axisSuffix" from ${file.path}');
+    }
+
+    if (axes.isEmpty) throw const FormatException('No valid funscript files');
+
+    var durationMs = 0;
+    for (final f in axes.values) {
+      if (f.durationMs > durationMs) durationMs = f.durationMs;
+    }
+
+    // Reuse existing library entry if same name.
+    String id = _uuid.v4();
+    final existingBundles = await listAll(libraryDir);
+    for (final b in existingBundles) {
+      if (b['name'] == name) {
+        id = b['id'] as String;
+        AppLogger.instance.i('FunscriptBundleLoader: updating existing bundle "$name" ($id)');
+        break;
+      }
+    }
+
+    final bundleDir = '$libraryDir/$id';
+    if (await Directory(bundleDir).exists()) {
+      await Directory(bundleDir).delete(recursive: true);
+    }
+    await Directory(bundleDir).create(recursive: true);
+
+    for (final file in files) {
+      final filename = file.path.split(Platform.pathSeparator).last;
+      await file.copy('$bundleDir/$filename');
+    }
+
+    final meta = {
+      'id': id,
+      'name': name,
+      'importDate': DateTime.now().toUtc().toIso8601String(),
+      'durationMs': durationMs,
+      'sourceFile': name,
+      'axes': axes.keys.toList(),
+      'waveformAxis': axes.containsKey('volume')
+          ? 'volume'
+          : (axes.containsKey('alpha') ? 'alpha' : axes.keys.first),
+    };
+    await File('$bundleDir/meta.json').writeAsString(jsonEncode(meta));
+
+    AppLogger.instance.i('FunscriptBundleLoader: imported loose "$name" ($id) with ${axes.length} axes');
+
+    return FunscriptBundle(
+      id: id,
+      name: name,
+      importDate: DateTime.now(),
+      durationMs: durationMs,
+      sourceFile: name,
+      axes: axes,
+    );
+  }
+
+  /// Return the set of axis names present inside a zip/focb [bytes] blob.
+  /// Reads the archive directory only — does not parse funscript content.
+  static Set<String> axesFromArchiveBytes(List<int> bytes) {
+    try {
+      final archive = ZipDecoder().decodeBytes(bytes);
+      final axes = <String>{};
+      for (final entry in archive) {
+        if (entry.isFile && entry.name.toLowerCase().endsWith('.funscript')) {
+          final axis = detectAxisSuffix(entry.name);
+          if (axis != null) axes.add(axis);
+        }
+      }
+      return axes;
+    } catch (_) {
+      return {};
+    }
+  }
+
   /// Extract axis suffix from a funscript filename.
   ///
   /// "video.alpha.funscript" → "alpha"

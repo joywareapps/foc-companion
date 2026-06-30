@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/models/funscript_bundle.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/services/app_logger.dart';
@@ -70,22 +69,34 @@ class MediaSyncOrchestrator {
     // 2. Check configured locations (Local folders and SMB)
     for (final loc in settings.mediaSync.funscriptLocations) {
       try {
-        final bundles = await _fileSourceService.findBundles(loc, basename);
-        if (bundles.isNotEmpty) {
-          final bundlePath = bundles.first;
-          AppLogger.instance.i("MediaSyncOrchestrator: found bundle at $bundlePath");
+        final found = await _fileSourceService.findBundle(loc, basename);
+        if (found == null) continue;
 
+        AppLogger.instance.i("MediaSyncOrchestrator: found ${found.isArchive ? 'archive' : 'loose files'} for '$basename' in ${loc.name}");
+
+        if (found.isArchive) {
           File? localFile;
           if (loc.type == 'local') {
-            localFile = File(bundlePath);
+            localFile = File(found.archivePath!);
           } else if (loc.type == 'smb') {
-            AppLogger.instance.i("MediaSyncOrchestrator: downloading from SMB...");
-            localFile = await SambaService.instance.downloadFile(loc, bundlePath);
+            AppLogger.instance.i("MediaSyncOrchestrator: downloading archive from SMB...");
+            localFile = await SambaService.instance.downloadFile(loc, found.archivePath!);
           }
-
           if (localFile != null && await localFile.exists()) {
             await _importAndLoad(localFile);
-            return; // Stop after first match
+            return;
+          }
+        } else {
+          List<File> localFiles;
+          if (loc.type == 'local') {
+            localFiles = found.loosePaths!.map(File.new).toList();
+          } else {
+            AppLogger.instance.i("MediaSyncOrchestrator: downloading ${found.loosePaths!.length} loose files from SMB...");
+            localFiles = await SambaService.instance.downloadFiles(loc, found.loosePaths!);
+          }
+          if (localFiles.isNotEmpty) {
+            await _importAndLoadLoose(basename, localFiles);
+            return;
           }
         }
       } catch (e) {
@@ -94,6 +105,19 @@ class MediaSyncOrchestrator {
     }
 
     AppLogger.instance.w("MediaSyncOrchestrator: no matching bundle found for '$basename'");
+  }
+
+  Future<void> _importAndLoadLoose(String name, List<File> files) async {
+    try {
+      final docDir = await getApplicationDocumentsDirectory();
+      final libraryDir = "${docDir.path}/funscript_library";
+      final bundle = await FunscriptBundleLoader.importFromFiles(name, files, libraryDir);
+      playbackController.load(bundle);
+      onBundleLoaded?.call(bundle);
+      AppLogger.instance.i("MediaSyncOrchestrator: autoloaded loose '$name' (${files.length} axes)");
+    } catch (e) {
+      AppLogger.instance.e("MediaSyncOrchestrator: failed to import loose bundle", error: e);
+    }
   }
 
   Future<void> _importAndLoad(File file) async {

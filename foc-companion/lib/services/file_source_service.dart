@@ -1,57 +1,74 @@
 import 'dart:io';
+
 import 'package:foc_companion/models/settings_models.dart';
+import 'package:foc_companion/services/found_bundle.dart';
+import 'package:foc_companion/services/funscript_bundle_loader.dart';
 import 'package:foc_companion/services/samba_service.dart';
-import 'package:foc_companion/services/app_logger.dart';
 
 class FileSourceService {
-  /// Find matching funscript bundles (.focb or .zip) for a video filename.
-  Future<List<String>> findBundles(FunscriptLocation location, String videoBasename) async {
+  /// Find the best matching funscript bundle for [videoBasename] in [location].
+  ///
+  /// Returns a [FoundBundle] describing either an archive (.focb/.zip) or a
+  /// set of loose .funscript files, chosen by the completeness+date rule.
+  /// Returns null when nothing matching is found.
+  Future<FoundBundle?> findBundle(FunscriptLocation location, String videoBasename) async {
     if (location.type == 'local') {
-      final dir = Directory(location.localPath);
-      if (!await dir.exists()) return [];
-
-      final files = await dir.list(recursive: location.searchSubfolders).toList();
-      return files
-          .whereType<File>()
-          .where((f) {
-            final name = f.path.split(Platform.pathSeparator).last.toLowerCase();
-            return (name.endsWith('.focb') || name.endsWith('.zip')) &&
-                   name.startsWith(videoBasename.toLowerCase());
-          })
-          .map((f) => f.path)
-          .toList();
+      return _findLocal(location, videoBasename);
     } else if (location.type == 'smb') {
-      // Logic for SMB listing would go here via SambaService
-      final focb = await SambaService.instance.findFile(location, "$videoBasename.focb");
-      if (focb != null) return [focb];
-      
-      final zip = await SambaService.instance.findFile(location, "$videoBasename.zip");
-      if (zip != null) return [zip];
+      return SambaService.instance.findBundle(location, videoBasename);
     }
-    return [];
+    return null;
   }
 
-  /// Original method for individual funscripts (legacy support)
-  Future<List<String>> findFunscripts(FunscriptLocation location, String videoBasename) async {
-    if (location.type == 'local') {
-      final dir = Directory(location.localPath);
-      if (!await dir.exists()) return [];
+  Future<FoundBundle?> _findLocal(FunscriptLocation loc, String videoBasename) async {
+    final dir = Directory(loc.localPath);
+    if (!await dir.exists()) return null;
 
-      final files = await dir.list().toList();
-      return files
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.funscript') && 
-                        f.path.split(Platform.pathSeparator).last.toLowerCase().startsWith(videoBasename.toLowerCase()))
-          .map((f) => f.path)
-          .toList();
-    }
-    return [];
-  }
+    final all = await dir.list(recursive: loc.searchSubfolders).toList();
+    final lower = videoBasename.toLowerCase();
+    final sep = Platform.pathSeparator;
 
-  Future<String> readFile(FunscriptLocation location, String path) async {
-    if (location.type == 'local') {
-      return await File(path).readAsString();
+    // ── Archive candidate (.focb preferred over .zip) ──────────────────────
+    FoundBundle? archiveCandidate;
+    for (final ext in ['.focb', '.zip']) {
+      final match = all.whereType<File>().where((f) {
+        final name = f.path.split(sep).last.toLowerCase();
+        return name == '$lower$ext';
+      }).firstOrNull;
+
+      if (match != null) {
+        final bytes = await match.readAsBytes();
+        final axes = FunscriptBundleLoader.axesFromArchiveBytes(bytes);
+        final date = await match.lastModified();
+        archiveCandidate = FoundBundle.archive(match.path, axes: axes, date: date);
+        break;
+      }
     }
-    throw Exception("Source type not supported for individual file read");
+
+    // ── Loose funscript candidate ──────────────────────────────────────────
+    final looseFiles = all.whereType<File>().where((f) {
+      final name = f.path.split(sep).last.toLowerCase();
+      return name.startsWith('$lower.') && name.endsWith('.funscript');
+    }).toList();
+
+    FoundBundle? looseCandidate;
+    if (looseFiles.isNotEmpty) {
+      final axes = looseFiles
+          .map((f) => FunscriptBundleLoader.detectAxisSuffix(f.path.split(sep).last))
+          .nonNulls
+          .toSet();
+      DateTime newest = DateTime.fromMillisecondsSinceEpoch(0);
+      for (final f in looseFiles) {
+        final d = await f.lastModified();
+        if (d.isAfter(newest)) newest = d;
+      }
+      looseCandidate = FoundBundle.loose(
+        looseFiles.map((f) => f.path).toList(),
+        axes: axes,
+        date: newest,
+      );
+    }
+
+    return pickBundleWinner(archiveCandidate, looseCandidate);
   }
 }

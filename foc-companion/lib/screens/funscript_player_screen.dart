@@ -15,6 +15,7 @@ import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/media_sync_orchestrator.dart';
 import 'package:foc_companion/screens/device_settings_screen.dart';
 import 'package:foc_companion/screens/sensor_settings_screen.dart';
+import 'package:foc_companion/widgets/volume_bar.dart';
 
 /// Full-screen funscript player with transport controls and live axis display.
 class FunscriptPlayerScreen extends StatefulWidget {
@@ -360,6 +361,9 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
                 _buildTransportControls(isLinked),
                 const SizedBox(height: 12),
 
+                _buildVolumeBar(),
+                const SizedBox(height: 12),
+
                 _buildSyncIndicator(),
                 const SizedBox(height: 12),
 
@@ -588,6 +592,16 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildVolumeBar() {
+    final device = context.watch<DeviceProvider>();
+    if (!device.isLoopRunning) return const SizedBox.shrink();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: VolumeBar(device: device),
     );
   }
 

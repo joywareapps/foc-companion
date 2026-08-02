@@ -14,6 +14,7 @@ import 'package:foc_companion/screens/settings_screen.dart';
 import 'package:foc_companion/screens/funscript_library_screen.dart';
 import 'package:foc_companion/screens/funscript_player_screen.dart';
 import 'package:foc_companion/services/shared_file_service.dart';
+import 'package:foc_companion/widgets/volume_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -400,116 +401,18 @@ class _PlayBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     if (device.isLoopRunning) {
-      // ── Running: volume slider (0–100%) + stop button ──
-      final vol = device.volume;
-      final boxVol = device.boxVolume;
-      final sensorMult = device.sensorMultiplier;
-      final potentialVol = vol * boxVol;
-      final actualVol = potentialVol * sensorMult;
-
-      return Container(
-        color: colorScheme.surfaceContainerHighest,
-        child: Stack(
-          children: [
-            // Base layer: Potential volume (less saturated/semi-transparent)
-            Positioned.fill(
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: potentialVol.clamp(0.0, 1.0),
-                child: Container(
-                  color: colorScheme.primary.withAlpha(20),
-                ),
-              ),
-            ),
-            // Top layer: Actual volume modified by sensor (opaque)
-            Positioned.fill(
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: actualVol.clamp(0.0, 1.0),
-                child: Container(
-                  color: colorScheme.primary.withAlpha(80),
-                ),
-              ),
-            ),
-            // Foreground content
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'App: ${(vol * 100).round()}%',
-                              style: Theme.of(context).textTheme.labelMedium,
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Tooltip(
-                                  message: device.isPotLocked
-                                      ? 'Hardware volume locked'
-                                      : 'Hardware volume unlocked',
-                                  child: Icon(
-                                    device.isPotLocked
-                                        ? Icons.lock
-                                        : Icons.lock_open,
-                                    size: 18,
-                                    color: device.isPotLocked
-                                        ? Colors.orange
-                                        : colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Box: ${(boxVol * 100).round()}%',
-                                  style: Theme.of(context).textTheme.labelMedium,
-                                ),
-                              ],
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: Text(
-                                'Total: ${(actualVol * 100).round()}%',
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.primary,
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Slider(
-                          value: vol,
-                          min: 0.0,
-                          max: 1.0,
-                          onChanged: (v) => device.setVolume(v),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton.filled(
-                    icon: const Icon(Icons.stop),
-                    tooltip: 'Stop',
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: device.toggleLoop,
-                  ),
-                  const SizedBox(width: 4),
-                ],
-              ),
-            ),
-          ],
+      // ── Running: volume bar + stop button ──
+      return VolumeBar(
+        device: device,
+        trailing: IconButton.filled(
+          icon: const Icon(Icons.stop),
+          tooltip: 'Stop',
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: device.toggleLoop,
         ),
       );
     } else {

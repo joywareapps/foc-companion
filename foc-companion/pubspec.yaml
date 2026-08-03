@@ -1,7 +1,7 @@
 name: foc_companion
 description: "FOC Companion App"
 publish_to: 'none'
-version: 1.5.1+24
+version: 1.5.2+25
 
 environment:
   sdk: '>=3.2.3 <4.0.0'

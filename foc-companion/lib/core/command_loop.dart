@@ -26,6 +26,27 @@ const _kSlowThreshold = 3;
 // Axis conversion: user-facing 0–1 values → firmware units
 // ─────────────────────────────────────────────────────────
 
+/// Inter-pulse gap → AXIS_PULSE_FREQUENCY_HZ, given an *explicit* wavelet
+/// width. Factored out of [pulseFirmwareAxes] so callers that already know
+/// the real width being sent (e.g. a funscript-driven pulse_width axis) can
+/// compute a frequency consistent with it, rather than one implicitly
+/// assuming some other — possibly stale — width.
+///
+/// [carrierHz]    AXIS_CARRIER_FREQUENCY_HZ (current value)
+/// [widthCycles]  wavelet duration actually being sent, in carrier cycles
+/// [speed]        0 = slow (long inter-pulse gap), 1 = fast (short gap)
+double gapPulseFrequencyHz({
+  required double carrierHz,
+  required double widthCycles,
+  required double speed,
+}) {
+  final waveletSeconds = widthCycles / carrierHz;
+  // Inter-pulse gap: 0.5 s (slow) → 0.005 s (fast), logarithmic
+  //   gap = 0.5 × (0.01)^speed
+  final gapSeconds = 0.5 * math.pow(0.01, speed.clamp(0.0, 1.0));
+  return (1.0 / (waveletSeconds + gapSeconds)).clamp(1.0, 100.0);
+}
+
 /// Converts the three intuitive axes (speed, pulse, texture) to the three
 /// firmware parameters (pulse_frequency_hz, pulse_width_cycles,
 /// pulse_rise_time_cycles).
@@ -40,14 +61,15 @@ const _kSlowThreshold = 3;
   required double pulse,
   required double texture,
 }) {
-  // 1. Wavelet duration in cycles (3..20) and seconds
+  // 1. Wavelet duration in cycles (3..20)
   final widthCycles = (3.0 + pulse * 17.0).clamp(3.0, 20.0);
-  final waveletSeconds = widthCycles / carrierHz;
 
-  // 2. Inter-pulse gap: 0.5 s (slow) → 0.005 s (fast), logarithmic
-  //    gap = 0.5 × (0.01)^speed
-  final gapSeconds = 0.5 * math.pow(0.01, speed.clamp(0.0, 1.0));
-  final freqHz = (1.0 / (waveletSeconds + gapSeconds)).clamp(1.0, 100.0);
+  // 2. Frequency from the gap implied by speed, at this actual width.
+  final freqHz = gapPulseFrequencyHz(
+    carrierHz: carrierHz,
+    widthCycles: widthCycles,
+    speed: speed,
+  );
 
   // 3. Rise time: 2 cycles (sharp) → pulse_width/2 cycles (smooth), capped at 10
   final effectiveMaxRise = (widthCycles / 2.0).clamp(2.0, 10.0);
@@ -459,23 +481,11 @@ class CommandLoop {
             _pulse.carrierFrequency)
         : _pulse.carrierFrequency;
 
-    // pulse_frequency funscript axis is treated as 0–1 "speed" (same semantics
-    // as the pulse tab slider), so the gap (silence between pulses) is what
-    // changes rather than the total period.
-    final double modFreq = useFunscript
-        ? (fsVal('pulse_frequency') != null
-            ? pulseFirmwareAxes(
-                carrierHz: _pulse.carrierFrequency,
-                speed: fsVal('pulse_frequency')!.clamp(0.0, 1.0),
-                pulse: _pulse.pulse,
-                texture: _pulse.texture,
-              ).freqHz
-            : axes.freqHz)
-        : (freqModActive
-            ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
-                .clamp(1.0, 100.0)
-            : axes.freqHz);
-
+    // Resolved before modFreq: when both pulse_width and pulse_frequency
+    // funscript axes are active, the frequency's gap calculation needs the
+    // width actually being sent — not a stale manual-slider assumption —
+    // otherwise the two axes can imply a pulse longer than its own
+    // repetition period.
     final double modWidth = useFunscript
         ? (fsDevice('pulse_width', min: 3.0, max: 15.0) ?? axes.widthCycles)
         : (widthModActive
@@ -487,6 +497,22 @@ class CommandLoop {
                             2)
                 .clamp(3.0, 15.0)
             : axes.widthCycles);
+
+    // pulse_frequency funscript axis is treated as 0–1 "speed" (same semantics
+    // as the pulse tab slider), so the gap (silence between pulses) is what
+    // changes rather than the total period. Uses the actual width (modWidth)
+    // and actual carrier (freq) so it stays consistent even when pulse_width
+    // and/or carrier frequency are separately overridden by funscript.
+    final double modFreq = useFunscript
+        ? gapPulseFrequencyHz(
+            carrierHz: freq,
+            widthCycles: modWidth,
+            speed: fsVal('pulse_frequency')?.clamp(0.0, 1.0) ?? _pulse.speed,
+          )
+        : (freqModActive
+            ? (modCfg.minHz + (modCfg.maxHz - modCfg.minHz) * (norm + 1) / 2)
+                .clamp(1.0, 100.0)
+            : axes.freqHz);
 
     final double pulseRiseTime = useFunscript
         ? (fsDevice('pulse_rise_time', min: 2.0, max: 20.0) ?? axes.riseCycles)

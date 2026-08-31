@@ -507,7 +507,7 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
           label: "Max Amplitude (mA)",
           value: d.waveformAmplitude * 1000,
           min: 10,
-          max: 150,
+          max: 200,
           decimals: 0,
           enabled: !widget.isPlaying,
           onChanged: (v) => setState(() => d.waveformAmplitude = v / 1000),

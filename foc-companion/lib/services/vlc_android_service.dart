@@ -13,6 +13,12 @@ import 'package:foc_companion/services/video_player_status.dart';
 
 final _log = AppLogger.instance;
 
+/// Thrown when VLC rejects the stored session cookie; the user must re-pair.
+class VlcAndroidSessionExpired implements Exception {
+  @override
+  String toString() => 'Session expired or revoked - re-pair with the device';
+}
+
 class VlcAndroidPairingChallenge {
   final String challenge;
   VlcAndroidPairingChallenge(this.challenge);
@@ -51,15 +57,16 @@ class VlcAndroidService {
   http.Client _client() {
     if (_httpClient != null) return _httpClient!;
     if (_useHttps) {
-      // Accept VLC-Android's self-signed certificate
-      final ioClient = HttpClient()
-        ..badCertificateCallback = (X509Certificate cert, String host, int port) => host == _ip;
-      _httpClient = IOClient(ioClient);
+      _httpClient = IOClient(_insecureHttpClient());
     } else {
       _httpClient = http.Client();
     }
     return _httpClient!;
   }
+
+  // Accept VLC-Android's self-signed certificate, but only from the configured host
+  HttpClient _insecureHttpClient() => HttpClient()
+    ..badCertificateCallback = (X509Certificate cert, String host, int port) => host == _ip;
 
   Future<VlcAndroidPairingChallenge> requestPairingCode({String? previousChallenge}) async {
     final response = await _client().post(
@@ -101,28 +108,39 @@ class VlcAndroidService {
     sessionCookie = null;
   }
 
+  /// Connects to VLC. Throws [VlcAndroidSessionExpired] if the stored pairing
+  /// is rejected, so the caller can surface a "re-pair needed" error.
   Future<void> startSync() async {
     if (!isPaired) {
       throw StateError('VlcAndroidService: not paired yet, call requestPairingCode/submitOtp first');
     }
     _stopped = false;
-    await _connect();
+    await _connect(rethrowSessionExpired: true);
   }
 
-  Future<void> _connect() async {
+  Future<void> _connect({bool rethrowSessionExpired = false}) async {
     if (_stopped) return;
+    _closeChannel();
     try {
       final ticket = await _fetchTicket();
+      if (_stopped) return;
       final uri = Uri.parse('$_wsScheme://$_ip:$_port/echo');
 
-      _channel = IOWebSocketChannel.connect(
+      final channel = IOWebSocketChannel.connect(
         uri,
         protocols: ['player'],
         headers: {'Cookie': sessionCookie!},
         pingInterval: const Duration(seconds: 10),
+        customClient: _useHttps ? _insecureHttpClient() : null,
       );
+      await channel.ready.timeout(const Duration(seconds: 5));
+      if (_stopped) {
+        channel.sink.close();
+        return;
+      }
+      _channel = channel;
 
-      _wsSubscription = _channel!.stream.listen(
+      _wsSubscription = channel.stream.listen(
         _onFrame,
         onError: (e) {
           _log.w('VlcAndroidService: websocket error: $e');
@@ -136,12 +154,29 @@ class VlcAndroidService {
       );
 
       _send({'message': 'hello', 'authTicket': ticket});
-      _statusController.add(const VideoPlayerStatus(connected: true));
+      _emit(const VideoPlayerStatus(connected: true));
+    } on VlcAndroidSessionExpired {
+      // Retrying can't succeed until the user re-pairs, so stop here.
+      _log.e('VlcAndroidService: session rejected by VLC, re-pairing required');
+      _stopped = true;
+      _emit(const VideoPlayerStatus.disconnected());
+      if (rethrowSessionExpired) rethrow;
     } catch (e) {
       _log.w('VlcAndroidService: failed to connect: $e');
-      _statusController.add(const VideoPlayerStatus.disconnected());
+      _emit(const VideoPlayerStatus.disconnected());
       _scheduleReconnect();
     }
+  }
+
+  void _emit(VideoPlayerStatus status) {
+    if (!_statusController.isClosed) _statusController.add(status);
+  }
+
+  void _closeChannel() {
+    _wsSubscription?.cancel();
+    _wsSubscription = null;
+    _channel?.sink.close();
+    _channel = null;
   }
 
   Future<String> _fetchTicket() async {
@@ -151,7 +186,7 @@ class VlcAndroidService {
     ).timeout(const Duration(seconds: 5));
 
     if (response.statusCode == 401) {
-      throw StateError('Session expired or revoked - re-pair with the device');
+      throw VlcAndroidSessionExpired();
     }
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch websocket ticket (HTTP ${response.statusCode})');
@@ -164,7 +199,7 @@ class VlcAndroidService {
       final Map<String, dynamic> json = jsonDecode(raw as String) as Map<String, dynamic>;
       if (json['type'] != 'now-playing') return;
 
-      _statusController.add(VideoPlayerStatus(
+      _emit(VideoPlayerStatus(
         connected: true,
         isPlaying: json['playing'] == true,
         currentTimeMs: (json['progress'] as num?)?.toDouble() ?? 0,
@@ -217,11 +252,8 @@ class VlcAndroidService {
     _stopped = true;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
-    _wsSubscription?.cancel();
-    _wsSubscription = null;
-    _channel?.sink.close();
-    _channel = null;
-    _statusController.add(const VideoPlayerStatus.disconnected());
+    _closeChannel();
+    _emit(const VideoPlayerStatus.disconnected());
   }
 
   void dispose() {

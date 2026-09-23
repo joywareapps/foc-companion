@@ -47,6 +47,8 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
     _vlcIpController.text = m.vlcIp;
     _vlcPortController.text = m.vlcPort.toString();
     _vlcPasswordController.text = m.vlcPassword;
+    _vlcAndroidIpController.text = m.vlcAndroidIp;
+    _vlcAndroidPortController.text = m.vlcAndroidPort.toString();
     _kodiIpController.text = m.kodiIp;
     _kodiPortController.text = m.kodiPort.toString();
   }
@@ -60,6 +62,8 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
     _vlcIpController.dispose();
     _vlcPortController.dispose();
     _vlcPasswordController.dispose();
+    _vlcAndroidIpController.dispose();
+    _vlcAndroidPortController.dispose();
     _kodiIpController.dispose();
     _kodiPortController.dispose();
     super.dispose();
@@ -252,7 +256,12 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
               keyboardType: TextInputType.number,
               onChanged: (v) => m.vlcAndroidPort = int.tryParse(v) ?? 8080,
             ),
-            const SizedBox(height: 10),
+            SwitchListTile(
+              title: const Text("Use HTTPS"),
+              subtitle: const Text("Accepts VLC's self-signed certificate"),
+              value: m.vlcAndroidUseHttps,
+              onChanged: (v) => setState(() => m.vlcAndroidUseHttps = v),
+            ),
             Row(
               children: [
                 Expanded(
@@ -472,6 +481,7 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
   }
 
   Future<void> _startPairing(BuildContext context, MediaSyncSettings m) async {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
     final service = VlcAndroidService();
     service.configure(m.vlcAndroidIp, m.vlcAndroidPort, useHttps: m.vlcAndroidUseHttps);
 
@@ -508,6 +518,12 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
       final ok = await service.submitOtp(challenge.challenge, otp);
       if (ok) {
         setState(() => m.vlcAndroidSessionCookie = service.sessionCookie!);
+        // Persist right away so the pairing isn't lost if the user leaves without saving
+        await settings.saveSettings();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text("Paired with VLC")));
+        }
       } else if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text("Invalid or expired code")));

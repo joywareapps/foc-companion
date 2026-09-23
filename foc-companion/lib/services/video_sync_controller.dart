@@ -11,6 +11,7 @@ import 'package:foc_companion/services/mpc_hc_service.dart';
 import 'package:foc_companion/services/video_player_status.dart';
 
 import 'package:foc_companion/services/vlc_service.dart';
+import 'package:foc_companion/services/vlc_android_service.dart';
 
 final _log = AppLogger.instance;
 
@@ -25,6 +26,7 @@ class VideoSyncController extends ChangeNotifier {
   HereSphereService? _heresphereService;
   MpcHcService? _mpcHcService;
   VlcService? _vlcService;
+  VlcAndroidService? _vlcAndroidService;
   KodiService? _kodiService;
   StreamSubscription<VideoPlayerStatus>? _statusSubscription;
 
@@ -63,6 +65,10 @@ class VideoSyncController extends ChangeNotifier {
     required String vlcIp,
     required int vlcPort,
     required String vlcPassword,
+    required String vlcAndroidIp,
+    required int vlcAndroidPort,
+    required bool vlcAndroidUseHttps,
+    required String vlcAndroidSessionCookie,
     required String kodiIp,
     required int kodiPort,
   }) async {
@@ -98,6 +104,18 @@ class VideoSyncController extends ChangeNotifier {
           _statusSubscription =
               _vlcService!.statusStream.listen(_onPlayerStatus);
           await _vlcService!.startPolling();
+          break;
+
+        case VideoPlayerType.vlcAndroid:
+          _vlcAndroidService = VlcAndroidService();
+          _vlcAndroidService!.configure(
+            vlcAndroidIp,
+            vlcAndroidPort,
+            useHttps: vlcAndroidUseHttps,
+            sessionCookie: vlcAndroidSessionCookie.isEmpty ? null : vlcAndroidSessionCookie,
+          );
+          _statusSubscription = _vlcAndroidService!.statusStream.listen(_onPlayerStatus);
+          await _vlcAndroidService!.startSync();
           break;
 
         case VideoPlayerType.kodi:
@@ -151,6 +169,8 @@ class VideoSyncController extends ChangeNotifier {
     _mpcHcService = null;
     _vlcService?.dispose();
     _vlcService = null;
+    _vlcAndroidService?.dispose();
+    _vlcAndroidService = null;
     _kodiService?.dispose();
     _kodiService = null;
   }

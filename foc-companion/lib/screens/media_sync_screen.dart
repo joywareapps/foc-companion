@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:foc_companion/providers/settings_provider.dart';
 import 'package:foc_companion/models/settings_models.dart';
 import 'package:foc_companion/services/samba_service.dart';
+import '../services/vlc_android_service.dart';
 
 class MediaSyncScreen extends StatefulWidget {
   const MediaSyncScreen({super.key});
@@ -20,6 +21,8 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
   final TextEditingController _vlcIpController = TextEditingController();
   final TextEditingController _vlcPortController = TextEditingController();
   final TextEditingController _vlcPasswordController = TextEditingController();
+  final TextEditingController _vlcAndroidIpController = TextEditingController();
+  final TextEditingController _vlcAndroidPortController = TextEditingController();
   final TextEditingController _kodiIpController = TextEditingController();
   final TextEditingController _kodiPortController = TextEditingController();
 
@@ -98,6 +101,10 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
               DropdownMenuItem(
                 value: VideoPlayerType.vlc,
                 child: Text("VLC"),
+              ),
+              DropdownMenuItem(
+                value: VideoPlayerType.vlcAndroid,
+                child: Text("VLC for Android"),
               ),
               DropdownMenuItem(
                 value: VideoPlayerType.kodi,
@@ -218,6 +225,46 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
               obscureText: true,
               controller: _vlcPasswordController,
               onChanged: (v) => m.vlcPassword = v,
+            ),
+          ],
+
+          // ── VLC for Android Section ──
+          if (m.activePlayer == VideoPlayerType.vlcAndroid) ...[
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "VLC-Android IP Address",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.wifi),
+                helperText: "Shown under Settings → Remote access on the phone running VLC",
+              ),
+              controller: _vlcAndroidIpController,
+              onChanged: (v) => m.vlcAndroidIp = v,
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: "Port",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.router),
+                helperText: "Default: 8080 (HTTP) — VLC also exposes 8443 for HTTPS",
+              ),
+              controller: _vlcAndroidPortController,
+              keyboardType: TextInputType.number,
+              onChanged: (v) => m.vlcAndroidPort = int.tryParse(v) ?? 8080,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(m.vlcAndroidSessionCookie.isEmpty
+                      ? "Not paired"
+                      : "Paired ✓"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _startPairing(context, m),
+                  child: Text(m.vlcAndroidSessionCookie.isEmpty ? "Pair device" : "Re-pair"),
+                ),
+              ],
             ),
           ],
 
@@ -422,5 +469,56 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _startPairing(BuildContext context, MediaSyncSettings m) async {
+    final service = VlcAndroidService();
+    service.configure(m.vlcAndroidIp, m.vlcAndroidPort, useHttps: m.vlcAndroidUseHttps);
+
+    try {
+      final challenge = await service.requestPairingCode();
+
+      if (!context.mounted) return;
+      final otp = await showDialog<String>(
+        context: context,
+        builder: (ctx) {
+          final controller = TextEditingController();
+          return AlertDialog(
+            title: const Text("Enter pairing code"),
+            content: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: const InputDecoration(
+                labelText: "Code shown in the VLC notification on your phone",
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+                child: const Text("Verify"),
+              ),
+            ],
+          );
+        },
+      );
+      if (otp == null || otp.isEmpty) return;
+
+      final ok = await service.submitOtp(challenge.challenge, otp);
+      if (ok) {
+        setState(() => m.vlcAndroidSessionCookie = service.sessionCookie!);
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("Invalid or expired code")));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Pairing failed: $e")));
+      }
+    } finally {
+      service.dispose();
+    }
   }
 }

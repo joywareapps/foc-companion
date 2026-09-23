@@ -34,6 +34,9 @@ dependencies:
   # WebSocket (for Kodi JSON-RPC)
   web_socket_channel: ^3.0.0
 
+  # crypto for VLC Androids OTP codes
+  crypto: ^3.0.3
+
   # UI
   share_plus: ^10.1.4
   wakelock_plus: ^1.2.8

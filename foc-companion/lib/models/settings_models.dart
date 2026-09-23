@@ -2,7 +2,7 @@ import 'dart:math' as dart_math;
 
 enum DeviceMode { threePhase, fourPhase }
 
-enum VideoPlayerType { none, heresphere, mpcHc, vlc, kodi }
+enum VideoPlayerType { none, heresphere, mpcHc, vlc, vlcAndroid, kodi }
 
 enum ButtonAction { nothing, togglePlayPause, toggleVolumeLock }
 
@@ -298,6 +298,11 @@ class MediaSyncSettings {
   int vlcPort = 8080;
   String vlcPassword = "";
 
+  String vlcAndroidIp = "";
+  int vlcAndroidPort = 8080;
+  bool vlcAndroidUseHttps = false;
+  String vlcAndroidSessionCookie = "";
+
   String kodiIp = "";
   int kodiPort = 9090;
 
@@ -315,6 +320,10 @@ class MediaSyncSettings {
     'vlcIp': vlcIp,
     'vlcPort': vlcPort,
     'vlcPassword': vlcPassword,
+    'vlcAndroidIp': vlcAndroidIp,
+    'vlcAndroidPort': vlcAndroidPort,
+    'vlcAndroidUseHttps': vlcAndroidUseHttps,
+    'vlcAndroidSessionCookie': vlcAndroidSessionCookie,
     'kodiIp': kodiIp,
     'kodiPort': kodiPort,
     'autoloadEnabled': autoloadEnabled,
@@ -337,6 +346,11 @@ class MediaSyncSettings {
     vlcIp = json['vlcIp'] ?? "";
     vlcPort = json['vlcPort'] ?? 8080;
     vlcPassword = json['vlcPassword'] ?? "";
+
+    vlcAndroidIp = json['vlcAndroidIp'] ?? "";
+    vlcAndroidPort = json['vlcAndroidPort'] ?? 8080;
+    vlcAndroidUseHttps = json['vlcAndroidUseHttps'] ?? false;
+    vlcAndroidSessionCookie = json['vlcAndroidSessionCookie'] ?? "";
 
     kodiIp = json['kodiIp'] ?? "";
     kodiPort = json['kodiPort'] ?? 9090;

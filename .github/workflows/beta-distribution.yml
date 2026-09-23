@@ -111,7 +111,8 @@ jobs:
 
       - name: Install Dart Protoc Plugin
         run: |
-          dart pub global activate protoc_plugin
+          # Pinned: 25.1.0+ generates code requiring protobuf ^6.1.0; keep in sync with pubspec.lock
+          dart pub global activate protoc_plugin 25.0.0
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
       - name: Get Dependencies

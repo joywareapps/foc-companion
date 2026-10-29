@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      windows_only:
+        description: 'Build only the Windows EXE (skip APK build, GitHub Release and Firebase distribution)'
+        type: boolean
+        default: false
 
 jobs:
   build-windows:
@@ -25,10 +30,12 @@ jobs:
       - name: Install libserialport via MSYS2
         shell: pwsh
         run: |
-          # MSYS2 is pre-installed on windows-latest; install the MinGW64 libserialport package
-          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm mingw-w64-x86_64-libserialport
+          # MSYS2 is pre-installed on windows-latest. libserialport is only
+          # packaged for the UCRT64/CLANG64 environments (no longer MINGW64).
+          & "C:\msys64\usr\bin\pacman.exe" -Sy --noconfirm --needed mingw-w64-ucrt-x86_64-libserialport
+          if ($LASTEXITCODE -ne 0) { throw "pacman failed with exit code $LASTEXITCODE" }
           # Copy DLL with the name the Dart libserialport package expects
-          Copy-Item "C:\msys64\mingw64\bin\libserialport-0.dll" `
+          Copy-Item "C:\msys64\ucrt64\bin\libserialport-0.dll" `
             "foc-companion\windows\serialport.dll"
 
       - name: Get Dependencies
@@ -49,11 +56,11 @@ jobs:
           # Resolve any non-Windows DLLs that serialport.dll links against
           $releaseDir = "foc-companion\build\windows\x64\runner\Release"
           $lddOutput = & "C:\msys64\usr\bin\bash.exe" -lc `
-            "ldd /mingw64/bin/libserialport-0.dll 2>/dev/null"
+            "ldd /ucrt64/bin/libserialport-0.dll 2>/dev/null"
           $lddOutput | ForEach-Object {
-            if ($_ -match '=> /mingw64/bin/(.+\.dll)') {
+            if ($_ -match '=> /ucrt64/bin/(.+\.dll)') {
               $dll = $Matches[1]
-              $src = "C:\msys64\mingw64\bin\$dll"
+              $src = "C:\msys64\ucrt64\bin\$dll"
               if (Test-Path $src) {
                 Write-Host "Bundling runtime dep: $dll"
                 Copy-Item $src "$releaseDir\$dll" -Force
@@ -85,12 +92,15 @@ jobs:
 
   distribute:
     name: Build and Distribute APK
+    if: ${{ !inputs.windows_only }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history so release notes can list every commit since the previous tag
 
       - name: Setup Java
         uses: actions/setup-java@v4

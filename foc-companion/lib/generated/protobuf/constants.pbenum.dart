@@ -37,12 +37,23 @@ class AxisType extends $pb.ProtobufEnum {
       AxisType._(23, _omitEnumNames ? '' : 'AXIS_PULSE_FREQUENCY_HZ');
   static const AxisType AXIS_PULSE_INTERVAL_RANDOM_PERCENT = AxisType._(
       24, _omitEnumNames ? '' : 'AXIS_PULSE_INTERVAL_RANDOM_PERCENT');
+
+  /// Upstream removed 30-32 in firmware v2.0.0. Kept here so the app can
+  /// still drive v1.x firmware.
   static const AxisType AXIS_CALIBRATION_3_CENTER =
       AxisType._(30, _omitEnumNames ? '' : 'AXIS_CALIBRATION_3_CENTER');
   static const AxisType AXIS_CALIBRATION_3_UP =
       AxisType._(31, _omitEnumNames ? '' : 'AXIS_CALIBRATION_3_UP');
   static const AxisType AXIS_CALIBRATION_3_LEFT =
       AxisType._(32, _omitEnumNames ? '' : 'AXIS_CALIBRATION_3_LEFT');
+  static const AxisType AXIS_CALIBRATION_3_A =
+      AxisType._(33, _omitEnumNames ? '' : 'AXIS_CALIBRATION_3_A');
+  static const AxisType AXIS_CALIBRATION_3_B =
+      AxisType._(34, _omitEnumNames ? '' : 'AXIS_CALIBRATION_3_B');
+  static const AxisType AXIS_CALIBRATION_3_C =
+      AxisType._(35, _omitEnumNames ? '' : 'AXIS_CALIBRATION_3_C');
+  static const AxisType AXIS_CALIBRATION_3_REDUCTION_IN_CENTER = AxisType._(
+      36, _omitEnumNames ? '' : 'AXIS_CALIBRATION_3_REDUCTION_IN_CENTER');
   static const AxisType AXIS_CALIBRATION_4_CENTER =
       AxisType._(40, _omitEnumNames ? '' : 'AXIS_CALIBRATION_4_CENTER');
   static const AxisType AXIS_CALIBRATION_4_A =
@@ -53,6 +64,8 @@ class AxisType extends $pb.ProtobufEnum {
       AxisType._(43, _omitEnumNames ? '' : 'AXIS_CALIBRATION_4_C');
   static const AxisType AXIS_CALIBRATION_4_D =
       AxisType._(44, _omitEnumNames ? '' : 'AXIS_CALIBRATION_4_D');
+  static const AxisType AXIS_CALIBRATION_4_REDUCTION_IN_CENTER = AxisType._(
+      45, _omitEnumNames ? '' : 'AXIS_CALIBRATION_4_REDUCTION_IN_CENTER');
   static const AxisType AXIS_ELECTRODE_1_POWER =
       AxisType._(50, _omitEnumNames ? '' : 'AXIS_ELECTRODE_1_POWER');
   static const AxisType AXIS_ELECTRODE_2_POWER =
@@ -76,11 +89,16 @@ class AxisType extends $pb.ProtobufEnum {
     AXIS_CALIBRATION_3_CENTER,
     AXIS_CALIBRATION_3_UP,
     AXIS_CALIBRATION_3_LEFT,
+    AXIS_CALIBRATION_3_A,
+    AXIS_CALIBRATION_3_B,
+    AXIS_CALIBRATION_3_C,
+    AXIS_CALIBRATION_3_REDUCTION_IN_CENTER,
     AXIS_CALIBRATION_4_CENTER,
     AXIS_CALIBRATION_4_A,
     AXIS_CALIBRATION_4_B,
     AXIS_CALIBRATION_4_C,
     AXIS_CALIBRATION_4_D,
+    AXIS_CALIBRATION_4_REDUCTION_IN_CENTER,
     AXIS_ELECTRODE_1_POWER,
     AXIS_ELECTRODE_2_POWER,
     AXIS_ELECTRODE_3_POWER,

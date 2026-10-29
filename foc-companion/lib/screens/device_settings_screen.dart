@@ -107,6 +107,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             color: Colors.green,
             impedance: device.impedanceD,
           ),
+          _buildSlider(
+            label: "Center reduction",
+            value: d.calibration4CenterReduction,
+            min: 0,
+            max: 0.2,
+            onChanged: (v) => setState(() => d.calibration4CenterReduction = v),
+            onChangeEnd: (_) => settings.saveSettings(),
+          ),
         ],
 
         const SizedBox(height: 30),

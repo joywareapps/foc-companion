@@ -334,6 +334,8 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
   Widget build(BuildContext context) {
     final boxProfile = widget.settings.boxes[widget.boxIndex];
     final d = boxProfile.device;
+    final firmwareVersion =
+        Provider.of<DeviceProvider>(context).boxes[widget.boxIndex].firmwareVersion;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,6 +345,14 @@ class _ConnectionSettingsSectionState extends State<_ConnectionSettingsSection> 
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const Divider(),
         const SizedBox(height: 8),
+        if (widget.isConnected && firmwareVersion.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              "Firmware: $firmwareVersion",
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
         if (widget.isConnected)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),

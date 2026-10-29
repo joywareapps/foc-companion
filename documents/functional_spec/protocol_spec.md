@@ -64,7 +64,9 @@ The following RPC functions are defined:
 *   **RequestFirmwareVersion**: Empty message.
 *   **ResponseFirmwareVersion**:
     *   `board`: [BoardIdentifier](#4-enumerations)
-    *   `stm32_firmware_version`: `string`
+    *   `stm32_firmware_version_2`: `FirmwareVersion` (major, minor, revision, branch, comment)
+    *   `esp32_firmware_version`: `FirmwareVersion` (firmware ≥ 2.0.1; currently not populated)
+    *   The app accepts branch `main` with API version 1.1+ or 2.x and picks the 3-phase calibration axes by major version.
 
 *   **RequestCapabilitiesGet**: Empty message.
 *   **ResponseCapabilitiesGet**:
@@ -178,14 +180,21 @@ Defines the different axes that can be controlled.
 | `AXIS_PULSE_RISE_TIME_CYCLES` | 22 | General pulse parameter |
 | `AXIS_PULSE_FREQUENCY_HZ` | 23 | General pulse parameter |
 | `AXIS_PULSE_INTERVAL_RANDOM_PERCENT`| 24 | General pulse parameter |
-| `AXIS_CALIBRATION_3_CENTER` | 30 | |
-| `AXIS_CALIBRATION_3_UP` | 31 | |
-| `AXIS_CALIBRATION_3_LEFT` | 32 | |
-| `AXIS_CALIBRATION_4_CENTER` | 40 | |
-| `AXIS_CALIBRATION_4_A` | 41 | |
-| `AXIS_CALIBRATION_4_B` | 42 | |
-| `AXIS_CALIBRATION_4_C` | 43 | |
-| `AXIS_CALIBRATION_4_D` | 44 | |
+| `AXIS_CALIBRATION_3_CENTER` | 30 | dB. Firmware 1.x only (removed in 2.0.0) |
+| `AXIS_CALIBRATION_3_UP` | 31 | dB. Firmware 1.x only (removed in 2.0.0) |
+| `AXIS_CALIBRATION_3_LEFT` | 32 | dB. Firmware 1.x only (removed in 2.0.0) |
+| `AXIS_CALIBRATION_3_A` | 33 | dB, −10…10. Firmware 2.x |
+| `AXIS_CALIBRATION_3_B` | 34 | dB, −10…10. Firmware 2.x |
+| `AXIS_CALIBRATION_3_C` | 35 | dB, −10…10. Firmware 2.x |
+| `AXIS_CALIBRATION_3_REDUCTION_IN_CENTER` | 36 | Ratio 0–0.2 (default 0.14). Firmware 2.x. App sends `1 − 10^(center_dB/10)` |
+| `AXIS_CALIBRATION_4_CENTER` | 40 | Deprecated |
+| `AXIS_CALIBRATION_4_A` | 41 | dB |
+| `AXIS_CALIBRATION_4_B` | 42 | dB |
+| `AXIS_CALIBRATION_4_C` | 43 | dB |
+| `AXIS_CALIBRATION_4_D` | 44 | dB |
+| `AXIS_CALIBRATION_4_REDUCTION_IN_CENTER` | 45 | Ratio 0–0.2 (default 0.14). Firmware ≥ 1.3.0 |
+
+Firmware ignores unknown axes without returning an error, so sending the wrong calibration axes fails silently.
 
 ### BoardIdentifier
 | Name | Value | Description |

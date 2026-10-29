@@ -80,6 +80,13 @@
   - Automated APK versioning using GitHub Run Number.
   - Restricted CI builds to version tags (`v*`).
 
+## 🏁 Phase 12 (2026-10-29): FOC-Stim Firmware v2 Support (v1.6.0)
+- [x] **Proto sync:** Synced with FOC-Stim v2.0.3 — new 3-phase calibration axes (33–36), 4-phase reduction in center (45), ESP32 firmware version field. Old v1 axes (30–32) kept locally.
+- [x] **Dual firmware support:** App accepts firmware 1.1+ and 2.x. 3-phase loop sends Center/Up/Left to 1.x and Electrode A/B/C (dB) + center reduction to 2.x.
+- [x] **4-phase center reduction:** New calibration slider (0–0.2, default 0.14 = firmware default), persisted per box.
+- [x] **Firmware version display:** Shown in the Settings connection section (includes ESP32 version when reported).
+- [x] **Hardware validation:** Tested on both 1.x and 2.x firmware.
+
 ## 🏁 Phase 11 (2026-02-25): Keep Screen On
 
 - [x] **Keep screen on toggle:** Added a "Keep screen on" switch at the top of the Settings tab. When enabled, prevents the phone from sleeping while the app is open. Setting persists across app restarts and takes effect immediately on toggle.

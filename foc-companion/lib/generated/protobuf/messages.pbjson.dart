@@ -62,6 +62,14 @@ const ResponseFirmwareVersion$json = {
       '6': '.focstim_rpc.FirmwareVersion',
       '10': 'stm32FirmwareVersion2'
     },
+    {
+      '1': 'esp32_firmware_version',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.focstim_rpc.FirmwareVersion',
+      '10': 'esp32FirmwareVersion'
+    },
   ],
 };
 
@@ -69,7 +77,9 @@ const ResponseFirmwareVersion$json = {
 final $typed_data.Uint8List responseFirmwareVersionDescriptor = $convert.base64Decode(
     'ChdSZXNwb25zZUZpcm13YXJlVmVyc2lvbhIyCgVib2FyZBgBIAEoDjIcLmZvY3N0aW1fcnBjLk'
     'JvYXJkSWRlbnRpZmllclIFYm9hcmQSVQoYc3RtMzJfZmlybXdhcmVfdmVyc2lvbl8yGAMgASgL'
-    'MhwuZm9jc3RpbV9ycGMuRmlybXdhcmVWZXJzaW9uUhVzdG0zMkZpcm13YXJlVmVyc2lvbjI=');
+    'MhwuZm9jc3RpbV9ycGMuRmlybXdhcmVWZXJzaW9uUhVzdG0zMkZpcm13YXJlVmVyc2lvbjISUg'
+    'oWZXNwMzJfZmlybXdhcmVfdmVyc2lvbhgEIAEoCzIcLmZvY3N0aW1fcnBjLkZpcm13YXJlVmVy'
+    'c2lvblIUZXNwMzJGaXJtd2FyZVZlcnNpb24=');
 
 @$core.Deprecated('Use requestCapabilitiesGetDescriptor instead')
 const RequestCapabilitiesGet$json = {

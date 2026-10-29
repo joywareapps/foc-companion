@@ -335,8 +335,7 @@ class FocStimServiceController {
       final resp = await box.api.requestFirmwareVersion();
       box.api.validateFirmwareVersion(resp);
 
-      final v = resp.stm32FirmwareVersion2;
-      box.firmwareVersion = 'v${v.major}.${v.minor}.${v.revision} (${v.branch})';
+      box.firmwareVersion = formatFirmwareVersion(resp);
       box.connectionStatus = "Connected";
       _logToMain(boxIndex, "Connected: ${box.firmwareVersion}");
 
@@ -363,8 +362,7 @@ class FocStimServiceController {
       final resp = await box.api.requestFirmwareVersion();
       box.api.validateFirmwareVersion(resp);
 
-      final v = resp.stm32FirmwareVersion2;
-      box.firmwareVersion = 'v${v.major}.${v.minor}.${v.revision} (${v.branch})';
+      box.firmwareVersion = formatFirmwareVersion(resp);
       box.connectionStatus = "Connected";
       _logToMain(boxIndex, "Connected via serial: ${box.firmwareVersion}");
 
@@ -385,6 +383,7 @@ class FocStimServiceController {
     box.isLoopRunning = false;
     box.isSlowConnection = false;
     box.connectionStatus = "Disconnected";
+    box.firmwareVersion = "";
     box.threePhaseLoop.sensorVolumeMultiplier = 1.0;
     box.fourPhaseLoop.sensorVolumeMultiplier = 1.0;
     box.threePhaseLoop.stop().catchError((e) => null);

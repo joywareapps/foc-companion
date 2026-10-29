@@ -79,6 +79,33 @@ double gapPulseFrequencyHz({
   return (freqHz: freqHz, widthCycles: widthCycles, riseCycles: riseCycles);
 }
 
+/// 3-phase center calibration (dB, ≤ 0 reduces the center) →
+/// AXIS_CALIBRATION_3_REDUCTION_IN_CENTER ratio, as restim does it:
+///   reduction = 1 − 10^(dB/10), clamped to the firmware range 0–0.2.
+double centerDbToReduction(double centerDb) =>
+    (1.0 - math.pow(10.0, centerDb / 10.0)).clamp(0.0, 0.2).toDouble();
+
+/// 3-phase calibration axes for the connected firmware's API major.
+/// v2+ takes per-electrode dB + center reduction; v1 takes CENTER/UP/LEFT.
+/// Each firmware silently ignores the other's axes.
+Map<AxisType, double> threePhaseCalibrationAxes(
+    DeviceSettings d, int firmwareMajor) {
+  if (firmwareMajor >= 2) {
+    return {
+      AxisType.AXIS_CALIBRATION_3_A: d.calibration3A,
+      AxisType.AXIS_CALIBRATION_3_B: d.calibration3B,
+      AxisType.AXIS_CALIBRATION_3_C: d.calibration3C,
+      AxisType.AXIS_CALIBRATION_3_REDUCTION_IN_CENTER:
+          centerDbToReduction(d.calibration3Center),
+    };
+  }
+  return {
+    AxisType.AXIS_CALIBRATION_3_CENTER: d.calibration3Center,
+    AxisType.AXIS_CALIBRATION_3_UP: d.calibration3Up,
+    AxisType.AXIS_CALIBRATION_3_LEFT: d.calibration3Left,
+  };
+}
+
 // ─────────────────────────────────────────────────────────
 // 4-Phase command loop
 // ─────────────────────────────────────────────────────────
@@ -254,6 +281,8 @@ class FourPhaseCommandLoop {
     send(AxisType.AXIS_CALIBRATION_4_B, _device.calibration4B);
     send(AxisType.AXIS_CALIBRATION_4_C, _device.calibration4C);
     send(AxisType.AXIS_CALIBRATION_4_D, _device.calibration4D);
+    send(AxisType.AXIS_CALIBRATION_4_REDUCTION_IN_CENTER,
+        _device.calibration4CenterReduction);
 
     try {
       // eagerError: false — wait for all futures so their exceptions are
@@ -308,6 +337,8 @@ class FourPhaseCommandLoop {
     await send(AxisType.AXIS_CALIBRATION_4_B, d.calibration4B);
     await send(AxisType.AXIS_CALIBRATION_4_C, d.calibration4C);
     await send(AxisType.AXIS_CALIBRATION_4_D, d.calibration4D);
+    await send(AxisType.AXIS_CALIBRATION_4_REDUCTION_IN_CENTER,
+        d.calibration4CenterReduction);
   }
 }
 
@@ -549,9 +580,7 @@ class CommandLoop {
     send(AxisType.AXIS_PULSE_WIDTH_IN_CYCLES, modWidth);
     send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, pulseRiseTime);
     send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT, pulseIntervalRandom);
-    send(AxisType.AXIS_CALIBRATION_3_CENTER, _device.calibration3Center);
-    send(AxisType.AXIS_CALIBRATION_3_UP, _device.calibration3Up);
-    send(AxisType.AXIS_CALIBRATION_3_LEFT, _device.calibration3Left);
+    threePhaseCalibrationAxes(_device, _api.firmwareMajor).forEach(send);
 
     try {
       await Future.wait(futs, eagerError: false);
@@ -599,8 +628,8 @@ class CommandLoop {
     await send(AxisType.AXIS_PULSE_RISE_TIME_CYCLES, axes.riseCycles);
     await send(AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT,
         p.pulseIntervalRandom / 100.0);
-    await send(AxisType.AXIS_CALIBRATION_3_CENTER, d.calibration3Center);
-    await send(AxisType.AXIS_CALIBRATION_3_UP, d.calibration3Up);
-    await send(AxisType.AXIS_CALIBRATION_3_LEFT, d.calibration3Left);
+    for (final e in threePhaseCalibrationAxes(d, _api.firmwareMajor).entries) {
+      await send(e.key, e.value);
+    }
   }
 }

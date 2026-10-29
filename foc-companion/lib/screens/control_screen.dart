@@ -134,6 +134,8 @@ class _CalibrationCardState extends State<_CalibrationCard> {
               _buildSlider('Electrode B', d.calibration4B, (v) => d.calibration4B = v, color: Colors.blue),
               _buildSlider('Electrode C', d.calibration4C, (v) => d.calibration4C = v, color: Colors.amber),
               _buildSlider('Electrode D', d.calibration4D, (v) => d.calibration4D = v, color: Colors.green),
+              _buildSlider('Center reduction', d.calibration4CenterReduction,
+                  (v) => d.calibration4CenterReduction = v, min: 0, max: 0.2),
             ] else ...[
               _buildSlider('Center', d.calibration3Center, (v) => d.calibration3Center = v),
               _buildSlider('Electrode A', d.calibration3A,

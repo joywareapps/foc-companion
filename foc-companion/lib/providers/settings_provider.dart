@@ -179,7 +179,8 @@ class SettingsProvider with ChangeNotifier {
       ..calibration4A = d.calibration4A
       ..calibration4B = d.calibration4B
       ..calibration4C = d.calibration4C
-      ..calibration4D = d.calibration4D;
+      ..calibration4D = d.calibration4D
+      ..calibration4CenterReduction = d.calibration4CenterReduction;
     notifyListeners();
   }
 
@@ -218,7 +219,8 @@ class SettingsProvider with ChangeNotifier {
       ..calibration4A = saved.calibration4A
       ..calibration4B = saved.calibration4B
       ..calibration4C = saved.calibration4C
-      ..calibration4D = saved.calibration4D;
+      ..calibration4D = saved.calibration4D
+      ..calibration4CenterReduction = saved.calibration4CenterReduction;
 
     // Sync Up/Left → A/B/C in case this save predates the A/B/C fields.
     _syncFromUdLrForBox(device);

@@ -165,11 +165,14 @@ class ResponseFirmwareVersion extends $pb.GeneratedMessage {
   factory ResponseFirmwareVersion({
     $0.BoardIdentifier? board,
     FirmwareVersion? stm32FirmwareVersion2,
+    FirmwareVersion? esp32FirmwareVersion,
   }) {
     final result = create();
     if (board != null) result.board = board;
     if (stm32FirmwareVersion2 != null)
       result.stm32FirmwareVersion2 = stm32FirmwareVersion2;
+    if (esp32FirmwareVersion != null)
+      result.esp32FirmwareVersion = esp32FirmwareVersion;
     return result;
   }
 
@@ -190,6 +193,8 @@ class ResponseFirmwareVersion extends $pb.GeneratedMessage {
         enumValues: $0.BoardIdentifier.values)
     ..aOM<FirmwareVersion>(3, _omitFieldNames ? '' : 'stm32FirmwareVersion2',
         protoName: 'stm32_firmware_version_2',
+        subBuilder: FirmwareVersion.create)
+    ..aOM<FirmwareVersion>(4, _omitFieldNames ? '' : 'esp32FirmwareVersion',
         subBuilder: FirmwareVersion.create)
     ..hasRequiredFields = false;
 
@@ -232,6 +237,17 @@ class ResponseFirmwareVersion extends $pb.GeneratedMessage {
   void clearStm32FirmwareVersion2() => $_clearField(3);
   @$pb.TagNumber(3)
   FirmwareVersion ensureStm32FirmwareVersion2() => $_ensure(1);
+
+  @$pb.TagNumber(4)
+  FirmwareVersion get esp32FirmwareVersion => $_getN(2);
+  @$pb.TagNumber(4)
+  set esp32FirmwareVersion(FirmwareVersion value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasEsp32FirmwareVersion() => $_has(2);
+  @$pb.TagNumber(4)
+  void clearEsp32FirmwareVersion() => $_clearField(4);
+  @$pb.TagNumber(4)
+  FirmwareVersion ensureEsp32FirmwareVersion() => $_ensure(2);
 }
 
 class RequestCapabilitiesGet extends $pb.GeneratedMessage {

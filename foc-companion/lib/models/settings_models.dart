@@ -147,6 +147,9 @@ class DeviceSettings {
   double calibration4B = 0.0;
   double calibration4C = 0.0;
   double calibration4D = 0.0;
+  // Ratio 0–0.2 (AXIS_CALIBRATION_4_REDUCTION_IN_CENTER). Default matches the
+  // firmware default, which applied implicitly before the app sent this axis.
+  double calibration4CenterReduction = 0.14;
 
   Map<String, dynamic> toJson() => {
         'minFrequency': minFrequency,
@@ -163,6 +166,7 @@ class DeviceSettings {
         'calibration4B': calibration4B,
         'calibration4C': calibration4C,
         'calibration4D': calibration4D,
+        'calibration4CenterReduction': calibration4CenterReduction,
       };
 
   DeviceSettings.fromJson(Map<String, dynamic> json) {
@@ -183,6 +187,8 @@ class DeviceSettings {
     calibration4B = json['calibration4B'] ?? 0.0;
     calibration4C = json['calibration4C'] ?? 0.0;
     calibration4D = json['calibration4D'] ?? 0.0;
+    calibration4CenterReduction =
+        (json['calibration4CenterReduction'] ?? 0.14).toDouble();
   }
 
   DeviceSettings();

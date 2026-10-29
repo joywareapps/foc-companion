@@ -10,9 +10,38 @@ import 'package:libserialport/libserialport.dart';
 
 final _log = AppLogger.instance;
 
-const int _kVersionMajor = 1;
-const int _kVersionMinorMin = 1;
+/// Minimum supported minor version for each supported firmware API major.
+/// v1.x: original 3-phase calibration axes (CENTER/UP/LEFT).
+/// v2.x: 3-phase calibration in dB per electrode (A/B/C + reduction in center).
+const Map<int, int> kSupportedFirmwareMinorMin = {1: 1, 2: 0};
 const String _kVersionBranch = 'main';
+
+/// Validates a firmware version against the supported range and returns its
+/// API major version. Throws if the firmware is incompatible.
+int checkFirmwareVersion(FirmwareVersion v) {
+  if (v.branch != _kVersionBranch) {
+    throw Exception(
+        'Incompatible firmware branch: "${v.branch}" (expected "$_kVersionBranch")');
+  }
+  final minorMin = kSupportedFirmwareMinorMin[v.major];
+  if (minorMin == null || v.minor < minorMin) {
+    throw Exception(
+        'Incompatible firmware version: ${v.major}.${v.minor}.${v.revision} '
+        '(needs 1.1+ or 2.x)');
+  }
+  return v.major;
+}
+
+/// Formats the firmware version(s) reported by the device for display.
+String formatFirmwareVersion(ResponseFirmwareVersion resp) {
+  final v = resp.stm32FirmwareVersion2;
+  var s = 'v${v.major}.${v.minor}.${v.revision} (${v.branch})';
+  if (resp.hasEsp32FirmwareVersion()) {
+    final e = resp.esp32FirmwareVersion;
+    s += ', ESP32 v${e.major}.${e.minor}.${e.revision}';
+  }
+  return s;
+}
 
 class FocStimApiService {
   // TCP transport
@@ -32,6 +61,10 @@ class FocStimApiService {
   Function()? onDisconnect;
 
   bool get isConnected => _socket != null || _serialPort != null;
+
+  /// Firmware API major version, set by [validateFirmwareVersion].
+  /// 0 until validated. Selects which calibration axes the loops send.
+  int firmwareMajor = 0;
 
   /// Number of requests currently awaiting a response.
   int get pendingCount => _pendingRequests.length;
@@ -121,6 +154,7 @@ class FocStimApiService {
     _serialReader = null;
     _serialPort?.close();
     _serialPort = null;
+    firmwareMajor = 0;
     onDisconnect?.call();
     _pendingRequests.clear();
   }
@@ -192,16 +226,7 @@ class FocStimApiService {
   }
 
   void validateFirmwareVersion(ResponseFirmwareVersion resp) {
-    final v = resp.stm32FirmwareVersion2;
-    if (v.branch != _kVersionBranch) {
-      throw Exception(
-          'Incompatible firmware branch: "${v.branch}" (expected "$_kVersionBranch")');
-    }
-    if (v.major != _kVersionMajor || v.minor < _kVersionMinorMin) {
-      throw Exception(
-          'Incompatible firmware version: ${v.major}.${v.minor}.${v.revision} '
-          '(needs >= $_kVersionMajor.$_kVersionMinorMin.0)');
-    }
+    firmwareMajor = checkFirmwareVersion(resp.stm32FirmwareVersion2);
   }
 
   Future<void> startSignal(

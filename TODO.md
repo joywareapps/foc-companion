@@ -36,6 +36,7 @@ See [DONE.md](DONE.md) for a detailed history of completed phases and implemente
 - **Summary:**
   - Implement firmware version validation on app startup/connection.
   - **Requirement:** Validate firmware version is at least 1.1.x but less than 2.0.0.
+  - **Update (2026-10-29, Task 10):** Range widened to 1.1+ or 2.x for FOC-Stim firmware v2 support.
   - **Implementation:**
     - Parse firmware version string from device response (e.g., "1.1.5", "1.2.0").
     - Compare against minimum (1.1.0) and maximum (2.0.0 exclusive).

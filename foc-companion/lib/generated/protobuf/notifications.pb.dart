@@ -1467,7 +1467,7 @@ class NotificationDebugAS5311 extends $pb.GeneratedMessage {
   void clearFlags() => $_clearField(3);
 }
 
-/// only abused for debug within logging in restim
+/// only used for debug logging in restim
 class NotificationDebugEdging extends $pb.GeneratedMessage {
   factory NotificationDebugEdging({
     $core.double? fullPowerThreshold,

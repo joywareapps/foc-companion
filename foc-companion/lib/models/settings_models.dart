@@ -305,8 +305,8 @@ class MediaSyncSettings {
   String vlcPassword = "";
 
   String vlcAndroidIp = "";
-  int vlcAndroidPort = 8080;
-  bool vlcAndroidUseHttps = false;
+  int vlcAndroidPort = 8443;
+  bool vlcAndroidUseHttps = true;
   String vlcAndroidSessionCookie = "";
 
   String kodiIp = "";
@@ -354,8 +354,8 @@ class MediaSyncSettings {
     vlcPassword = json['vlcPassword'] ?? "";
 
     vlcAndroidIp = json['vlcAndroidIp'] ?? "";
-    vlcAndroidPort = json['vlcAndroidPort'] ?? 8080;
-    vlcAndroidUseHttps = json['vlcAndroidUseHttps'] ?? false;
+    vlcAndroidPort = json['vlcAndroidPort'] ?? 8443;
+    vlcAndroidUseHttps = json['vlcAndroidUseHttps'] ?? true;
     vlcAndroidSessionCookie = json['vlcAndroidSessionCookie'] ?? "";
 
     kodiIp = json['kodiIp'] ?? "";

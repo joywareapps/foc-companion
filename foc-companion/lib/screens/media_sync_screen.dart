@@ -250,17 +250,17 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
                 labelText: "Port",
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.router),
-                helperText: "Default: 8080 (HTTP) — VLC also exposes 8443 for HTTPS",
+                helperText: "Default: 8443 (HTTPS) — unencrypted communication is not supported anymore",
               ),
               controller: _vlcAndroidPortController,
               keyboardType: TextInputType.number,
-              onChanged: (v) => m.vlcAndroidPort = int.tryParse(v) ?? 8080,
+              onChanged: (v) => m.vlcAndroidPort = int.tryParse(v) ?? 8443,
             ),
             SwitchListTile(
               title: const Text("Use HTTPS"),
               subtitle: const Text("Accepts VLC's self-signed certificate"),
               value: m.vlcAndroidUseHttps,
-              onChanged: (v) => setState(() => m.vlcAndroidUseHttps = v),
+              onChanged: null,
             ),
             Row(
               children: [

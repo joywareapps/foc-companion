@@ -67,7 +67,6 @@ class VideoSyncController extends ChangeNotifier {
     required String vlcPassword,
     required String vlcAndroidIp,
     required int vlcAndroidPort,
-    required bool vlcAndroidUseHttps,
     required String vlcAndroidSessionCookie,
     required String kodiIp,
     required int kodiPort,
@@ -111,7 +110,6 @@ class VideoSyncController extends ChangeNotifier {
           _vlcAndroidService!.configure(
             vlcAndroidIp,
             vlcAndroidPort,
-            useHttps: vlcAndroidUseHttps,
             sessionCookie: vlcAndroidSessionCookie.isEmpty ? null : vlcAndroidSessionCookie,
           );
           _statusSubscription = _vlcAndroidService!.statusStream.listen(_onPlayerStatus);

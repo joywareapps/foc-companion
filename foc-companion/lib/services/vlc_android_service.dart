@@ -12,7 +12,6 @@ import 'package:foc_companion/services/app_logger.dart';
 import 'package:foc_companion/services/video_player_status.dart';
 
 final _log = AppLogger.instance;
-HttpClient? _ioClient;
 
 /// Thrown when VLC rejects the stored session cookie; the user must re-pair.
 class VlcAndroidSessionExpired implements Exception {
@@ -28,11 +27,11 @@ class VlcAndroidPairingChallenge {
 class VlcAndroidService {
   String _ip = '127.0.0.1';
   int _port = 8443;
-  bool _useHttps = true;
 
   // `user_session` cookie obtained after a successful pairing. Null/empty means "not paired yet".
   String? sessionCookie;
 
+  HttpClient? _ioClient;
   http.Client? _httpClient;
   WebSocketChannel? _channel;
   StreamSubscription? _wsSubscription;
@@ -44,39 +43,31 @@ class VlcAndroidService {
 
   bool get isPaired => sessionCookie != null && sessionCookie!.isNotEmpty;
 
-  void configure(String ip, int port, {bool useHttps = true, String? sessionCookie}) {
+  void configure(String ip, int port, {String? sessionCookie}) {
     _ip = ip;
     _port = port;
-    _useHttps = true;
     this.sessionCookie = sessionCookie;
   }
 
-  String get _httpScheme => 'https';
-  String get _wsScheme => 'wss';
-  Uri _uri(String path) => Uri.parse('$_httpScheme://$_ip:$_port$path');
+  Uri _uri(String path) => Uri.parse('https://$_ip:$_port$path');
 
-  http.Client _client() {
-    if (_httpClient != null) return _httpClient!;
+  http.Client _client() => _httpClient ??= IOClient(_tlsClient());
 
-    final c = HttpClient();
-    c.badCertificateCallback = (cert, host, port) {
-      return true;
-    };
+  // Shared by HTTP requests and the websocket; owned by this instance and closed in dispose().
+  HttpClient _tlsClient() {
+    if (_ioClient != null) return _ioClient!;
     // VLC's server only answers clients that offer ALPN "http/1.1", and
     // dart:io's HttpClient doesn't, so open the TLS socket ourselves.
-    c.connectionFactory = (uri, proxyHost, proxyPort) {
-      return SecureSocket.startConnect(_ip, uri.port,
-          onBadCertificate: (_) => true, supportedProtocols: ['http/1.1']);
-    };
-
-    _ioClient = c;
-    _httpClient = IOClient(c);
-    return _httpClient!;
+    // Accept VLC-Android's self-signed certificate, but only from the configured host.
+    _ioClient = HttpClient()
+      ..connectionFactory = (uri, proxyHost, proxyPort) => SecureSocket.startConnect(
+            uri.host,
+            uri.port,
+            onBadCertificate: (_) => uri.host == _ip,
+            supportedProtocols: ['http/1.1'],
+          );
+    return _ioClient!;
   }
-
-  // Accept VLC-Android's self-signed certificate, but only from the configured host
-  HttpClient _insecureHttpClient() => HttpClient()
-    ..badCertificateCallback = (X509Certificate cert, String host, int port) => host == _ip;
 
   Future<VlcAndroidPairingChallenge> requestPairingCode({String? previousChallenge}) async {
     final response = await _client().post(
@@ -134,14 +125,14 @@ class VlcAndroidService {
     try {
       final ticket = await _fetchTicket();
       if (_stopped) return;
-      final uri = Uri.parse('$_wsScheme://$_ip:$_port/echo');
+      final uri = Uri.parse('wss://$_ip:$_port/echo');
 
       final channel = IOWebSocketChannel.connect(
         uri,
         protocols: ['player'],
         headers: {'Cookie': sessionCookie!},
         pingInterval: const Duration(seconds: 10),
-        customClient: _ioClient,
+        customClient: _tlsClient(),
       );
       await channel.ready.timeout(const Duration(seconds: 5));
       if (_stopped) {

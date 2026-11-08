@@ -250,17 +250,11 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
                 labelText: "Port",
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.router),
-                helperText: "Default: 8443 (HTTPS) — unencrypted communication is not supported anymore",
+                helperText: "Default: 8443 (HTTPS, accepts VLC's self-signed certificate)",
               ),
               controller: _vlcAndroidPortController,
               keyboardType: TextInputType.number,
               onChanged: (v) => m.vlcAndroidPort = int.tryParse(v) ?? 8443,
-            ),
-            SwitchListTile(
-              title: const Text("Use HTTPS"),
-              subtitle: const Text("Accepts VLC's self-signed certificate"),
-              value: m.vlcAndroidUseHttps,
-              onChanged: null,
             ),
             Row(
               children: [
@@ -483,7 +477,7 @@ class _MediaSyncScreenState extends State<MediaSyncScreen> {
   Future<void> _startPairing(BuildContext context, MediaSyncSettings m) async {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     final service = VlcAndroidService();
-    service.configure(m.vlcAndroidIp, m.vlcAndroidPort, useHttps: m.vlcAndroidUseHttps);
+    service.configure(m.vlcAndroidIp, m.vlcAndroidPort);
 
     try {
       final challenge = await service.requestPairingCode();

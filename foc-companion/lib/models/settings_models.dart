@@ -305,8 +305,7 @@ class MediaSyncSettings {
   String vlcPassword = "";
 
   String vlcAndroidIp = "";
-  int vlcAndroidPort = 8080;
-  bool vlcAndroidUseHttps = false;
+  int vlcAndroidPort = 8443;
   String vlcAndroidSessionCookie = "";
 
   String kodiIp = "";
@@ -328,7 +327,6 @@ class MediaSyncSettings {
     'vlcPassword': vlcPassword,
     'vlcAndroidIp': vlcAndroidIp,
     'vlcAndroidPort': vlcAndroidPort,
-    'vlcAndroidUseHttps': vlcAndroidUseHttps,
     'vlcAndroidSessionCookie': vlcAndroidSessionCookie,
     'kodiIp': kodiIp,
     'kodiPort': kodiPort,
@@ -354,8 +352,12 @@ class MediaSyncSettings {
     vlcPassword = json['vlcPassword'] ?? "";
 
     vlcAndroidIp = json['vlcAndroidIp'] ?? "";
-    vlcAndroidPort = json['vlcAndroidPort'] ?? 8080;
-    vlcAndroidUseHttps = json['vlcAndroidUseHttps'] ?? false;
+    // VLC-Android is HTTPS-only now; move users still on the old plain-HTTP port to 8443.
+    final int? savedVlcAndroidPort = json['vlcAndroidPort'];
+    vlcAndroidPort = savedVlcAndroidPort == null ||
+            (savedVlcAndroidPort == 8080 && json['vlcAndroidUseHttps'] != true)
+        ? 8443
+        : savedVlcAndroidPort;
     vlcAndroidSessionCookie = json['vlcAndroidSessionCookie'] ?? "";
 
     kodiIp = json['kodiIp'] ?? "";

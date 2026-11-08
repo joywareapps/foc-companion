@@ -672,7 +672,6 @@ class _FunscriptPlayerScreenState extends State<FunscriptPlayerScreen> {
         kodiPort: m.kodiPort,
         vlcAndroidIp: m.vlcAndroidIp,
         vlcAndroidPort: m.vlcAndroidPort,
-        vlcAndroidUseHttps: m.vlcAndroidUseHttps,
         vlcAndroidSessionCookie: m.vlcAndroidSessionCookie,
       );
       

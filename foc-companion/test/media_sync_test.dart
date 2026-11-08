@@ -77,4 +77,24 @@ void main() {
       expect(result!.isArchive, isFalse);
     });
   });
+
+  group('MediaSyncSettings VLC-Android port migration', () {
+    test('defaults to 8443 when nothing is saved', () {
+      expect(MediaSyncSettings.fromJson({}).vlcAndroidPort, 8443);
+    });
+
+    test('moves the old plain-HTTP port 8080 to 8443', () {
+      final m = MediaSyncSettings.fromJson({'vlcAndroidPort': 8080, 'vlcAndroidUseHttps': false});
+      expect(m.vlcAndroidPort, 8443);
+    });
+
+    test('keeps a custom port', () {
+      expect(MediaSyncSettings.fromJson({'vlcAndroidPort': 9443}).vlcAndroidPort, 9443);
+    });
+
+    test('keeps 8080 if it was already used with HTTPS', () {
+      final m = MediaSyncSettings.fromJson({'vlcAndroidPort': 8080, 'vlcAndroidUseHttps': true});
+      expect(m.vlcAndroidPort, 8080);
+    });
+  });
 }

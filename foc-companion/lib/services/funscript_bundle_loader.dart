@@ -208,7 +208,7 @@ class FunscriptBundleLoader {
       id: bundleId,
       name: metaJson['name'] as String? ?? 'Unknown',
       importDate: DateTime.parse(metaJson['importDate'] as String),
-      durationMs: metaJson['durationMs'] as int? ?? 0,
+      durationMs: (metaJson['durationMs'] as num?)?.round() ?? 0,
       sourceFile: metaJson['sourceFile'] as String? ?? '',
       axes: axes,
     );

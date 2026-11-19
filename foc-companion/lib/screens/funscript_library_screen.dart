@@ -339,7 +339,7 @@ class _FunscriptLibraryScreenState extends State<FunscriptLibraryScreen> {
   Widget _buildBundleTile(Map<String, dynamic> meta) {
     final id = meta['id'] as String;
     final name = meta['name'] as String? ?? 'Unknown';
-    final durationMs = meta['durationMs'] as int? ?? 0;
+    final durationMs = (meta['durationMs'] as num?)?.round() ?? 0;
     final axes = (meta['axes'] as List<dynamic>?)?.cast<String>() ?? [];
     final importDate = meta['importDate'] as String? ?? '';
     final sourceFile = meta['sourceFile'] as String? ?? '';

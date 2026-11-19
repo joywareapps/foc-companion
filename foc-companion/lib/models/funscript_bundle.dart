@@ -67,7 +67,7 @@ class FunscriptBundle {
       id: json['id'] as String,
       name: json['name'] as String? ?? 'Unknown',
       importDate: DateTime.parse(json['importDate'] as String),
-      durationMs: json['durationMs'] as int? ?? 0,
+      durationMs: (json['durationMs'] as num?)?.round() ?? 0,
       sourceFile: json['sourceFile'] as String? ?? '',
       axes: {},
     );

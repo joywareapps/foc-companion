@@ -7,8 +7,8 @@ class FunscriptAction {
 
   factory FunscriptAction.fromJson(Map<String, dynamic> json) {
     return FunscriptAction(
-      at: json['at'] as int? ?? 0,
-      pos: json['pos'] as int? ?? 0,
+      at: (json['at'] as num?)?.round() ?? 0,
+      pos: (json['pos'] as num?)?.round() ?? 0,
     );
   }
 
